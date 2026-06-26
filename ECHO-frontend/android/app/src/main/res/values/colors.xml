@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Matches echo-bg / the splash overlay's background (theme/variables.scss,
+         splash-overlay.component.ts) so the OS-level launch theme (styles.xml,
+         AppTheme.NoActionBarLaunch) doesn't flash a mismatched screen before our
+         animated overlay takes over. -->
+    <color name="splash_background">#F6EFE8</color>
+</resources>

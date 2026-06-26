@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:tools="http://schemas.android.com/tools">
+
+    <!-- Base application theme. -->
+    <style name="AppTheme" parent="Theme.AppCompat.Light.DarkActionBar">
+        <!-- Customize your theme here. -->
+        <item name="colorPrimary">@color/colorPrimary</item>
+        <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
+        <item name="colorAccent">@color/colorAccent</item>
+    </style>
+
+    <style name="AppTheme.NoActionBar" parent="Theme.AppCompat.DayNight.NoActionBar">
+        <item name="windowActionBar">false</item>
+        <item name="windowNoTitle">true</item>
+        <item name="android:background">@null</item>
+    </style>
+
+
+    <style name="AppTheme.NoActionBarLaunch" parent="Theme.SplashScreen">
+        <!-- android:background is what the AndroidX SplashScreen COMPAT path (API < 31)
+             reads. On a real API 31+ device the OS's own SplashScreen system ignores it
+             and falls back to a default white background + the launcher icon unless the
+             windowSplashScreenBackground attribute below is set explicitly — both are
+             needed to cover every Android version this app targets. -->
+        <item name="android:background">@color/splash_background</item>
+        <item name="android:windowSplashScreenBackground" tools:targetApi="31">@color/splash_background</item>
+        <!-- This activity keeps AppTheme.NoActionBarLaunch as its theme for its whole
+             lifetime (no postSplashScreenTheme switch) — android:background/
+             windowSplashScreenBackground above only cover the OS splash phase itself.
+             windowBackground is what's actually behind the WebView the instant the splash
+             view is removed but before any HTML/CSS has painted (cold start: a few seconds
+             of JS bundle loading) — without this it defaults to AppCompat's white,
+             producing a white flash between the dark splash and the dark app. -->
+        <item name="android:windowBackground">@color/splash_background</item>
+    </style>
+</resources>
