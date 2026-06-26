@@ -1,0 +1,49 @@
+/* CSS principale, necessario per il corretto funzionamento dei componenti Ionic */
+@import "@ionic/angular/css/core.css";
+
+/* CSS di base per le app sviluppate con Ionic */
+@import "@ionic/angular/css/normalize.css";
+@import "@ionic/angular/css/structure.css";
+@import "@ionic/angular/css/typography.css";
+@import "@ionic/angular/css/display.css";
+
+/* Utility CSS opzionali (possono essere commentate se non necessarie) */
+@import "@ionic/angular/css/padding.css";
+@import "@ionic/angular/css/float-elements.css";
+@import "@ionic/angular/css/text-alignment.css";
+@import "@ionic/angular/css/text-transformation.css";
+@import "@ionic/angular/css/flex-utils.css";
+
+/* ═══════════════════════════════════════════════════════════════ */
+/* ANTI-SCROLLBAR (WEB & DESKTOP BROWSER)                      */
+/* ═══════════════════════════════════════════════════════════════ */
+
+/* Rimuove la barra per tutti i browser basati su Chromium/WebKit (Chrome, Edge, Opera) */
+html::-webkit-scrollbar,
+body::-webkit-scrollbar,
+ion-content::-webkit-scrollbar,
+.scroll-y::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
+/* Rimuove la barra su Firefox ed elementi radice */
+html, body {
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+}
+
+/* Forza la scomparsa della scrollbar all'interno delle componenti Ionic Web */
+ion-content {
+  --scrollbar-width: 0px !important;
+  --scrollbar-style: none !important;
+}
+
+/**
+ * Dark Mode di Ionic — disabilitata intenzionalmente.
+ * https://ionicframework.com/docs/theming/dark-mode
+ */
+/* @import "@ionic/angular/css/palettes/dark.always.css"; */
+/* @import "@ionic/angular/css/palettes/dark.class.css"; */
+/* @import '@ionic/angular/css/palettes/dark.system.css'; */

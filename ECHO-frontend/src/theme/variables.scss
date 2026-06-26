@@ -1,0 +1,249 @@
+/*
+ * ECHO — Token Globali (Stile Vintage Caldo)
+ */
+
+:root {
+  /* Sfondi */
+  --ion-background-color:         #F5EFE6;   /* beige caldo — sfondo pagina */
+  --ion-background-color-rgb:     245,239,230;
+  --ion-item-background:          transparent;
+  --ion-card-background:          #F5EFE6;
+
+  /* Testo */
+  --ion-text-color:               #2A1A0E; 
+  --ion-text-color-rgb:           42,26,14;
+
+  /* Barra degli strumenti */
+  --ion-toolbar-background:       #3B2314;
+  --ion-toolbar-color:            #F5EFE6;
+  --ion-tab-bar-background:       #3B2314;
+  --ion-tab-bar-border-color:     #2A1A0E;
+  --ion-tab-bar-color:            #C9A28A;
+  --ion-tab-bar-color-selected:   #F5EFE6;
+
+  /* Bordi e separatori */
+  --ion-border-color:             #2A1A0E;
+  --ion-item-border-color:        #2A1A0E;
+  --ion-color-step-50:            #ECE3D3;
+  --ion-color-step-100:           #E3D7C0;
+
+  /* Token personalizzati── */
+  --echo-bg:            #F5EFE6;  /* sfondo principale beige caldo */
+  --echo-surface-dark:  #3B2314;  /* header, tab bar, pulsanti CTA, card profilo */
+  --echo-surface-card:  #C9A28A;  /* terracotta — card per la lista eventi */
+  --echo-surface-muted: #8C7B6E;  /* tab inattivo / superficie secondaria */
+  --echo-teal: #5BA8A0;
+  --echo-rust: #B85C38;
+  --echo-ink:        #2A1A0E;     /* testo primario su sfondo chiaro, bordi */
+  --echo-ink-soft:   #6B5744;     /* testo secondario/metadati */
+  --echo-cream:      #F5EFE6;     /* testo SU superfici scure */
+  --echo-medal-gold:   #D4AF37;
+  --echo-medal-silver: #A8A9AD;
+  --echo-medal-bronze: #CD7F32;
+
+  /* Font */
+  --echo-font-display: 'Abril Fatface', 'Playfair Display', Georgia, serif; /* Logo */
+  --echo-font-serif:   'Playfair Display', Georgia, 'Times New Roman', serif; /* Titoli */
+  --echo-font-mono:    'Courier New', Courier, monospace; /* font principale per il testo */
+
+  /* Raggi dei bordi */
+  --echo-radius-sm: 2px;
+  --echo-radius-md: 4px;
+  --echo-radius-lg: 8px;
+  --echo-radius-pill: 999px;
+
+  /* Animazione */
+  --echo-transition: 150ms ease-in-out;
+
+  /* Colore primario Ionic - marrone scuro */
+  --ion-color-primary:         #3B2314;
+  --ion-color-primary-rgb:     59,35,20;
+  --ion-color-primary-contrast: #F5EFE6;
+  --ion-color-primary-shade:   #2A1A0E;
+  --ion-color-primary-tint:    #4F3320;
+
+  /* Colore secondario Ionic mappato sull'accento verde acqua */
+  --ion-color-secondary:         #5BA8A0;
+  --ion-color-secondary-rgb:     91,168,160;
+  --ion-color-secondary-contrast: #F5EFE6;
+  --ion-color-secondary-shade:   #508f89;
+  --ion-color-secondary-tint:    #6cb1aa;
+
+  --ion-color-medium:          #8C7B6E;
+  --ion-color-dark:            #2A1A0E;
+  --ion-color-light:           #F5EFE6;
+}
+
+/* ─── Reset ─────────────────────────────────────────────────────────── */
+* { box-sizing: border-box; }
+
+body {
+  background: var(--echo-bg);
+  color: var(--echo-ink);
+  font-family: var(--echo-font-mono);
+  font-size: 14px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ─── Altri font di supporto ──────────────────────────────────────────────────── */
+.echo-display {
+  font-family: var(--echo-font-display);
+  font-size: 32px;
+  font-weight: 400;
+  letter-spacing: 0.04em;
+  color: var(--echo-ink);
+}
+.echo-display--on-dark { color: var(--echo-cream); }
+
+.echo-heading {
+  font-family: var(--echo-font-serif);
+  font-size: 20px;
+  font-weight: 400;
+  letter-spacing: 0.03em;
+  color: var(--echo-ink);
+  margin: 0;
+}
+.echo-heading--on-dark { color: var(--echo-cream); }
+
+.echo-label {
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--echo-ink-soft);
+}
+
+.echo-mono {
+  font-family: var(--echo-font-mono);
+  color: var(--echo-ink);
+  letter-spacing: 0.05em;
+}
+
+/* Azione primaria — pulsante a pillola marrone scuro con ombra spostata 
+   per effetto "pressione" */
+.echo-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: none;
+  color: var(--echo-cream);
+  background: var(--echo-surface-dark);
+  font-family: var(--echo-font-mono);
+  font-weight: 700;
+  font-size: 12px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  padding: 12px 28px;
+  border-radius: var(--echo-radius-pill);
+  cursor: pointer;
+  box-shadow: 0 4px 0 #1E1209;
+  transition: transform var(--echo-transition), box-shadow var(--echo-transition);
+  -webkit-tap-highlight-color: transparent;
+
+  &:active { transform: translateY(2px); box-shadow: 0 2px 0 #1E1209; }
+  &:disabled {
+    background: var(--echo-surface-muted);
+    color: var(--echo-bg);
+    box-shadow: none;
+    cursor: not-allowed;
+    opacity: 0.6;
+  }
+}
+
+/* Azione fantasma / secondaria — solo contorno, senza riempimento */
+.echo-btn-ghost {
+  @extend .echo-btn;
+  background: transparent;
+  color: var(--echo-ink);
+  border: 1.5px solid var(--echo-ink);
+  box-shadow: none;
+  &:active { background: rgba(42,26,14,0.06); transform: none; }
+}
+
+/* Variante a larghezza intera */
+.echo-btn-block { display: flex; width: 100%; }
+
+/* Card di superficie — terracotta, usata per le card della lista eventi */
+.echo-card {
+  background: var(--echo-surface-card);
+  border: none;
+  border-radius: var(--echo-radius-lg);
+  padding: 20px;
+  box-shadow: 0 2px 6px rgba(42,26,14,0.15);
+}
+
+/* Variante card scura — usata per card profilo, bacheca trofei, ecc. */
+.echo-card-dark {
+  @extend .echo-card;
+  background: var(--echo-surface-dark);
+  color: var(--echo-cream);
+}
+
+/* Divisore */
+.echo-divider {
+  border: none;
+  border-top: 1px solid var(--echo-ink);
+  opacity: 0.25;
+  margin: 12px 0;
+}
+
+/* Pillola di stato — stessi 5 stati di prima, ricolorati per la palette calda */
+.echo-stato {
+  display: inline-block;
+  font-family: var(--echo-font-mono);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding: 3px 10px;
+  border-radius: var(--echo-radius-pill);
+}
+.echo-stato--in-corso  { background: #E3EEDD; border: 1px solid #5DA862; color: #2F6B36; }
+.echo-stato--sviluppo  { background: #F6E8C9; border: 1px solid #B8862E; color: #7A5419; }
+.echo-stato--album     { background: #F3DCD2; border: 1px solid #B85C38; color: #8A3F23; }
+.echo-stato--chiusa    { background: #E3D7C0; border: 1px solid #8C7B6E; color: #6B5744; }
+.echo-stato--attesa    { background: #DCE4ED; border: 1px solid #5B7AA8; color: #2F4566; }
+
+/* Indicatori per il contatore degli scatti */
+.echo-pips {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+.echo-pip {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--echo-surface-muted);
+  transition: background var(--echo-transition);
+  &.used { background: var(--echo-rust); }
+}
+
+/* Sovrascritture per gli elementi Ionic */
+ion-item {
+  --background: transparent;
+  --color: var(--echo-ink);
+  --border-color: var(--echo-ink);
+  --padding-start: 16px;
+  --inner-padding-end: 16px;
+}
+
+ion-input, ion-textarea, ion-select {
+  --color: var(--echo-ink);
+  --placeholder-color: var(--echo-ink-soft);
+  --background: transparent;
+}
+
+ion-toolbar {
+  --background: #3B2314;
+  --color: #F5EFE6;
+  --border-color: var(--echo-ink);
+}
+
+ion-tab-bar {
+  border-top: none;
+}
+
+/* Barra di scorrimento */
+::-webkit-scrollbar { width: 4px; background: var(--echo-bg); }
+::-webkit-scrollbar-thumb { background: var(--echo-ink-soft); border-radius: 2px; }

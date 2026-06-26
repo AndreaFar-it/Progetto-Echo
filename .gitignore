@@ -1,0 +1,10 @@
+node_modules/
+
+# Cartelle duplicate/accidentali rimosse dal tracking (refactor giugno 2026)
+ECHO-project/
+ECHO-frontend/ECHO-frontend/
+ECHO-frontend/ECHO-project/
+
+# Artefatti binari e file sensibili — non devono mai entrare in source control
+*.db
+firebase-service-account.json

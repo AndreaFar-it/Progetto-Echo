@@ -1,0 +1,4 @@
+# Regola di fallback per SPA su host statici (Netlify, Render, ecc.).
+# Previene gli errori 404 in caso di refresh o accesso diretto a route specifiche (es. /profilo).
+# Invia tutte le richieste non trovate a index.html (status 200), delegando il routing ad Angular.
+/* /index.html  200

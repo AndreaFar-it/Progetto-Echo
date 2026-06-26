@@ -1,0 +1,7 @@
+{
+  "name": "ECHO-frontend",
+  "integrations": {
+    "capacitor": {}
+  },
+  "type": "angular-standalone"
+}
