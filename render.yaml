@@ -16,7 +16,7 @@ services:
       - key: JWT_SECRET
         sync: false
       - key: CORS_ORIGIN
-        value: "*"
+        value: "https://echo-frontend-nua6.onrender.com"
       - key: FIREBASE_SERVICE_ACCOUNT_JSON
         sync: false
 
