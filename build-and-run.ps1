@@ -128,7 +128,7 @@ function Invoke-Build {
 
   # 4. Build web con l'URL backend di PRODUZIONE (Render).
   #    ionic:build = "ng build --configuration capacitor" → environment.capacitor.ts
-  #    (apiUrl = https://echo-backend-wsl2.onrender.com). Un "npm run build" semplice
+  #    (apiUrl = https://echo-backend-z9k5.onrender.com). Un "npm run build" semplice
   #    userebbe localhost:3000 e l'APK non raggiungerebbe il backend dal telefono.
   Step 'Build web (configurazione capacitor / URL Render)...'
   Set-Location $Frontend
@@ -190,7 +190,7 @@ function Invoke-Dev {
   Write-Host "`n[ECHO] Servizi avviati (Backend = $Backend)." -ForegroundColor Green
   Write-Host '  Browser  : http://localhost:8100'
   if ($Backend -eq 'Dev') { Write-Host '  Backend  : http://localhost:3000 (locale, 3 min)' }
-  else                    { Write-Host '  Backend  : https://echo-backend-wsl2.onrender.com (online, durate reali)' }
+  else                    { Write-Host '  Backend  : https://echo-backend-z9k5.onrender.com (online, durate reali)' }
 }
 
 # ------------------------------------------------------------------------------------
