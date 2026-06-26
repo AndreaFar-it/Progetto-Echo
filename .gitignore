@@ -8,6 +8,7 @@ ECHO-frontend/ECHO-project/
 # Artefatti binari e file sensibili — non devono mai entrare in source control
 *.db
 firebase-service-account.json
+google-services.json
 
 # Build artifacts
 ECHO-backend/dist/
