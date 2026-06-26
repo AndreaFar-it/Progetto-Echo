@@ -137,6 +137,11 @@ function Invoke-Build {
   Step 'Sincronizzo web + nativo (cap sync)...'
   Run 'npx cap sync android'
 
+  # Ricrea sempre local.properties prima di gradle (viene ignorato da git e può mancare)
+  $localProps = Join-Path $Android 'local.properties'
+  $sdkPath = Join-Path $env:LOCALAPPDATA 'Android\Sdk'
+  [System.IO.File]::WriteAllText($localProps, "sdk.dir=$($sdkPath.Replace('\','\\'))`n")
+
   Step 'Gradle clean + assembleDebug...'
   Set-Location $Android
   Run '.\gradlew.bat clean'

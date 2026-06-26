@@ -8,3 +8,15 @@ ECHO-frontend/ECHO-project/
 # Artefatti binari e file sensibili — non devono mai entrare in source control
 *.db
 firebase-service-account.json
+
+# Build artifacts
+ECHO-backend/dist/
+ECHO-frontend/www/
+ECHO-frontend/.angular/
+
+# Android build
+ECHO-frontend/android/gradle/wrapper/gradle-wrapper.jar
+ECHO-frontend/android/local.properties
+ECHO-frontend/android/app/build/
+ECHO-frontend/android/build/
+ECHO-frontend/android/.gradle/
