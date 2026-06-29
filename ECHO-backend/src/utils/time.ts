@@ -1,18 +1,13 @@
 /**
- * ECHO — Naive datetime utilities
- *
- * All ECHO datetimes are stored as "naive" local-time ISO strings (no Z / tz offset),
- * so they display identically on any device regardless of its timezone setting.
- * The server must run in the event's local timezone (Italy / Europe/Rome).
- *
- * Node/V8 rule: "YYYY-MM-DDTHH:mm:ss.sss" without Z → parsed as LOCAL time.
- * This is spec-defined (ES2015+) and consistent across Node 18+.
+ * Utility per la gestione delle date "naive" (senza fuso orario).
+ * Tutte le date sono trattate come stringhe ISO locali, coerenti con il fuso orario del server.
  */
 
+// Funzioni helper per il padding dei numeri (es. 9 -> '09')
 function pad2(n: number): string { return String(n).padStart(2, '0'); }
 function pad3(n: number): string { return String(n).padStart(3, '0'); }
 
-/** Format a Date as a naive local-time ISO string, e.g. "2026-06-18T17:30:00.000". */
+/** Converte un oggetto Date in una stringha ISO locale (es. "2026-06-18T17:30:00.000"). */
 export function toNaive(d: Date): string {
   return (
     `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}` +
@@ -20,17 +15,14 @@ export function toNaive(d: Date): string {
   );
 }
 
-/** Current server local time as a naive ISO string. */
+/** Ritorna l'orario attuale del server come stringa ISO locale. */
 export function nowNaive(): string {
   return toNaive(new Date());
 }
 
-// Loud, unmissable boot-time confirmation of the resolved server timezone — every
-// naive-datetime computation in this file silently assumes the server's local
-// timezone IS Europe/Rome (no TZ conversion happens anywhere). If a cloud host's
-// container defaults to UTC (the common case) without TZ=Europe/Rome set, every
-// event's data_inizio comparison drifts by 1-2h (CET/CEST offset) with no error,
-// just events that seem to start/end at the wrong time. Compare against Europe/Rome.
+// Verifica del fuso orario all'avvio. 
+// Il server DEVE essere configurato su "Europe/Rome" (es. tramite TZ=Europe/Rome), 
+// altrimenti i confronti temporali del cron e degli eventi risulteranno sfalsati di 1-2 ore.
 const resolvedTz = Intl.DateTimeFormat().resolvedOptions().timeZone;
 console.log(
   `[Config] Server timezone = ${resolvedTz} (process.env.TZ=${JSON.stringify(process.env['TZ'])}) ` +
@@ -38,9 +30,8 @@ console.log(
 );
 
 /**
- * Add minutes to a naive ISO string and return a naive ISO string.
- * new Date("YYYY-MM-DDTHH:mm") is parsed as LOCAL time by V8,
- * so arithmetic and back-conversion stay in the server's local timezone.
+ * Aggiunge un numero specificato di minuti a una stringa ISO locale.
+ * Sfrutta il parsing locale di V8 per mantenere l'aritmetica allineata al fuso orario del server.
  */
 export function addMinutesNaive(naiveIso: string, m: number): string {
   const d = new Date(naiveIso);

@@ -29,11 +29,11 @@ CREATE TABLE IF NOT EXISTS EVENTO (
                      CHECK (stato IN ('non_iniziata','in_corso','sviluppo','album_aperto','chiusa')),
   album_sbloccato_at TEXT,
   sviluppo_started_at TEXT,
-  -- Extension flow (organiser opt-in, replaces the old always-on +120min margin):
-  --   estensione_richiesta: 0/1, set by the cron job once the 10-min-before-end
-  --     prompt has been sent to the organiser (dedupe guard, never reset).
-  --   estensione_accettata: NULL = not yet decided, 1 = accepted (+120min applied,
-  --     all participants asked to confirm), 0 = declined (event ends as scheduled).
+  -- Flusso di estensione (opt-in dell'organizzatore, sostituisce il vecchio margine sempre attivo di +120 min):
+  -- estensione_richiesta: 0/1, impostato dal cron job una volta che il prompt dei
+  -- 10 minuti prima della fine è stato inviato all'organizzatore (controllo anti-duplicazione, mai resettato).
+  -- estensione_accettata: NULL = non ancora deciso, 1 = accettata (+120 min applicati,
+  -- richiesta di conferma inviata a tutti i partecipanti), 0 = rifiutata (l'evento termina come programmato).
   estensione_richiesta INTEGER NOT NULL DEFAULT 0,
   estensione_richiesta_at TEXT,
   estensione_accettata INTEGER,
@@ -62,11 +62,11 @@ CREATE TABLE IF NOT EXISTS PARTECIPA (
   data_iscrizione TEXT   NOT NULL DEFAULT (datetime('now')),
   scatti_usati   INTEGER NOT NULL DEFAULT 0,
   ha_votato      INTEGER NOT NULL DEFAULT 0,
-  -- "Desideri rimanere all'evento?" response after the organiser accepts a +2h
-  -- extension. NULL = not asked yet / no response. 1 = staying (counts as busy
-  -- for the full extended window in the temporal-conflict check). 0 = declined
-  -- — frees this participant up for other events starting during the extension,
-  -- without affecting what they already did in the original event window.
+  -- Risposta a "Desideri rimanere all'evento?" dopo che l'organizzatore ha accettato
+  -- un'estensione di +2 ore. NULL = non ancora richiesto / nessuna risposta. 1 = rimane
+  -- (viene considerato occupato per l'intera finestra estesa nel controllo dei conflitti
+  -- temporali). 0 = rifiutato — libera questo partecipante per altri eventi che iniziano
+  -- durante l'estensione, senza influire su ciò che ha già fatto nella finestra originale dell'evento.
   rimane_esteso  INTEGER,
   PRIMARY KEY (id_utente, id_evento)
 );

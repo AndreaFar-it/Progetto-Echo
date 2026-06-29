@@ -1,11 +1,7 @@
 /**
- * ECHO — Real push notifications via Firebase Cloud Messaging.
- *
- * Needs a service account key (downloaded from Firebase Console → Project Settings →
- * Service accounts → Generate new private key) saved at the path below — gitignored,
- * never commit it. Until that file exists, sendFcmPush() is a safe no-op so the rest of
- * the app (and local dev without Firebase set up) keeps working exactly as before —
- * eventLifecycle.service.ts's console.log("[Push → ...]") is still the dev-visible trace.
+ * ECHO — Notifiche Push tramite Firebase Cloud Messaging (FCM).
+ * Richiede una chiave di servizio (Service Account) salvata localmente o configurata tramite variabili d'ambiente.
+ * Se la chiave manca, il servizio fallisce silenziosamente per consentire lo sviluppo locale senza configurazioni obbligatorie.
  */
 
 import { initializeApp, cert } from 'firebase-admin/app';
@@ -13,16 +9,17 @@ import { getMessaging } from 'firebase-admin/messaging';
 import fs from 'fs';
 import path from 'path';
 
+// Percorso della chiave di servizio Firebase
 const SERVICE_ACCOUNT_PATH = process.env['FIREBASE_SERVICE_ACCOUNT_PATH']
   ?? path.join(__dirname, '../../firebase-service-account.json');
 
 let initialized = false;
 
+// Inizializzazione del modulo Firebase
 function tryInit(): boolean {
   if (initialized) return true;
   try {
-    // Cloud hosts (Railway, etc.) pass the key as an env var rather than a committed
-    // file — prefer that when present, fall back to the local file for dev machines.
+    // Caricamento credenziali: preferisce la variabile d'ambiente (cloud), poi il file locale
     const inlineJson = process.env['FIREBASE_SERVICE_ACCOUNT_JSON'];
     const serviceAccount = inlineJson
       ? JSON.parse(inlineJson)
@@ -40,8 +37,7 @@ function tryInit(): boolean {
   }
 }
 
-// Resolved once at boot so the "not configured" warning is loud and immediate, not just
-// silently swallowed the first time a notification tries (and fails) to go out.
+// Controllo configurazione all'avvio dell'applicazione
 if (!tryInit()) {
   console.warn(
     `[Push] No Firebase service account found at ${SERVICE_ACCOUNT_PATH} — real push ` +
@@ -49,11 +45,12 @@ if (!tryInit()) {
   );
 }
 
+// Invio effettivo della notifica push a un token specifico
 export async function sendFcmPush(
   token: string,
   payload: { title: string; body: string; data?: Record<string, unknown> },
 ): Promise<void> {
-  if (!tryInit()) return; // already warned at boot — stay quiet per-call
+  if (!tryInit()) return; // Fallback se Firebase non è configurato
   try {
     await getMessaging().send({
       token,
@@ -65,7 +62,7 @@ export async function sendFcmPush(
   }
 }
 
-/** FCM's "data" payload requires every value to be a string. */
+// Utility per convertire tutti i valori del payload custom in stringhe (requisito FCM)
 function stringifyData(data: Record<string, unknown>): Record<string, string> {
   const out: Record<string, string> = {};
   for (const [k, v] of Object.entries(data)) out[k] = String(v);
