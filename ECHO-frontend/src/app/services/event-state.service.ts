@@ -70,7 +70,7 @@ export class ServizioStatoEvento implements OnDestroy {
       // "Attivamente in corso" termina a data_inizio + durata_minuti — il margine backend di
       // +120min (data_fine_calc) è un buffer di pianificazione interno e non deve trapelare in
       // ciò che viene comunicato all'utente sulla finestra di acquisizione live.
-      const activeEnd = new Date(inCorso.data_inizio).getTime() + inCorso.durata_minuti * 60_000;
+      const activeEnd = new Date(inCorso.data_inizio).getTime() + inCorso.durata_minuti * TRASFORMA_IN_MINUTI;
       return { evento: inCorso, galleryEvento, showCamera: rem > 0, showGallery: !!galleryEvento, scattiRimanenti: rem,
         secondsToNext: Math.max(0, Math.floor((activeEnd - now) / 1000)),
         countdownLabel: 'Fine acquisizione' };

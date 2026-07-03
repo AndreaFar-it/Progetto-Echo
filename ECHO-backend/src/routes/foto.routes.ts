@@ -130,7 +130,7 @@ router.post('/vota', (richiesta: RichiestaAutenticata, risposta: Response) => {
   if (!evento.album_sbloccato_at) return risposta.status(409).json({ error: 'Album non sbloccato' });
 
   // Verifica che la finestra di votazione non sia scaduta (calcolo in JS per coerenza dei formati)
-  const fineVotazioneMs = new Date(evento.album_sbloccato_at).getTime() + calcolaMinutiVotazione(evento.durata_votazione) * 60_000;
+  const fineVotazioneMs = new Date(evento.album_sbloccato_at).getTime() + calcolaMinutiVotazione(evento.durata_votazione) * TRASFORMA_IN_MINUTI;
   if (Date.now() > fineVotazioneMs) return risposta.status(410).json({ error: 'Finestra di votazione scaduta' });
 
   // Prevenzione auto-voto (controllo cross-table, non gestibile con CHECK di SQLite)
