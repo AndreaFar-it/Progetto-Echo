@@ -3,7 +3,7 @@ import { v4 as uuid } from 'uuid';
 import { run, get, all, transaction } from '../db/database';
 import { authMiddleware, RichiestaAutenticata } from '../middleware/auth';
 import { nowNaive, addMinutesNaive, toNaive } from '../utils/time';
-import { MINUTI_RITARDO_SVILUPPO, calcolaMinutiVotazione, calcolaOffsetFineEvento, MINUTI_ESTENSIONE, MINUTI_MODALITA_RAPIDA } from '../config';
+import { MINUTI_RITARDO_SVILUPPO, calcolaMinutiVotazione, calcolaOffsetFineEvento, MINUTI_ESTENSIONE, MINUTI_MODALITA_DEV } from '../config';
 import { inviaPushNotifica } from '../services/eventLifecycle.service';
 
 const router = Router();
@@ -257,8 +257,8 @@ router.post('/:id/estendi', (richiesta: RichiestaAutenticata, risposta: Response
   let nuovaDataFine = evento.data_fine_calc;
 
   // In dev_mode gli eventi durano 3 min: aggiungere 120 min di estensione non avrebbe
-  // senso. Si usa MINUTI_MODALITA_RAPIDA (3 min) per mantenere il ciclo rapido testabile.
-  const minutiEst = evento.dev_mode === 1 ? MINUTI_MODALITA_RAPIDA : MINUTI_ESTENSIONE;
+  // senso. Si usa MINUTI_MODALITA_DEV (3 min) per mantenere il ciclo rapido testabile.
+  const minutiEst = evento.dev_mode === 1 ? MINUTI_MODALITA_DEV : MINUTI_ESTENSIONE;
 
   transaction(() => {
     run('UPDATE EVENTO SET estensione_accettata=? WHERE id_evento=?', [accetta ? 1 : 0, id]);

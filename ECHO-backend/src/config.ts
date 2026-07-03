@@ -1,62 +1,49 @@
-// --- CONFIGURAZIONE LOGICA DI SVILUPPO (DEV MODE) ---
+//CONFIGURAZIONE LOGICA
 
 // Se attivo, riduce i tempi lunghi a pochi minuti per testare rapidamente il ciclo di vita.
-export const MODALITA_SVILUPPO = process.env['DEVELOPMENT_MODE'] === 'true';
+export const MODALITA_SVILUPPO = process.env['DEVELOPMENT_MODE'] === 'true'; // Presumibilmente codice morto (process.env)
 
 // Durata standard (in minuti) delle fasi di votazione e fine evento in modalità rapida.
-export const MINUTI_MODALITA_RAPIDA = 3;
+export const MINUTI_MODALITA_DEV = 3;
 
 // Durata della fase di sviluppo foto in dev (0 = sblocco istantaneo dell'album).
 export const MINUTI_SVILUPPO_DEV = 0;
 
 // Ritardo reale (24 ore) o accelerato per la fase di sviluppo foto.
-export const MINUTI_RITARDO_SVILUPPO = MODALITA_SVILUPPO ? MINUTI_SVILUPPO_DEV : 1440;
+export const MINUTI_RITARDO_SVILUPPO = MODALITA_SVILUPPO ? MINUTI_SVILUPPO_DEV : 1440; // Presumibilmente codice morto (o errato nel file Server)
+
+// Costante per convertire minuti in millisecondi (1 minuto = 60.000 ms)
+export const TRASFORMA_IN_MINUTI = 60_000; 
 
 
-// --- GESTIONE DELLE TEMPISTICHE E DEI PROMPT ---
+// Estensione dell'evento
 
 // Minuti aggiuntivi concessi se l'organizzatore accetta l'estensione dell'evento.
 export const MINUTI_ESTENSIONE = 120;
 
 // Anticipo (in minuti) con cui inviare il prompt di estensione prima della fine reale.
-export const MINUTI_ANTICIPO_PROMPT = 10;
+export const NOTIFICA_ESTENSIONE = 10;
 
 // Anticipo ridotto a 1 minuto per i test rapidi in modalità sviluppo.
-export const MINUTI_ANTICIPO_PROMPT_DEV = 1;
+export const NOTIFICA_ESTENSIONE_DEV = 1;
+
+// Timeout per la risposta dell'organizzatore al prompt di estensione (in minuti)
+export const MINUTI_TIMEOUT_RISPOSTA_ESTENSIONE = 5;
 
 
 // --- FUNZIONI DI CALCOLO DEI TIMEOUT ---
 
-/**
- * Ritorna la durata della finestra di votazione.
- * Forza 3 minuti se in modalità rapida, altrimenti converte le ore impostate in minuti.
- */
+// Calcola quanti minuti dura la fase di votazione prima di considerarla conclusa.
 export function calcolaMinutiVotazione(durataVotazioneOre: number, modalitaRapidaEvento = false): number {
-  return (MODALITA_SVILUPPO || modalitaRapidaEvento) ? MINUTI_MODALITA_RAPIDA : durataVotazioneOre * 60;
+  return (MODALITA_SVILUPPO || modalitaRapidaEvento) ? MINUTI_MODALITA_DEV : durataVotazioneOre * 60;
 }
 
-/**
- * Ritorna il tempo di attesa per lo sviluppo delle foto.
- * Forza i minuti di dev (0) se in modalità rapida, altrimenti usa il valore standard.
- */
+// Calcola quanti minuti dura la fase di sviluppo foto prima di considerarla conclusa.
 export function calcolaMinutiSviluppo(modalitaRapidaEvento = false): number {
   return (MODALITA_SVILUPPO || modalitaRapidaEvento) ? MINUTI_SVILUPPO_DEV : MINUTI_RITARDO_SVILUPPO;
 }
 
-/**
- * Calcola quanti minuti dura l'evento prima di considerare concluso il caricamento.
- * Forza 3 minuti se in modalità rapida, altrimenti usa la durata scelta dall'organizzatore.
- */
+// Calcola quanti minuti dura la fase di fine evento prima di considerarla conclusa.
 export function calcolaOffsetFineEvento(durataMinuti: number, modalitaRapidaEvento = false): number {
-  return (MODALITA_SVILUPPO || modalitaRapidaEvento) ? MINUTI_MODALITA_RAPIDA : durataMinuti;
+  return (MODALITA_SVILUPPO || modalitaRapidaEvento) ? MINUTI_MODALITA_DEV : durataMinuti;
 }
-
-
-// --- VERIFICA STATO DI AVVIO ---
-
-// Stampa di controllo per verificare la corretta lettura delle variabili d'ambiente.
-console.log(
-  `[Config] Valore grezzo DEVELOPMENT_MODE = ${JSON.stringify(process.env['DEVELOPMENT_MODE'])} ` +
-  `→ MODALITA_SVILUPPO=${MODALITA_SVILUPPO} | offset fine evento / ritardo sviluppo / finestra voto = ` +
-  `${MODALITA_SVILUPPO ? `${MINUTI_MODALITA_RAPIDA} min fissi (override attivo)` : 'durate reali (durata_minuti organizzatore / 24h / durata_votazione organizzatore)'}`
-);

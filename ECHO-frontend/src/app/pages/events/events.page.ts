@@ -397,7 +397,7 @@ export class PaginaEventi implements OnInit, OnDestroy, ViewWillEnter {
   eventEndsIn(e: EventoCard): string {
     const fineMs = e.estensione_accettata === 1
       ? new Date(e.data_fine_calc).getTime()
-      : new Date(e.data_inizio).getTime() + e.durata_minuti * 60_000;
+      : new Date(e.data_inizio).getTime() + e.durata_minuti * TRASFORMA_IN_MINUTI;
     return this.remainingFromMs(fineMs);
   }
 
