@@ -86,7 +86,7 @@ interface DatiProfilo {
         <div class="section-header">
           <span class="section-label">Bacheca Trofei</span>
         </div>
-        <div class="trophy-wall" *ngIf="profilo.badge.length; else bagheccaVuota">
+        <div class="trophy-wall" *ngIf="profilo.badge.length; else bachecaVuota">
           <app-medal-badge
             *ngFor="let badge of profilo.badge; let i = index"
             [tipo]="tipoMedaglia(badge.tipo)"
@@ -96,7 +96,7 @@ interface DatiProfilo {
             class="trophy-medal"
           ></app-medal-badge>
         </div>
-        <ng-template #bagheccaVuota>
+        <ng-template #bachecaVuota>
           <div class="badge-empty">
             <p class="badge-empty-text">Partecipa a un evento e scala la classifica per ottenere il tuo primo badge.</p>
           </div>
@@ -249,6 +249,7 @@ export class PaginaProfilo implements OnInit, ViewWillEnter {
   private async caricaProfilo() {
     try {
       this.profilo = await firstValueFrom(this.api.getProfilo()) as any;
+      this.generaPosizioniMedaglie(this.profilo?.badge.length ?? 0);
     } catch (errore: unknown) {
       const messaggio = (errore as { error?: { error?: string } })?.error?.error ?? 'Errore caricamento profilo';
       const toast = await this.toastCtrl.create({ message: messaggio, duration: 2000, color: 'danger' });
@@ -280,10 +281,26 @@ export class PaginaProfilo implements OnInit, ViewWillEnter {
   }
 
   /**
-   * Posizioni deterministiche per la "parete dei trofei" (effetto "gettati su una lavagna").
-   * Basate sull'indice (non casuali) per essere stabili tra i re-render di Angular.
+   * Posizioni casuali per la "parete dei trofei" (effetto "gettati su una lavagna").
+   * Calcolate UNA sola volta a ogni caricamento del profilo e memorizzate qui: così la
+   * disposizione è casuale (cambia a ogni apertura del profilo) ma resta STABILE tra i
+   * re-render di Angular — i metodi getter del template leggono solo da questa cache,
+   * altrimenti chiamare Math.random() nei binding farebbe "saltare" le medaglie a ogni
+   * ciclo di change detection.
    */
-  posizioneSinistra(i: number): number   { return [8, 32, 18, 58, 74, 46, 64, 12][i % 8]; }
-  posizioneAlto(i: number): number       { return [20, 12, 78, 26, 70, 100, 50, 96][i % 8]; }
-  rotatazioneMedaglia(i: number): number { return [-12, 8, -6, 14, -18, 5, 11, -9][i % 8]; }
+  private posizioniMedaglie: { sinistra: number; alto: number; rotazione: number }[] = [];
+
+  /** Genera `quante` posizioni casuali entro i limiti della bacheca (larghezza % e altezza 160px). */
+  private generaPosizioniMedaglie(quante: number): void {
+    const casuale = (min: number, max: number) => Math.round(min + Math.random() * (max - min));
+    this.posizioniMedaglie = Array.from({ length: quante }, () => ({
+      sinistra: casuale(4, 76),    // % — entro la larghezza della bacheca
+      alto: casuale(8, 104),       // px — entro l'altezza 160px della bacheca
+      rotazione: casuale(-18, 14), // gradi di inclinazione
+    }));
+  }
+
+  posizioneSinistra(i: number): number   { return this.posizioniMedaglie[i]?.sinistra ?? 0; }
+  posizioneAlto(i: number): number       { return this.posizioniMedaglie[i]?.alto ?? 0; }
+  rotatazioneMedaglia(i: number): number { return this.posizioniMedaglie[i]?.rotazione ?? 0; }
 }

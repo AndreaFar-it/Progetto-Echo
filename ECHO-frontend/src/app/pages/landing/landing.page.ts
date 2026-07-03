@@ -256,6 +256,8 @@ interface PassoProcesso {
       margin: 0;
     }
 
+
+    <!-- ── Codice morto (rivedere) ── -->
     .hero-actions { display: flex; flex-direction: column; gap: 14px; max-width: 280px; }
     .cta-primary, .cta-secondary {
       padding: 15px;
