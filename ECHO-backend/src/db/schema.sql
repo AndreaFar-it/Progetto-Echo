@@ -1,3 +1,6 @@
+-- WAL (Write-Ahead Logging) modalità per ottimizzare le prestazioni di scrittura e lettura concorrente.
+-- foreign_keys=ON per abilitare il supporto alle chiavi esterne, collegano diverse tabella in maniera coerente.
+
 PRAGMA journal_mode = WAL;
 PRAGMA foreign_keys = ON;
 
@@ -11,7 +14,9 @@ CREATE TABLE IF NOT EXISTS UTENTE (
   data_registrazione TEXT   NOT NULL DEFAULT (datetime('now')),
   scatti_totali     INTEGER NOT NULL DEFAULT 0,
   voti_ricevuti     INTEGER NOT NULL DEFAULT 0,
-  push_token        TEXT
+  push_token        TEXT,
+  reset_otp         TEXT,
+  reset_otp_expires_at TEXT
 );
 
 CREATE TABLE IF NOT EXISTS EVENTO (
@@ -27,17 +32,15 @@ CREATE TABLE IF NOT EXISTS EVENTO (
   durata_votazione   INTEGER NOT NULL CHECK (durata_votazione BETWEEN 12 AND 72),
   stato              TEXT    NOT NULL DEFAULT 'non_iniziata'
                      CHECK (stato IN ('non_iniziata','in_corso','sviluppo','album_aperto','chiusa')),
-  album_sbloccato_at TEXT,
-  sviluppo_started_at TEXT,
-  -- Flusso di estensione (opt-in dell'organizzatore, sostituisce il vecchio margine sempre attivo di +120 min):
-  -- estensione_richiesta: 0/1, impostato dal cron job una volta che il prompt dei
-  -- 10 minuti prima della fine è stato inviato all'organizzatore (controllo anti-duplicazione, mai resettato).
-  -- estensione_accettata: NULL = non ancora deciso, 1 = accettata (+120 min applicati,
-  -- richiesta di conferma inviata a tutti i partecipanti), 0 = rifiutata (l'evento termina come programmato).
-  estensione_richiesta INTEGER NOT NULL DEFAULT 0,
+  album_sbloccato_at    TEXT,
+  album_aperto_ended_at TEXT,
+  sviluppo_started_at   TEXT,
+  sviluppo_ended_at     TEXT,
+  estensione_richiesta    INTEGER NOT NULL DEFAULT 0,
   estensione_richiesta_at TEXT,
-  estensione_accettata INTEGER,
-  -- Evento creato in modalità rapida (0h 3min): tutte le fasi durano 3 minuti
+  estensione_timeout_at   TEXT,
+  estensione_notifica_at  TEXT,
+  estensione_accettata    INTEGER,
   dev_mode INTEGER NOT NULL DEFAULT 0
 );
 
@@ -62,11 +65,6 @@ CREATE TABLE IF NOT EXISTS PARTECIPA (
   data_iscrizione TEXT   NOT NULL DEFAULT (datetime('now')),
   scatti_usati   INTEGER NOT NULL DEFAULT 0,
   ha_votato      INTEGER NOT NULL DEFAULT 0,
-  -- Risposta a "Desideri rimanere all'evento?" dopo che l'organizzatore ha accettato
-  -- un'estensione di +2 ore. NULL = non ancora richiesto / nessuna risposta. 1 = rimane
-  -- (viene considerato occupato per l'intera finestra estesa nel controllo dei conflitti
-  -- temporali). 0 = rifiutato — libera questo partecipante per altri eventi che iniziano
-  -- durante l'estensione, senza influire su ciò che ha già fatto nella finestra originale dell'evento.
   rimane_esteso  INTEGER,
   PRIMARY KEY (id_utente, id_evento)
 );

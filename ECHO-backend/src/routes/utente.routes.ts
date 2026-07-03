@@ -15,7 +15,7 @@ const SALT = 12;
 // RAGGRUPPAMENTO DATI PROFILO
 // Recupera le informazioni dell'utente, il conteggio degli eventi, i badge e lo storico.
 router.get('/profilo', (richiesta: RichiestaAutenticata, risposta: Response) => {
-  const idUtente = richiesta.user!.id_utente;
+  const idUtente = richiesta.user.id_utente;
   const utente = get('SELECT nome,cognome,foto_profilo_url,data_registrazione,scatti_totali,voti_ricevuti FROM UTENTE WHERE id_utente=?', [idUtente]);
   if (!utente) return risposta.status(404).json({ error: 'Utente non trovato' });
   const eventi_count = get<{ cnt:number }>(
@@ -47,7 +47,7 @@ const uploadProfilePic = multer({
 // AGGIORNAMENTO FOTO PROFILO
 // Sostituisce l'immagine utente ed elimina il vecchio file dal server per risparmiare spazio.
 router.post('/foto-profilo', uploadProfilePic.single('foto'), (richiesta: RichiestaAutenticata, risposta: Response) => {
-  const idUtente = richiesta.user!.id_utente;
+  const idUtente = richiesta.user.id_utente;
   if (!richiesta.file) return risposta.status(400).json({ error: 'Nessun file ricevuto' });
 
   const url_originale = `/uploads/profili/${richiesta.file.filename}`;
@@ -66,7 +66,7 @@ router.post('/foto-profilo', uploadProfilePic.single('foto'), (richiesta: Richie
 // REGISTRAZIONE TOKEN PUSH (FCM)
 // Associa un token di notifica al singolo utente. Eventuali nuovi login sovrascrivono il precedente.
 router.post('/push-token', (richiesta: RichiestaAutenticata, risposta: Response) => {
-  const idUtente = richiesta.user!.id_utente;
+  const idUtente = richiesta.user.id_utente;
   const { token } = richiesta.body;
   if (!token) return risposta.status(400).json({ error: 'Token mancante' });
   run('UPDATE UTENTE SET push_token=? WHERE id_utente=?', [token, idUtente]);
@@ -76,7 +76,7 @@ router.post('/push-token', (richiesta: RichiestaAutenticata, risposta: Response)
 // CAMBIO PASSWORD
 // Valida la password corrente e aggiorna l'hash di sicurezza sul database.
 router.post('/password', async (richiesta: RichiestaAutenticata, risposta: Response) => {
-  const idUtente = richiesta.user!.id_utente;
+  const idUtente = richiesta.user.id_utente;
   const { password_attuale, nuova_password } = richiesta.body;
   if (!password_attuale || !nuova_password)
     return risposta.status(400).json({ error: 'Password attuale e nuova password sono obbligatorie' });
@@ -98,7 +98,7 @@ router.post('/password', async (richiesta: RichiestaAutenticata, risposta: Respo
 // ELIMINAZIONE ACCOUNT IN TRANSAZIONE
 // Rimuove l'utente e pulisce a cascata tutte le sue dipendenze (voti, foto, eventi organizzati) per rispettare i vincoli FK del database.
 router.delete('/account', (richiesta: RichiestaAutenticata, risposta: Response) => {
-  const idUtente = richiesta.user!.id_utente;
+  const idUtente = richiesta.user.id_utente;
   const user = get<{ id_utente: string; foto_profilo_url: string | null }>(
     'SELECT id_utente, foto_profilo_url FROM UTENTE WHERE id_utente=?', [idUtente]);
   if (!user) return risposta.status(404).json({ error: 'Utente non trovato' });

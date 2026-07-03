@@ -5,6 +5,9 @@ import path from 'path';
 // Istanza singleton del database in memoria (null finché avviaDatabase() non viene chiamato).
 let _istanzaDb: Database | null = null;
 
+// Flag che indica se siamo all'interno di una transazione. Serve per evitare di salvare su disco dopo ogni scrittura durante una transazione.
+let _inTransazione = false;
+
 // Percorso assoluto del file database su disco. Configurabile tramite variabile d'ambiente DB_PATH.
 const percorsoDb = process.env['DB_PATH'] ?? path.join(__dirname, '../../echo.db'); // Presumibilmente codice morto (process.env) — non viene mai impostata la variabile d'ambiente DB_PATH, quindi usa il percorso di default.
 
@@ -69,11 +72,29 @@ function righedalRisultato<T>(risultato: QueryExecResult[]): T[] {
 export function run(sql: string, params: unknown[] = []): { changes: number } {
   const db = ottieniDb();
   db.run(sql, params as any[]);
-  const righeModificate = (db.exec('SELECT changes()')[0]?.values[0]?.[0] as number) ?? 0;
-  salvasuDisco(); // Persistiamo dopo ogni scrittura diretta (le transazioni gestiscono il proprio persist)
-  return { changes: righeModificate };
+  const changes = (db.exec('SELECT changes()')[0]?.values[0]?.[0] as number) ?? 0;
+  if (!_inTransazione) salvasuDisco();
+  return { changes };
 }
 
+// Modello di transizione ottimo per SQLite: permette di gestire gruppi di salvataggi insieme , così da ridurre il numero di scritture su disco 
+// e gestire gli eventuali errori tramite rollback.
+export function transaction<T>(fn: () => T): T {
+  const db = ottieniDb();
+  _inTransazione = true;
+  db.run('BEGIN');
+  try {
+    const risultato = fn();
+    db.run('COMMIT');
+    return risultato;
+  } catch (e) {
+    db.run('ROLLBACK');  // ← annulla tutto se qualcosa va storto
+    throw e;
+  } finally {
+    _inTransazione = false;
+    salvasuDisco();      // ← un solo save, sempre (anche dopo ROLLBACK per sicurezza)
+  }
+}
 // Esegue una SELECT e ritorna la PRIMA riga corrispondente come oggetto tipizzato T, oppure undefined se non ci sono risultati.
 export function get<T = Record<string, unknown>>(sql: string, params: unknown[] = []): T | undefined {
   const righe = righedalRisultato<T>(ottieniDb().exec(sql, params as any[]));
@@ -85,14 +106,7 @@ export function all<T = Record<string, unknown>>(sql: string, params: unknown[] 
   return righedalRisultato<T>(ottieniDb().exec(sql, params as any[]));
 }
 
-// Dovrebbe funzionare come salvataggi sincroni globali, ma in realtà è scritta male RIVEDERE
-export function transaction<T>(fn: () => T): T {
-  const risultato = fn();
-  salvasuDisco();
-  return risultato;
-}
-
-/** Salva il database su disco e chiude la connessione in memoria. */
+// Salva il database su disco e chiude la connessione in memoria.
 export function chiudiDatabase(): void {
   if (_istanzaDb) {
     salvasuDisco();

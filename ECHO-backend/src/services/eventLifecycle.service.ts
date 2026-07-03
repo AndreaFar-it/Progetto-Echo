@@ -1,6 +1,7 @@
 import { v4 as uuid }              from 'uuid';
 import { run, get, all, transaction } from '../db/database';
-import { nowNaive } from '../utils/time';
+import { nowNaive, addMinutesNaive } from '../utils/time';
+import { calcolaMinutiSviluppo, calcolaMinutiVotazione, MINUTI_TIMEOUT_RISPOSTA_ESTENSIONE } from '../config';
 import { sendFcmPush } from './push.service';
 
 /**
@@ -49,13 +50,14 @@ export async function avviaEvento(id_evento: string): Promise<void> {
  * `sviluppo_started_at` (vedi sotto) e notifica il solo organizzatore.
  */
 export async function avviaSviluppoFoto(id_evento: string): Promise<void> {
-  // sviluppo_started_at è l'inizio reale del conto alla rovescia dello sviluppo — sia che
-  // questa transizione scatti puntuale (cron T2, raggiunto data_fine_calc) sia in anticipo
-  // (scatti di tutti esauriti, vedi chiusuraAnticipataSeEsaurito). T3 conta il ritardo di
-  // sviluppo da QUESTO timestamp, non da data_fine_calc, così un trigger anticipato accorcia
-  // davvero l'attesa invece di aspettare comunque fino al data_fine_calc originale.
   const now = nowNaive();
-  const r = run("UPDATE EVENTO SET stato='sviluppo', sviluppo_started_at=? WHERE id_evento=? AND stato='in_corso'", [now, id_evento]);
+  const meta = get<{ dev_mode: number }>('SELECT dev_mode FROM EVENTO WHERE id_evento=?', [id_evento]);
+  if (!meta) return;
+  const sviluppo_ended_at = addMinutesNaive(now, calcolaMinutiSviluppo(meta.dev_mode === 1));
+  const r = run(
+    "UPDATE EVENTO SET stato='sviluppo', sviluppo_started_at=?, sviluppo_ended_at=? WHERE id_evento=? AND stato='in_corso'",
+    [now, sviluppo_ended_at, id_evento]
+  );
   if ((r as { changes: number }).changes === 0) return;
   console.log(`[Lifecycle] ${id_evento}: in_corso → sviluppo (sviluppo_started_at=${now})`);
   run("UPDATE CODICE_EVENTO SET attivato=0 WHERE id_evento=?", [id_evento]);
@@ -78,9 +80,17 @@ export async function avviaSviluppoFoto(id_evento: string): Promise<void> {
  */
 export async function sbloccaAlbum(id_evento: string): Promise<void> {
   const now = nowNaive();
+  const meta = get<{ durata_votazione: number; dev_mode: number }>(
+    'SELECT durata_votazione, dev_mode FROM EVENTO WHERE id_evento=?', [id_evento]
+  );
+  if (!meta) return;
+  const album_aperto_ended_at = addMinutesNaive(now, calcolaMinutiVotazione(meta.durata_votazione, meta.dev_mode === 1));
   const moved = transaction(() => {
     run("UPDATE FOTO SET visibile=1 WHERE id_evento=? AND stato_moderazione='approvata'", [id_evento]);
-    const r = run("UPDATE EVENTO SET stato='album_aperto',album_sbloccato_at=? WHERE id_evento=? AND stato='sviluppo'", [now, id_evento]);
+    const r = run(
+      "UPDATE EVENTO SET stato='album_aperto', album_sbloccato_at=?, album_aperto_ended_at=? WHERE id_evento=? AND stato='sviluppo'",
+      [now, album_aperto_ended_at, id_evento]
+    );
     return (r as { changes:number }).changes > 0;
   });
   if (!moved) return;
@@ -158,10 +168,17 @@ export async function chiudiEventoEAssegnaBadge(id_evento: string): Promise<void
  */
 export async function richiestaEstensione(id_evento: string): Promise<void> {
   const now = nowNaive();
-  const r = run("UPDATE EVENTO SET estensione_richiesta=1, estensione_richiesta_at=? WHERE id_evento=? AND estensione_richiesta=0", [now, id_evento]);
-  if ((r as { changes: number }).changes === 0) return;
-  const evento = get<{ id_organizzatore:string; nome:string; dev_mode:number }>('SELECT id_organizzatore,nome,dev_mode FROM EVENTO WHERE id_evento=?', [id_evento]);
+  const evento = get<{ id_organizzatore:string; nome:string; dev_mode:number }>(
+    'SELECT id_organizzatore,nome,dev_mode FROM EVENTO WHERE id_evento=?', [id_evento]
+  );
   if (!evento) return;
+  const timeoutMin = evento.dev_mode === 1 ? 1 : MINUTI_TIMEOUT_RISPOSTA_ESTENSIONE;
+  const estensione_timeout_at = addMinutesNaive(now, timeoutMin);
+  const r = run(
+    "UPDATE EVENTO SET estensione_richiesta=1, estensione_richiesta_at=?, estensione_timeout_at=? WHERE id_evento=? AND estensione_richiesta=0",
+    [now, estensione_timeout_at, id_evento]
+  );
+  if ((r as { changes: number }).changes === 0) return;
   const durata = evento.dev_mode === 1 ? '3 minuti' : '2 ore';
   console.log(`[Lifecycle] ${id_evento}: extension prompt sent to organiser (dev_mode=${evento.dev_mode})`);
   await inviaPushNotifica(evento.id_organizzatore, {

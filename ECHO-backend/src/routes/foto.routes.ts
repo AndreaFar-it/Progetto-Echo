@@ -48,7 +48,7 @@ const caricaFile = multer({
  * (nel caso in cui tutti i partecipanti abbiano terminato i propri scatti).
  */
 router.post('/upload', caricaFile.single('foto'), async (richiesta: RichiestaAutenticata, risposta: Response) => {
-  const idUtente  = richiesta.user!.id_utente;
+  const idUtente  = richiesta.user.id_utente;
   const { id_evento } = richiesta.body;
 
   if (!richiesta.file || !id_evento) return risposta.status(400).json({ error: 'Dati mancanti' });
@@ -112,7 +112,7 @@ router.post('/upload', caricaFile.single('foto'), async (richiesta: RichiestaAut
  *  - Ogni partecipante dispone di un solo voto per evento
  */
 router.post('/vota', (richiesta: RichiestaAutenticata, risposta: Response) => {
-  const idUtente  = richiesta.user!.id_utente;
+  const idUtente  = richiesta.user.id_utente;
   const { id_foto } = richiesta.body;
 
   if (!id_foto) return risposta.status(400).json({ error: 'id_foto mancante' });
@@ -168,7 +168,7 @@ router.post('/vota', (richiesta: RichiestaAutenticata, risposta: Response) => {
  *  - La scadenza della finestra di votazione (calcolata in JS)
  */
 router.get('/galleria/:id_evento', (richiesta: RichiestaAutenticata, risposta: Response) => {
-  const idUtente  = richiesta.user!.id_utente;
+  const idUtente  = richiesta.user.id_utente;
   const { id_evento } = richiesta.params;
 
   const evento = get<{ stato:string; album_sbloccato_at:string|null; durata_votazione:number }>(

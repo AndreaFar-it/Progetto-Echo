@@ -3,7 +3,7 @@ import { v4 as uuid } from 'uuid';
 import { run, get, all, transaction } from '../db/database';
 import { authMiddleware, RichiestaAutenticata } from '../middleware/auth';
 import { nowNaive, addMinutesNaive, toNaive } from '../utils/time';
-import { MINUTI_RITARDO_SVILUPPO, calcolaMinutiVotazione, calcolaOffsetFineEvento, MINUTI_ESTENSIONE, MINUTI_MODALITA_DEV } from '../config';
+import { MINUTI_RITARDO_SVILUPPO, calcolaMinutiVotazione, calcolaOffsetFineEvento, MINUTI_ESTENSIONE, MINUTI_MODALITA_DEV, NOTIFICA_ESTENSIONE, NOTIFICA_ESTENSIONE_DEV } from '../config';
 import { inviaPushNotifica } from '../services/eventLifecycle.service';
 
 const router = Router();
@@ -76,7 +76,7 @@ function verificaConflittoTemporale(idUtente: string, inizio: string, fine: stri
  * Supporta una modalità sviluppo rapido (3 min) per i test end-to-end.
  */
 router.post('/crea', (richiesta: RichiestaAutenticata, risposta: Response) => {
-  const idUtente = richiesta.user!.id_utente;
+  const idUtente = richiesta.user.id_utente;
   const { nome, luogo, data_inizio, durata_minuti, max_partecipanti, scatti_per_utente, durata_votazione, dev_mode } = richiesta.body;
 
   if (!nome || !luogo || !data_inizio)
@@ -111,14 +111,15 @@ router.post('/crea', (richiesta: RichiestaAutenticata, risposta: Response) => {
 
       const idEvento = uuid();
       const codice   = generaCodiceUnico();
-      // L'evento parte come non_iniziata se è in futuro, in_corso se la data è già passata
       const stato    = inizioNaivo > nowNaive() ? 'non_iniziata' : 'in_corso';
+      const anticipoMin = modalitaRapida ? NOTIFICA_ESTENSIONE_DEV : NOTIFICA_ESTENSIONE;
+      const estensione_notifica_at = addMinutesNaive(data_fine_calc, -anticipoMin);
 
       run(`INSERT INTO EVENTO (id_evento,id_organizzatore,nome,luogo,data_inizio,durata_minuti,
-           data_fine_calc,max_partecipanti,scatti_per_utente,durata_votazione,stato,dev_mode)
-           VALUES (?,?,?,?,?,?,?,?,?,?,?,?)`,
+           data_fine_calc,max_partecipanti,scatti_per_utente,durata_votazione,stato,dev_mode,estensione_notifica_at)
+           VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)`,
         [idEvento, idUtente, nome, luogo, inizioNaivo, durata_minuti, data_fine_calc, max_partecipanti,
-         scatti_per_utente, durata_votazione, stato, modalitaRapida ? 1 : 0]);
+         scatti_per_utente, durata_votazione, stato, modalitaRapida ? 1 : 0, estensione_notifica_at]);
 
       // Crea il codice di invito valido fino alla fine dell'evento
       run(`INSERT INTO CODICE_EVENTO (id_codice,id_evento,codice,tipo,data_scadenza,attivato)
@@ -148,7 +149,7 @@ router.post('/crea', (richiesta: RichiestaAutenticata, risposta: Response) => {
  * conflitti temporali con altri eventi dell'utente.
  */
 router.post('/partecipa', (richiesta: RichiestaAutenticata, risposta: Response) => {
-  const idUtente = richiesta.user!.id_utente;
+  const idUtente = richiesta.user.id_utente;
   const { codice } = richiesta.body;
 
   if (!codice || String(codice).length !== 5)
@@ -201,7 +202,7 @@ router.post('/partecipa', (richiesta: RichiestaAutenticata, risposta: Response) 
  * non combacia con il formato naivo "YYYY-MM-DDTHH:MM:SS.sss" usato ovunque nel progetto.
  */
 router.get('/miei', (richiesta: RichiestaAutenticata, risposta: Response) => {
-  const idUtente = richiesta.user!.id_utente;
+  const idUtente = richiesta.user.id_utente;
 
   const eventi = all<{
     data_fine_calc: string; sviluppo_started_at: string | null;
@@ -239,7 +240,7 @@ router.get('/miei', (richiesta: RichiestaAutenticata, risposta: Response) => {
  * - Rifiutando: registra la decisione e permette al cron T2 di procedere normalmente
  */
 router.post('/:id/estendi', (richiesta: RichiestaAutenticata, risposta: Response) => {
-  const idUtente = richiesta.user!.id_utente;
+  const idUtente = richiesta.user.id_utente;
   const { id }   = richiesta.params;
   const { accetta } = richiesta.body;
 
@@ -295,7 +296,7 @@ router.post('/:id/estendi', (richiesta: RichiestaAutenticata, risposta: Response
  * (vedi verificaConflittoTemporale).
  */
 router.post('/:id/rimani', (richiesta: RichiestaAutenticata, risposta: Response) => {
-  const idUtente = richiesta.user!.id_utente;
+  const idUtente = richiesta.user.id_utente;
   const { id }   = richiesta.params;
   const { rimane } = richiesta.body;
 
@@ -322,7 +323,7 @@ router.post('/:id/rimani', (richiesta: RichiestaAutenticata, risposta: Response)
  * L'ordine di cancellazione rispetta i vincoli di chiave esterna (figli prima del padre).
  */
 router.delete('/:id', (richiesta: RichiestaAutenticata, risposta: Response) => {
-  const idUtente = richiesta.user!.id_utente;
+  const idUtente = richiesta.user.id_utente;
   const { id }   = richiesta.params;
 
   const evento = get<{ id_organizzatore: string; stato: string }>(
@@ -356,7 +357,7 @@ router.delete('/:id', (richiesta: RichiestaAutenticata, risposta: Response) => {
  */
 router.get('/:id/analytics', (richiesta: RichiestaAutenticata, risposta: Response) => {
   const { id }   = richiesta.params;
-  const idUtente = richiesta.user!.id_utente;
+  const idUtente = richiesta.user.id_utente;
 
   const evento = get<{ id_organizzatore:string; stato:string; max_partecipanti:number; scatti_per_utente:number }>(
     'SELECT id_organizzatore,stato,max_partecipanti,scatti_per_utente FROM EVENTO WHERE id_evento=?', [id]);

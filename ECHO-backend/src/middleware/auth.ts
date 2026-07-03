@@ -1,51 +1,44 @@
-import { Request, Response, NextFunction } from 'express';
+// Tipi di dati forniti dal framework Express.js per le richieste HTTP, le risposte e la funzione next() del middleware.
+import { 
+  Request,
+  Response,
+  NextFunction
+} from 'express';
+
+// Libreria per la gestione dei token JWT (JSON Web Token), utilizzata per autenticare le richieste.
 import jwt from 'jsonwebtoken';
 
-export interface JwtPayload { id_utente: string; email: string; iat: number; exp: number; }
-export interface RichiestaAutenticata extends Request { user?: JwtPayload; }
+// Tipi di dati per il payload del token JWT e per la richiesta autenticata.
+export interface JwtPayload {
+  id_utente: string;
+  email: string;
+  iat: number;
+  exp: number;
+}
 
-const JWT_SECRET = process.env['JWT_SECRET'] ?? 'echo-dev-secret-CHANGE-IN-PROD';
+export interface RichiestaAutenticata extends Request { user: JwtPayload; }
 
-const DEV_MOCK: JwtPayload = {
-  id_utente: 'usr_andrea_test_id',
-  email:     'andrea@echo.dev',
-  iat:       Math.floor(Date.now() / 1000),
-  exp:       Math.floor(Date.now() / 1000) + 30 * 24 * 3600,
-};
+const JWT_SECRET = process.env['JWT_SECRET'] ?? 'echo-dev-secret-CHANGE-IN-PROD'; // Presumibilmente codice morto (process.env)
 
-/**
- * Middleware di autenticazione JWT. Estrae il token dall'header `Authorization: Bearer ...`,
- * lo verifica e popola `richiesta.user` con il payload decodificato (vedi RichiestaAutenticata,
- * che estende Request con il campo `user`). In ambiente non-production, se il token manca,
- * inietta un utente fittizio (DEV_MOCK) per comodità di sviluppo. Risponde 401 se il token
- * è assente/non valido in produzione.
- */
-export function authMiddleware(richiesta: RichiestaAutenticata, risposta: Response, prossimo: NextFunction): void {
-  // --- Estrazione del token dall'header ---
-  const header = richiesta.headers['authorization'];
+// Analizza l'header Authorization della richiesta HTTP per estrarre e verificare il token JWT.
+export function authMiddleware(req: RichiestaAutenticata, res: Response, next: NextFunction): void {
+  // L'header Authorization deve essere nel formato "Bearer <token>".
+  const header = req.headers['authorization'];
+  // Controlliamo se effettivamente l'Header esista e inizi con Bearer. 
   if (header?.startsWith('Bearer ')) {
     try {
-      // Verifica firma + scadenza; lancia se il token è alterato o scaduto
-      richiesta.user = jwt.verify(header.slice(7), JWT_SECRET) as JwtPayload;
-      return prossimo();
+      // Se sì, estraiamo il token (Slice(7) per tagliare via Bearer) e lo verifichiamo usando la chiave segreta.
+      req.user = jwt.verify(header.slice(7), JWT_SECRET) as JwtPayload;
+      return next();
     } catch {
-      risposta.status(401).json({ error: 'Token non valido o scaduto' });
+      res.status(401).json({ error: 'Token non valido o scaduto' });// Altrimenti errore HTTP 401 ovvero Unauthorized
       return;
     }
   }
-  // --- Fallback di sviluppo: nessun token → utente fittizio (mai in produzione) ---
-  if (process.env['NODE_ENV'] !== 'production') {
-    console.warn('[AUTH] No token — injecting DEV_MOCK_USER (disabled in production)');
-    richiesta.user = { ...DEV_MOCK };
-    return prossimo();
-  }
-  risposta.status(401).json({ error: 'Token mancante' });
+  res.status(401).json({ error: 'Token mancante' });
 }
 
-/**
- * Firma un nuovo token JWT per l'utente dato (solo id_utente + email nel payload),
- * con scadenza a 30 giorni. Usato dalle rotte di login/registrazione.
- */
+// Genera un token JWT firmato con il payload fornito ovvero id_utente e email, valido per 30 giorni (Standard).
 export function signToken(payload: Pick<JwtPayload, 'id_utente' | 'email'>): string {
   return jwt.sign(payload, JWT_SECRET, { expiresIn: '30d' });
 }

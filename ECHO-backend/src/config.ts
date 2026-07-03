@@ -14,6 +14,7 @@ export const MINUTI_RITARDO_SVILUPPO = MODALITA_SVILUPPO ? MINUTI_SVILUPPO_DEV :
 
 // Costante per convertire minuti in millisecondi (1 minuto = 60.000 ms)
 export const TRASFORMA_IN_MINUTI = 60_000; 
+export const TIMEOUT_OTP = 15 * TRASFORMA_IN_MINUTI; // 15 minuti in millisecondi
 
 
 // Estensione dell'evento
