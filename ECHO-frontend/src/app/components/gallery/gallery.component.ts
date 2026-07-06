@@ -617,7 +617,7 @@ export class ComponenteGalleria implements OnInit, OnDestroy {
   downloadingZip = false;
   downloadProgress = 0;
 
-  /** album_sbloccato_at + durata_votazione, in epoch ms — il target reale e fisso rispetto al
+  /** album_sbloccato_at + durata_votazione_ore, in epoch ms — il target reale e fisso rispetto al
    *  quale il countdown sotto è calcolato a ogni lettura (nessuna stringa di durata in cache). */
   private voteEndAt: number | null = null;
   private votingTicker?: Subscription;

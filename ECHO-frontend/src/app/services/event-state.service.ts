@@ -85,8 +85,8 @@ export class ServizioStatoEvento implements OnDestroy {
     }
     if (albumAperto) {
       // voting_end_at è calcolato lato server da album_sbloccato_at più la durata di votazione
-      // attiva del server — normalmente la durata_votazione reale dell'organizzatore, forzata
-      // a 3min in DEVELOPMENT_MODE. Ricade su "ora" solo nella breve finestra prima che
+      // attiva del server — normalmente la durata_votazione_ore reale dell'organizzatore, forzata
+      // a 3min in dev_mode. Ricade su "ora" solo nella breve finestra prima che
       // album_sbloccato_at/voting_end_at siano popolati.
       const voteEnd = albumAperto.voting_end_at ? new Date(albumAperto.voting_end_at).getTime() : now;
       return { evento: albumAperto, galleryEvento, showCamera: false, showGallery: true, scattiRimanenti: 0,

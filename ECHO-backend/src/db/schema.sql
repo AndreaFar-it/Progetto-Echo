@@ -29,7 +29,7 @@ CREATE TABLE IF NOT EXISTS EVENTO (
   data_fine_calc     TEXT    NOT NULL,
   max_partecipanti   INTEGER NOT NULL CHECK (max_partecipanti > 0),
   scatti_per_utente  INTEGER NOT NULL CHECK (scatti_per_utente BETWEEN 1 AND 5),
-  durata_votazione   INTEGER NOT NULL CHECK (durata_votazione BETWEEN 12 AND 72),
+  durata_votazione_ore INTEGER NOT NULL CHECK (durata_votazione_ore BETWEEN 12 AND 72),
   stato              TEXT    NOT NULL DEFAULT 'non_iniziata'
                      CHECK (stato IN ('non_iniziata','in_corso','sviluppo','album_aperto','chiusa')),
   album_sbloccato_at    TEXT,

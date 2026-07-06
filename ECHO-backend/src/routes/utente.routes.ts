@@ -1,36 +1,48 @@
-import { Router, Response }  from 'express';
-import multer                 from 'multer';
-import path                   from 'path';
-import fs                     from 'fs';
-import bcrypt                  from 'bcryptjs';
-import { v4 as uuid }          from 'uuid';
-import { run, get, all, transaction } from '../db/database';
-import { authMiddleware, RichiestaAutenticata } from '../middleware/auth';
+import {
+  Router,
+  Response
+} from 'express';
+import multer from 'multer';
+import path from 'path';
+import fs from 'fs';
+import bcrypt from 'bcryptjs';
+import { v4 as uuid } from 'uuid';
+import {
+  run,
+  get,
+  all,
+  transaction
+} from '../db/database';
+import {
+  authMiddleware,
+  reqAuth
+} from '../middleware/auth';
+import {
+  GIRI_BCRYPT,
+  LIMITE_UPLOAD_BYTE
+} from '../config';
 
 const router = Router();
 router.use(authMiddleware);
 
-const SALT = 12;
-
-// RAGGRUPPAMENTO DATI PROFILO
 // Recupera le informazioni dell'utente, il conteggio degli eventi, i badge e lo storico.
-router.get('/profilo', (richiesta: RichiestaAutenticata, risposta: Response) => {
-  const idUtente = richiesta.user.id_utente;
-  const utente = get('SELECT nome,cognome,foto_profilo_url,data_registrazione,scatti_totali,voti_ricevuti FROM UTENTE WHERE id_utente=?', [idUtente]);
-  if (!utente) return risposta.status(404).json({ error: 'Utente non trovato' });
-  const eventi_count = get<{ cnt:number }>(
-    `SELECT COUNT(DISTINCT e.id_evento) AS cnt FROM EVENTO e
-     LEFT JOIN PARTECIPA p ON p.id_evento=e.id_evento AND p.id_utente=?
-     WHERE e.id_organizzatore=? OR p.id_utente=?`, [idUtente, idUtente, idUtente])?.cnt ?? 0;
-  const badge = all('SELECT id_badge,tipo,etichetta,data_emissione FROM BADGE WHERE id_utente=? ORDER BY data_emissione DESC', [idUtente]);
-  const archivio = all(
-    `SELECT DISTINCT e.id_evento,e.nome,e.data_inizio,e.stato FROM EVENTO e
-     LEFT JOIN PARTECIPA p ON p.id_evento=e.id_evento AND p.id_utente=?
-     WHERE e.id_organizzatore=? OR p.id_utente=? ORDER BY e.data_inizio DESC`, [idUtente, idUtente, idUtente]);
-  return risposta.json({ utente, eventi_count, badge, archivio });
+router.get('/profilo', (req: reqAuth, res: Response) => {
+  const idUtente = req.user.id_utente;
+  const utente = get<{ nome: string; cognome: string; foto_profilo_url: string | null; data_registrazione: string; scatti_totali: number; voti_ricevuti: number }>(
+    'SELECT nome,cognome,foto_profilo_url,data_registrazione,scatti_totali,voti_ricevuti FROM UTENTE WHERE id_utente=?', [idUtente]);
+  if (!utente) return res.status(404).json({ error: 'Utente non trovato' });
+  const eventi_count = get<{ cnt: number }>(
+    'SELECT COUNT(*) AS cnt FROM PARTECIPA WHERE id_utente=?', [idUtente])?.cnt ?? 0;
+  const badge = all<{ id_badge: string; tipo: string; etichetta: string; data_emissione: string }>(
+    'SELECT id_badge,tipo,etichetta,data_emissione FROM BADGE WHERE id_utente=? ORDER BY data_emissione DESC', [idUtente]);
+  const archivio = all<{ id_evento: string; nome: string; data_inizio: string; stato: string }>(
+    `SELECT e.id_evento,e.nome,e.data_inizio,e.stato FROM PARTECIPA p
+     JOIN EVENTO e ON e.id_evento=p.id_evento
+     WHERE p.id_utente=? ORDER BY e.data_inizio DESC`, [idUtente]);
+
+  return res.json({ utente, eventi_count, badge, archivio });
 });
 
-// GESTIONE CARICAMENTO IMMAGINI
 // Configurazione di Multer per il salvataggio locale delle foto profilo (Max 15MB, JPEG/PNG/WEBP).
 const profileStorage = multer.diskStorage({
   destination(_req, _f, cb) {
@@ -40,17 +52,16 @@ const profileStorage = multer.diskStorage({
   filename(_req, _f, cb) { cb(null, `${uuid()}.jpg`); },
 });
 const uploadProfilePic = multer({
-  storage: profileStorage, limits: { fileSize: 15 * 1024 * 1024 },
-  fileFilter(_r, f, cb) { cb(null, ['image/jpeg','image/png','image/webp'].includes(f.mimetype)); },
+  storage: profileStorage, limits: { fileSize: LIMITE_UPLOAD_BYTE },
+  fileFilter(_r, f, cb) { cb(null, ['image/jpeg', 'image/png', 'image/webp'].includes(f.mimetype)); },
 });
 
-// AGGIORNAMENTO FOTO PROFILO
 // Sostituisce l'immagine utente ed elimina il vecchio file dal server per risparmiare spazio.
-router.post('/foto-profilo', uploadProfilePic.single('foto'), (richiesta: RichiestaAutenticata, risposta: Response) => {
-  const idUtente = richiesta.user.id_utente;
-  if (!richiesta.file) return risposta.status(400).json({ error: 'Nessun file ricevuto' });
+router.post('/foto-profilo', uploadProfilePic.single('foto'), (req: reqAuth, res: Response) => {
+  const idUtente = req.user.id_utente;
+  if (!req.file) return res.status(400).json({ error: 'Nessun file ricevuto' });
 
-  const url_originale = `/uploads/profili/${richiesta.file.filename}`;
+  const url_originale = `/uploads/profili/${req.file.filename}`;
 
   const prev = get<{ foto_profilo_url: string | null }>('SELECT foto_profilo_url FROM UTENTE WHERE id_utente=?', [idUtente]);
   run('UPDATE UTENTE SET foto_profilo_url=? WHERE id_utente=?', [url_originale, idUtente]);
@@ -60,48 +71,46 @@ router.post('/foto-profilo', uploadProfilePic.single('foto'), (richiesta: Richie
     fs.unlink(oldPath, () => { /* Pulizia best-effort, ignora errori */ });
   }
 
-  return risposta.json({ message: 'Immagine profilo aggiornata', foto_profilo_url: url_originale });
+  return res.json({ message: 'Immagine profilo aggiornata', foto_profilo_url: url_originale });
 });
 
-// REGISTRAZIONE TOKEN PUSH (FCM)
 // Associa un token di notifica al singolo utente. Eventuali nuovi login sovrascrivono il precedente.
-router.post('/push-token', (richiesta: RichiestaAutenticata, risposta: Response) => {
-  const idUtente = richiesta.user.id_utente;
-  const { token } = richiesta.body;
-  if (!token) return risposta.status(400).json({ error: 'Token mancante' });
+router.post('/push-token', (req: reqAuth, res: Response) => {
+  const idUtente = req.user.id_utente;
+  const { token } = req.body;
+  if (!token) return res.status(400).json({ error: 'Token mancante' });
   run('UPDATE UTENTE SET push_token=? WHERE id_utente=?', [token, idUtente]);
-  return risposta.json({ message: 'Token registrato' });
+  return res.json({ message: 'Token registrato' });
 });
 
 // CAMBIO PASSWORD
 // Valida la password corrente e aggiorna l'hash di sicurezza sul database.
-router.post('/password', async (richiesta: RichiestaAutenticata, risposta: Response) => {
-  const idUtente = richiesta.user.id_utente;
-  const { password_attuale, nuova_password } = richiesta.body;
+router.post('/password', async (req: reqAuth, res: Response) => {
+  const idUtente = req.user.id_utente;
+  const { password_attuale, nuova_password } = req.body;
   if (!password_attuale || !nuova_password)
-    return risposta.status(400).json({ error: 'Password attuale e nuova password sono obbligatorie' });
-  if (nuova_password.length < 8)
-    return risposta.status(400).json({ error: 'La nuova password deve avere almeno 8 caratteri' });
+    return res.status(400).json({ error: 'Password attuale e nuova password sono obbligatorie' });
+  if (nuova_password.length < 8 || !/[A-Z]/.test(nuova_password) || !/[a-z]/.test(nuova_password) || !/[0-9]/.test(nuova_password) || !/[^A-Za-z0-9]/.test(nuova_password))
+    return res.status(400).json({ error: 'Password non soddisfa i criteri di sicurezza. Deve contenere almeno un carattere maiuscolo, uno minuscolo, un numero e un simbolo speciale.' });
 
   const user = get<{ password_hash: string }>('SELECT password_hash FROM UTENTE WHERE id_utente=?', [idUtente]);
-  if (!user) return risposta.status(404).json({ error: 'Utente non trovato' });
+  if (!user) return res.status(404).json({ error: 'Utente non trovato' });
 
   const valid = await bcrypt.compare(password_attuale, user.password_hash);
   // Usa lo status 400 invece di 401 per evitare che l'intercettore frontend forzi il logout per un semplice errore di battitura.
-  if (!valid) return risposta.status(400).json({ error: 'Password attuale non corretta' });
+  if (!valid) return res.status(400).json({ error: 'Password attuale non corretta' });
 
-  const newHash = await bcrypt.hash(nuova_password, SALT);
+  const newHash = await bcrypt.hash(nuova_password, GIRI_BCRYPT);
   run('UPDATE UTENTE SET password_hash=? WHERE id_utente=?', [newHash, idUtente]);
-  return risposta.json({ message: 'Password aggiornata con successo' });
+  return res.json({ message: 'Password aggiornata con successo' });
 });
 
-// ELIMINAZIONE ACCOUNT IN TRANSAZIONE
 // Rimuove l'utente e pulisce a cascata tutte le sue dipendenze (voti, foto, eventi organizzati) per rispettare i vincoli FK del database.
-router.delete('/account', (richiesta: RichiestaAutenticata, risposta: Response) => {
-  const idUtente = richiesta.user.id_utente;
+router.delete('/account', (req: reqAuth, res: Response) => {
+  const idUtente = req.user.id_utente;
   const user = get<{ id_utente: string; foto_profilo_url: string | null }>(
     'SELECT id_utente, foto_profilo_url FROM UTENTE WHERE id_utente=?', [idUtente]);
-  if (!user) return risposta.status(404).json({ error: 'Utente non trovato' });
+  if (!user) return res.status(404).json({ error: 'Utente non trovato' });
 
   try {
     transaction(() => {
@@ -141,10 +150,10 @@ router.delete('/account', (richiesta: RichiestaAutenticata, risposta: Response) 
       fs.unlink(path.join(__dirname, '../..', user.foto_profilo_url), () => { /* Pulizia best-effort */ });
     }
 
-    return risposta.json({ message: 'Account eliminato definitivamente' });
+    return res.json({ message: 'Account eliminato definitivamente' });
   } catch (e) {
     console.error('[DELETE /utente/account]', e);
-    return risposta.status(500).json({ error: 'Errore interno durante l\'eliminazione' });
+    return res.status(500).json({ error: 'Errore interno durante l\'eliminazione' });
   }
 });
 

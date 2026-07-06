@@ -35,7 +35,7 @@ export class ApiService {
     durata_minuti: number;
     max_partecipanti: number;
     scatti_per_utente: number;
-    durata_votazione: number;
+    durata_votazione_ore: number;
     dev_mode?: boolean;
   }): Observable<{ message: string; eventoId: string; codice: string; data_fine_calc: string; stato: string }> {
     return this.http.post<{ message: string; eventoId: string; codice: string; data_fine_calc: string; stato: string }>(

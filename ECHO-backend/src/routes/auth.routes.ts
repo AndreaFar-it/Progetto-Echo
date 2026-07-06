@@ -4,7 +4,7 @@ import {
   Response
 } from 'express';
 
-import { TIMEOUT_OTP } from '../config';
+import { MINUTI_TIMEOUT_OTP, GIRI_BCRYPT } from '../config';
 import { v4 as uuid } from 'uuid'; //Importiamo L'identificatore univoco universale di quarta generazione formato da 36 caratteri alfanumerici.
 import bcrypt from 'bcryptjs';// Libreria bcryptjs fornisce funzioni per l'hashing sicuro delle password e la verifica degli hash.
 
@@ -13,12 +13,10 @@ import {
   get
 } from '../db/database';
 import { signToken } from '../middleware/auth';
+import { adessoUTC, aggiungiMinutiUTC } from '../utils/time';
 
 const router = Router();
 
-//Indica l'esponente del numero di giri di hashing bcrypt da eseguire. Più alto è il numero, più sicuro è l'hash,
-//ma più tempo richiede la generazione e la verifica dell'hash. 12 è un buon compromesso tra sicurezza e prestazioni.
-const GIRI_BCRYPT = 12;
 // Hash fittizio per prevenire attacchi di timing durante il login
 const falsoHash = '$2a$12$invalidhashpadding00000000000000000';
 
@@ -40,8 +38,8 @@ router.post('/registrazione', async (req: Request, res: Response) => {
   const hashPassword = await bcrypt.hash(password, GIRI_BCRYPT);
   const idUtente = uuid();
 
-  run('INSERT INTO UTENTE (id_utente,nome,cognome,email,password_hash) VALUES (?,?,?,?,?)',
-    [idUtente, nome.trim(), cognome.trim(), email.toLowerCase().trim(), hashPassword]);
+  run('INSERT INTO UTENTE (id_utente,nome,cognome,email,password_hash,data_registrazione) VALUES (?,?,?,?,?,?)',
+    [idUtente, nome.trim(), cognome.trim(), email.toLowerCase().trim(), hashPassword, adessoUTC()]);
 
   // Restituisce un token JWT firmato con l'id_utente e l'email appena registrati, insieme ai dati dell'utente. (HTTP 201 Created)
   return res.status(201).json({ token: signToken({ id_utente: idUtente, email }), id_utente: idUtente, nome, cognome });
@@ -84,13 +82,13 @@ router.post('/forgot-password', (req: Request, res: Response) => {
   );
 
   if (utente) {
-    const adesso = Date.now();
-    const otpAncorValido = utente.reset_otp && utente.reset_otp_expires_at && adesso < new Date(utente.reset_otp_expires_at).getTime();
+    const adesso = adessoUTC();
+    const otpAncorValido = utente.reset_otp && utente.reset_otp_expires_at && adesso < utente.reset_otp_expires_at;
     if (otpAncorValido)
       return res.status(429).json({ error: 'Hai già richiesto un OTP. Potrai richiederne uno nuovo alle ' + utente.reset_otp_expires_at });
 
     const otp = String(Math.floor(100000 + Math.random() * 900000));
-    const scadenzaOtp = new Date(adesso + TIMEOUT_OTP).toISOString();
+    const scadenzaOtp = aggiungiMinutiUTC(adesso, MINUTI_TIMEOUT_OTP);
     run('UPDATE UTENTE SET reset_otp=?, reset_otp_expires_at=? WHERE id_utente=?', [otp, scadenzaOtp, utente.id_utente]);
     console.log(`[Auth] OTP recupero password per ${emailNormalizzata}: ${otp} (scade alle ${scadenzaOtp})`);
   }
@@ -117,7 +115,7 @@ router.post('/verify-reset-otp', async (req: Request, res: Response) => {
 
   if (!utente || !utente.reset_otp)
     return res.status(400).json({ error: 'OTP non valido o scaduto' });
-  if (Date.now() > new Date(utente.reset_otp_expires_at!).getTime())
+  if (adessoUTC() > utente.reset_otp_expires_at!)
     return res.status(400).json({ error: 'OTP scaduto. Richiedi un nuovo codice.' });
 
   // OTP brucia al primo tentativo — cancella subito per bloccare brute-force e replay

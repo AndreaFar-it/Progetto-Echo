@@ -3,14 +3,14 @@ export type EventoStato = 'non_iniziata' | 'in_corso' | 'sviluppo' | 'album_aper
 export interface EventoCard {
   id_evento: string; id_organizzatore: string; nome: string; luogo: string;
   data_inizio: string; durata_minuti: number; data_fine_calc: string;
-  max_partecipanti: number; scatti_per_utente: number; durata_votazione: number;
+  max_partecipanti: number; scatti_per_utente: number; durata_votazione_ore: number;
   stato: EventoStato; album_sbloccato_at: string | null;
   /** Miglior stima corrente di quando si sblocca la galleria — sviluppo_started_at (o, prima
    *  che sia impostato, data_fine_calc) più il ritardo di sviluppo attivo del server. Sempre un
    *  valore fresco e live: riflette DEVELOPMENT_MODE e ogni trigger di esaurimento anticipato. */
   album_unlock_at: string;
   /** album_sbloccato_at + la durata di votazione attiva del server (normalmente la
-   *  durata_votazione reale dell'organizzatore, forzata a 3min in DEVELOPMENT_MODE). null finché
+   *  durata_votazione_ore reale dell'organizzatore, forzata a 3min in dev_mode). null finché
    *  l'album non si sblocca davvero. */
   voting_end_at: string | null;
   scatti_usati: number; ha_votato: 0 | 1; is_organiser: 0 | 1;
@@ -45,7 +45,7 @@ export interface FotoGalleria {
 
 export interface GalleriaResponse {
   foto: FotoGalleria[]; ha_votato: boolean; stato: EventoStato;
-  album_sbloccato_at: string; durata_votazione: number; voting_end_at: string | null;
+  album_sbloccato_at: string; durata_votazione_ore: number; voting_end_at: string | null;
   /** Top 3 per voti — popolato solo quando stato === 'chiusa', vuoto altrimenti così il
    *  risultato non può essere svelato mentre la votazione è ancora aperta. */
   classifica: { nome: string; cognome: string; foto_profilo_url: string | null; id_foto: string; url_originale: string; punteggio_voti: number }[];

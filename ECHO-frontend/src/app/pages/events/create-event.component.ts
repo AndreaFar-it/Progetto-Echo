@@ -112,8 +112,8 @@ import { firstValueFrom } from 'rxjs';
         </div>
 
         <div class="field-group">
-          <label class="field-label">Tempo per Votare: {{ form.durata_votazione }}h <span class="field-hint">(min:12h, max:72h)</span></label>
-          <input class="field-input" [(ngModel)]="form.durata_votazione"
+          <label class="field-label">Tempo per Votare: {{ form.durata_votazione_ore }}h <span class="field-hint">(min:12h, max:72h)</span></label>
+          <input class="field-input" [(ngModel)]="form.durata_votazione_ore"
                  type="number" min="12" max="72" step="12" />
         </div>
       </div>
@@ -311,7 +311,7 @@ export class CreateEventComponent {
     durata_min: 0,
     max_partecipanti: 50,
     scatti_per_utente: 3,
-    durata_votazione: 24,
+    durata_votazione_ore: 24,
   };
 
   /**
@@ -381,7 +381,7 @@ export class CreateEventComponent {
     const nelRange = (v: number, min: number, max: number) => Number.isFinite(v) && v >= min && v <= max;
     if (!nelRange(this.form.max_partecipanti, 1, 500))  { this.messaggioErrore = 'I partecipanti devono essere tra 1 e 500.'; return; }
     if (!nelRange(this.form.scatti_per_utente, 1, 5))   { this.messaggioErrore = 'Gli scatti devono essere tra 1 e 5.'; return; }
-    if (!nelRange(this.form.durata_votazione, 12, 72))  { this.messaggioErrore = 'La finestra di votazione deve essere tra 12h e 72h.'; return; }
+    if (!nelRange(this.form.durata_votazione_ore, 12, 72))  { this.messaggioErrore = 'La finestra di votazione deve essere tra 12h e 72h.'; return; }
 
     this.inCreazione = true;
     try {
@@ -393,7 +393,7 @@ export class CreateEventComponent {
           durata_minuti: totaleMinuti,
           max_partecipanti: this.form.max_partecipanti,
           scatti_per_utente: this.form.scatti_per_utente,
-          durata_votazione: this.form.durata_votazione,
+          durata_votazione_ore: this.form.durata_votazione_ore,
           dev_mode: this.modalitaSviluppo,
         })
       );

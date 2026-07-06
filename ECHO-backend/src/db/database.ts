@@ -1,5 +1,5 @@
 import initSqlJs, { Database, QueryExecResult } from 'sql.js'; // Libreria che implementa SQLite in WebAssembly per Node.js e browser.
-import fs   from 'fs';// Modulo nativo di Node.js per leggere/scrivere file su disco.
+import fs from 'fs';// Modulo nativo di Node.js per leggere/scrivere file su disco.
 import path from 'path';
 
 // Istanza singleton del database in memoria (null finché avviaDatabase() non viene chiamato).
@@ -9,13 +9,13 @@ let _istanzaDb: Database | null = null;
 let _inTransazione = false;
 
 // Percorso assoluto del file database su disco. Configurabile tramite variabile d'ambiente DB_PATH.
-const percorsoDb = process.env['DB_PATH'] ?? path.join(__dirname, '../../echo.db'); // Presumibilmente codice morto (process.env) — non viene mai impostata la variabile d'ambiente DB_PATH, quindi usa il percorso di default.
+const percorsoDb = process.env['DB_PATH'] ?? path.join(__dirname, '../../echo.db'); // Impostata in render.yaml per puntare a un percorso persistente su Render.
 
 // Salva su disco il database in memoria (_istanzaDb) nel file percorsoDb. Viene chiamata dopo ogni scrittura diretta per garantire la persistenza dei dati.
 function salvasuDisco(): void {
   if (!_istanzaDb) return;
   const datiDb = _istanzaDb.export();
-// Utilizziamo un Buffer.from() per convertire l'ArrayBuffer in un Buffer di Node.js, necessario per fs.writeFileSync().
+  // Utilizziamo un Buffer.from() per convertire l'ArrayBuffer in un Buffer di Node.js, necessario per fs.writeFileSync().
   fs.writeFileSync(percorsoDb, Buffer.from(datiDb));
 }
 

@@ -9,10 +9,10 @@
  * OS/FCM, non tramite polling dell'app. Solo nativo; sul web la UI live riflette già i cambi
  * di stato direttamente, nessun push necessario.
  *
- * Richiede un progetto Firebase configurato (google-services.json in android/app/ + il
- * firebase-service-account.json del backend) — vedi DEV_SETUP.md. Senza, la registrazione
- * gira comunque ma il token che il backend riceve non corrisponderà a nulla che FCM possa
- * raggiungere; no-op innocuo finché Firebase non è configurato.
+ * Richiede un progetto Firebase configurato: google-services.json in android/app/ (client) e
+ * la variabile d'ambiente FIREBASE_SERVICE_ACCOUNT_JSON sul backend (invio). Senza, la
+ * registrazione gira comunque ma il token che il backend riceve non corrisponderà a nulla
+ * che FCM possa raggiungere; no-op innocuo finché Firebase non è configurato.
  */
 
 import { Injectable } from '@angular/core';

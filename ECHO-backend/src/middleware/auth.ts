@@ -1,5 +1,5 @@
 // Tipi di dati forniti dal framework Express.js per le richieste HTTP, le risposte e la funzione next() del middleware.
-import { 
+import {
   Request,
   Response,
   NextFunction
@@ -16,12 +16,27 @@ export interface JwtPayload {
   exp: number;
 }
 
-export interface RichiestaAutenticata extends Request { user: JwtPayload; }
+// Estende globalmente il tipo Request di Express con `user`, invece di creare un sottotipo
+// separato: un sottotipo con `user` obbligatorio non sarebbe assegnabile come RequestHandler
+// (Express lo confronta in modo contravariante con Request in modalità strict).
+declare global {
+  namespace Express {
+    interface Request {
+      user: JwtPayload;
+    }
+  }
+}
 
-const JWT_SECRET = process.env['JWT_SECRET'] ?? 'echo-dev-secret-CHANGE-IN-PROD'; // Presumibilmente codice morto (process.env)
+export type reqAuth = Request;
+
+const JWT_SECRET: string = (() => {
+  const secret = process.env['JWT_SECRET'];
+  if (!secret) throw new Error('[AUTH] JWT_SECRET non impostato: obbligatorio per firmare/verificare i token.');
+  return secret;
+})();
 
 // Analizza l'header Authorization della richiesta HTTP per estrarre e verificare il token JWT.
-export function authMiddleware(req: RichiestaAutenticata, res: Response, next: NextFunction): void {
+export function authMiddleware(req: Request, res: Response, next: NextFunction): void {
   // L'header Authorization deve essere nel formato "Bearer <token>".
   const header = req.headers['authorization'];
   // Controlliamo se effettivamente l'Header esista e inizi con Bearer. 

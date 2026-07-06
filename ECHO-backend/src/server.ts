@@ -1,4 +1,4 @@
-import 'dotenv/config'; // Carica automaticamente il file .env nella variabile process.env prima di qualsiasi altra cosa, //Presumibilmente codice morto
+import 'dotenv/config'; // Carica automaticamente il file .env nella variabile process.env prima di qualsiasi altra cosa,
 // così da poter usare le variabili d'ambiente in tutto il codice senza dover importare dotenv in ogni file.
 import express from 'express';// Framework HTTP che gestisce routing, middleware, e richieste/risposte
 import cors from 'cors';// Permette al browser di fare richieste di origine diversa (CORS) verso il backend, senza di esso il browser bloccherebbe le richieste da domini diversi da quello del backend.
@@ -11,14 +11,18 @@ import authRoutes from './routes/auth.routes';
 import eventiRoutes from './routes/eventi.routes';
 import fotoRoutes from './routes/foto.routes';
 import utenteRoutes from './routes/utente.routes';
-import { TRASFORMA_IN_MINUTI } from './config';
+import { MS_PER_MINUTO } from './config';
 
 //Setup App
 const app = express(); // Crea un'istanza dell'applicazione Express
-const PORT = process.env['PORT'] ?? 3000; // Imposta la porta del server, prendendola dalla variabile d'ambiente PORT se definita, altrimenti usa 3000 come default.//Presumibilmente codice morto
+const PORT = process.env['PORT'] ?? 3000; // Imposta la porta del server, prendendola dalla variabile d'ambiente PORT se definita, altrimenti usa 3000 come default.
 
 app.use(helmet()); // Attiva le protezioni di base.
-app.use(cors({ origin: process.env['CORS_ORIGIN'] ?? '*' })); //Presumibilmente codice morto
+const CORS_ORIGIN = process.env['CORS_ORIGIN'];
+if (process.env['NODE_ENV'] === 'production' && (!CORS_ORIGIN || CORS_ORIGIN === '*')) {
+  throw new Error('[CORS] CORS_ORIGIN non impostato (o "*"): obbligatorio in produzione, deve essere l\'URL del frontend.');
+}
+app.use(cors({ origin: CORS_ORIGIN ?? '*' }));
 app.use(express.json({ limit: '1mb' })); // Express legge il body json nelle richieste e lo mette in req.body, limitando la dimensione a 1 MB.
 
 
@@ -42,7 +46,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/eventi', eventiRoutes);
 app.use('/api/foto', fotoRoutes);
 app.use('/api/utente', utenteRoutes);
-app.get('/health', (_req, res) => res.json({ status: 'ok', ts: new Date().toISOString(), developmentDelayMinutes: MINUTI_RITARDO_SVILUPPO }));//Presumibilmente codice morto
+app.get('/health', (_req, res) => res.json({ status: 'ok', ts: new Date().toISOString(), developmentDelayMinutes: MINUTI_RITARDO_SVILUPPO }));
 
 // funzione asincrona che avvia il server, il database e i job periodici.
 async function avviaServer() {
@@ -52,7 +56,7 @@ async function avviaServer() {
 
   //Apriamo la porta HTTP e iniziamo ad ascoltare le richieste in arrivo
   const server = app.listen(PORT, () =>
-    console.log(`[Server] ECHO backend on port ${PORT} (${process.env['NODE_ENV'] ?? 'development'})`) // Presumibilmente codice morto (process.env)
+    console.log(`[Server] ECHO backend on port ${PORT} (${process.env['NODE_ENV'] ?? 'development'})`)
   );
 
   //Smettiamo di ascoltare le richieste e chiudiamo il database. forza l'uscita del processo dopo 10 secondi se il server non si chiude correttamente.
@@ -75,7 +79,7 @@ async function avviaServer() {
       import('http').then(({ default: http }) =>
         http.get(SELF_URL, res => res.resume()).on('error', () => { })
       );
-    }, 14 * TRASFORMA_IN_MINUTI); // calcola 14 minuti in millisecondi
+    }, 14 * MS_PER_MINUTO); // calcola 14 minuti in millisecondi
   }
 }
 

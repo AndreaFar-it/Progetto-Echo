@@ -4,7 +4,7 @@ export type EventoStato = 'non_iniziata' | 'in_corso' | 'sviluppo' | 'album_aper
 export interface EventoCard {
   id_evento: string; id_organizzatore: string; nome: string; luogo: string;
   data_inizio: string; durata_minuti: number; data_fine_calc: string;
-  max_partecipanti: number; scatti_per_utente: number; durata_votazione: number;
+  max_partecipanti: number; scatti_per_utente: number; durata_votazione_ore: number;
   stato: EventoStato; album_sbloccato_at: string | null;
   scatti_usati: number; ha_votato: 0|1; is_organiser: 0|1;
 }
