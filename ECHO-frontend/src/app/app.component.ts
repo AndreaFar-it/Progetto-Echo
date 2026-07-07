@@ -1,6 +1,12 @@
-import { Component, OnInit } from '@angular/core';
+import {
+  Component,
+  OnInit
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { IonApp, IonRouterOutlet } from '@ionic/angular/standalone';
+import {
+  IonApp,
+  IonRouterOutlet
+} from '@ionic/angular/standalone';
 import { ComponenteSplash } from './shell/splash-overlay.component';
 import { ApiService } from './services/api.service';
 import { firstValueFrom } from 'rxjs';
@@ -57,7 +63,7 @@ export class AppComponent implements OnInit {
   // Stato per la visibilità del banner di "risveglio" del server
   waking = false;
 
-  constructor(private api: ApiService) {}
+  constructor(private api: ApiService) { }
 
   ngOnInit() {
     // Inizia la procedura di "risveglio" del server all'avvio dell'app

@@ -14,22 +14,17 @@
 @import "@ionic/angular/css/text-transformation.css";
 @import "@ionic/angular/css/flex-utils.css";
 
-/* ═══════════════════════════════════════════════════════════════ */
-/* ANTI-SCROLLBAR (WEB & DESKTOP BROWSER)                      */
-/* ═══════════════════════════════════════════════════════════════ */
-
-/* Rimuove la barra per tutti i browser basati su Chromium/WebKit (Chrome, Edge, Opera) */
-html::-webkit-scrollbar,
-body::-webkit-scrollbar,
-ion-content::-webkit-scrollbar,
-.scroll-y::-webkit-scrollbar {
+/* Rimuove la barra su qualunque elemento scrollabile (Chrome, Edge, Opera) — non solo
+   html/body/ion-content/.scroll-y, altrimenti un contenitore scrollabile nuovo (es. un
+   pannello di dettaglio) resta scoperto e mostra la scrollbar di default del browser. */
+*::-webkit-scrollbar {
   display: none !important;
   width: 0 !important;
   height: 0 !important;
 }
 
-/* Rimuove la barra su Firefox ed elementi radice */
-html, body {
+/* Rimuove la barra su Firefox, su qualunque elemento */
+* {
   scrollbar-width: none !important;
   -ms-overflow-style: none !important;
 }

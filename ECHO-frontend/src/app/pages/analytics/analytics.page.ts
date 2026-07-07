@@ -15,6 +15,9 @@ import jsPDF from 'jspdf';
 
 interface ReportMetric { label: string; percent: number; valueLabel: string; }
 
+// Cadenza del polling mentre l'evento è live (stato non finale).
+const POLLING_MS = 20_000;
+
 @Component({
   selector: 'app-analytics', standalone: true,
   imports: [CommonModule, IonContent, IonRefresher, IonRefresherContent, ComponenteCornicePolaroid, ComponenteEtichettaStato],
@@ -452,7 +455,7 @@ export class PaginaAnalisi implements OnInit, OnDestroy {
       this.data = await firstValueFrom(this.api.getAnalisi(this.id_evento));
       this.deriveState();
       if (this.isLive && !this.pollSub) {
-        this.pollSub = interval(20_000).pipe(
+        this.pollSub = interval(POLLING_MS).pipe(
           switchMap(() => this.api.getAnalisi(this.id_evento).pipe(catchError(() => of(null))))
         ).subscribe(d => { if (d) { this.data = d; this.deriveState(); if (this.isFinal) { this.pollSub?.unsubscribe(); this.isLive = false; } } });
       }

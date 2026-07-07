@@ -40,10 +40,11 @@ non_iniziata → [T1] → in_corso → [T1b prompt estensione, T1c auto-rifiuto]
              → [T2] → sviluppo → [T3] → album_aperto → [T4] → chiusa
 ```
 
-- **Modalità sviluppo (dev mode)** — un evento creato con durata `0h 3min` salta il prompt T1b
-  e completa l'intero ciclo in ~9 minuti (3 min per fase). Utile per i test.
+- **Modalità sviluppo (dev mode)** — un evento creato con durata `0h 3min` e `dev_mode: true`
+  salta il prompt T1b e completa l'intero ciclo in ~9 minuti (3 min per fase). Utile per i test,
+  attivabile per singolo evento in fase di creazione — non esiste più un interruttore globale.
 - I tempi (durata evento, ritardo sviluppo, finestra di voto) sono calcolati lato server in
-  `ECHO-backend/src/config.ts`; con `DEVELOPMENT_MODE=true` collassano tutti a 3 minuti.
+  `ECHO-backend/src/config.ts`.
 
 ---
 
@@ -92,24 +93,14 @@ Dalla **root del repository**:
 # Ambiente di sviluppo locale: emulatore + frontend con live reload.
 # Il frontend punta al backend Render (durate reali, come un utente vero).
 .\build-and-run.ps1 -Mode Dev
-
-# Variante "developer": avvia anche un backend LOCALE con timer a 3 minuti.
-.\build-and-run.ps1 -Mode Dev -Backend Dev
 ```
 
 ### Avvio manuale (equivalente, senza script)
 
 ```powershell
-# Backend (in una finestra)
-cd ECHO-backend
-$env:TZ = "Europe/Rome"           # OBBLIGATORIO: senza, le date slittano di 1-2h
-$env:DEVELOPMENT_MODE = "true"    # opzionale: collassa tutti i timer a 3 minuti
-npm run dev                       # hot-reload su http://localhost:3000
-
-# Frontend (in un'altra finestra)
+# Frontend (punta sempre al backend online, Render)
 cd ECHO-frontend
-npm run ionic:serve:dev           # live reload su http://localhost:8100, backend = localhost:3000
-# (npm run ionic:serve:user punta invece al backend Render)
+npm run ionic:serve               # live reload su http://localhost:8100
 ```
 
 ### Emulatore Android

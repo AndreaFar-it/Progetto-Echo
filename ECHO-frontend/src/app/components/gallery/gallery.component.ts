@@ -27,6 +27,10 @@ import { saveAs } from 'file-saver';
 import { Filesystem, Directory } from '@capacitor/filesystem';
 import { Share } from '@capacitor/share';
 import { FilmBorderComponent, ComponenteMedaglia, MedalTipo } from '../../shared/components';
+import { MS_PER_MINUTO, isoToMs } from '../../core/time.util';
+
+// Cadenza del ticker che rifà il fetch e ricalcola il countdown "vota entro".
+const VOTING_TICKER_MS = 60_000;
 
 /** Filesystem.writeFile() wants raw base64 — strip FileReader's "data:<mime>;base64," prefix. */
 function blobToBase64(blob: Blob): Promise<string> {
@@ -639,7 +643,7 @@ export class ComponenteGalleria implements OnInit, OnDestroy {
     // Ogni minuto: rifà il fetch (nuove foto / voti / transizioni di stato avvengono lato server)
     // e ri-renderizza così il countdown "vota entro" continua a scorrere rispetto a Date.now()
     // tra un fetch e l'altro.
-    this.votingTicker = interval(60_000).subscribe(() => { this.cdr.markForCheck(); this.loadGallery(); });
+    this.votingTicker = interval(VOTING_TICKER_MS).subscribe(() => { this.cdr.markForCheck(); this.loadGallery(); });
   }
 
   ngOnDestroy() { this.votingTicker?.unsubscribe(); }
@@ -656,7 +660,7 @@ export class ComponenteGalleria implements OnInit, OnDestroy {
     if (!this.voteEndAt) return '';
     const remainingMs = this.voteEndAt - Date.now();
     if (remainingMs <= 0) return '';
-    const totalMin = Math.ceil(remainingMs / 60_000);
+    const totalMin = Math.ceil(remainingMs / MS_PER_MINUTO);
     const h = Math.floor(totalMin / 60);
     const m = totalMin % 60;
     return h > 0 ? `${h}h ${m}m` : `${m}m`;
@@ -672,7 +676,7 @@ export class ComponenteGalleria implements OnInit, OnDestroy {
     this.stato = res?.stato ?? '';
     
     // voting_end_at è calcolato lato server...
-    this.voteEndAt = res.voting_end_at ? new Date(res.voting_end_at).getTime() : null;
+    this.voteEndAt = res.voting_end_at ? isoToMs(res.voting_end_at) : null;
     const BADGES: ('oro' | 'argento' | 'bronzo')[] = ['oro', 'argento', 'bronzo'];
     this.ranking = (res.classifica ?? []).slice(0, 3).map((c, i) => ({
       posizione: (i + 1) as 1 | 2 | 3,

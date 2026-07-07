@@ -1,7 +1,7 @@
 /**
  * ECHO — Pagina Autenticazione (Analog Dark)
  * Login + Registrazione. (Il tutorial di primo avvio è una pagina instradata a parte —
- * /onboarding, protetta da guardiaTutorial — non più mostrata da qui.)
+ * /onboarding, protetta da guardOnBoarding — non più mostrata da qui.)
  */
 
 import { Component, OnInit } from '@angular/core';
@@ -368,7 +368,7 @@ export class PaginaAutenticazione implements OnInit {
     private alertCtrl: AlertController,
   ) {}
 
-  /** Impostato da guardiaAutenticazione quando rimbalza a /auth una visita non autenticata/scaduta da un
+  /** Impostato da guardAuth quando rimbalza a /auth una visita non autenticata/scaduta da un
    *  deep link specifico (es. /profilo) — login() sotto rimanda l'utente lì invece di atterrare
    *  sempre su /eventi/miei, così un re-login forzato non perde la pagina che stava
    *  effettivamente cercando di raggiungere. */

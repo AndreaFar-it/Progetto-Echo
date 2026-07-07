@@ -151,23 +151,6 @@ import { ServizioNotifiche } from '../services/notification.service';
       justify-content: center;
       padding: 0 4px;
     }
-    
-    /* Puntino rosso lampeggiante (usato per notifiche/eventi live) */
-    .vote-dot {
-      position: absolute;
-      top: 8px;
-      right: calc(50% - 14px);
-      width: 6px;
-      height: 6px;
-      border-radius: 50%;
-      background: var(--echo-rust);
-      animation: pulse 2s ease-in-out infinite;
-    }
-
-    @keyframes pulse {
-      0%, 100% { opacity: 1; transform: scale(1); }
-      50%       { opacity: .4; transform: scale(.75); }
-    }
   `],
 })
 export class ComponenteShellApp implements OnInit, OnDestroy {

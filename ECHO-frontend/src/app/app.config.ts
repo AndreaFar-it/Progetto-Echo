@@ -1,6 +1,16 @@
-import { ApplicationConfig, isDevMode } from '@angular/core';
-import { provideRouter, withComponentInputBinding, withViewTransitions } from '@angular/router';
-import { provideHttpClient, withInterceptors } from '@angular/common/http';
+import {
+  ApplicationConfig,
+  isDevMode
+} from '@angular/core';
+import {
+  provideRouter,
+  withComponentInputBinding,
+  withViewTransitions
+} from '@angular/router';
+import {
+  provideHttpClient,
+  withInterceptors
+} from '@angular/common/http';
 import { provideIonicAngular } from '@ionic/angular/standalone';
 import { provideServiceWorker } from '@angular/service-worker';
 import { routes } from './app.routes';

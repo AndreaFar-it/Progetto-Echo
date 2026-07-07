@@ -207,8 +207,10 @@ router.get('/miei', (req: reqAuth, res: Response) => {
     [idUtente, idUtente, idUtente, idUtente]
   ).map(e => ({
     ...e,
-    // Calcola quando si sblocca la galleria (24h dopo la fine delle riprese, o 3min in modalità rapida)
-    album_unlock_at: aggiungiMinutiUTC(e.sviluppo_started_at ?? e.data_fine_calc, MINUTI_RITARDO_SVILUPPO),
+    // Valore reale se la galleria si è già sbloccata, altrimenti la stima corrente di quando
+    // succederà (24h dopo la fine delle riprese, o 3min in modalità rapida) — un solo campo,
+    // sempre valorizzato, che diventa "definitivo" non appena il vero sblocco avviene.
+    album_sbloccato_at: e.album_sbloccato_at ?? aggiungiMinutiUTC(e.sviluppo_started_at ?? e.data_fine_calc, MINUTI_RITARDO_SVILUPPO),
     // Vero solo per l'organizzatore mentre attende la sua res al prompt di estensione
     needs_estensione_response: !!(e.is_organiser && e.estensione_req && e.estensione_accettata === null),
     // Vero solo per i partecipanti non-organizzatori dopo che l'organizzatore ha accettato l'estensione

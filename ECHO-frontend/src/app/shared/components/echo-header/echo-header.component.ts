@@ -1,11 +1,7 @@
-/**
- * ECHO — Intestazione con Brand
- *
- * L'intestazione marrone scuro con il logotipo "ECHO" + tagline + decorazione a pennellata
- * teal/ruggine, usata in cima a Eventi e Profilo.
- */
-
-import { Component, Input } from '@angular/core';
+import {
+  Component,
+  Input
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 
 @Component({

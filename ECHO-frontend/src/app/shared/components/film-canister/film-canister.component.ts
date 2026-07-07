@@ -1,13 +1,10 @@
-/**
- * ECHO — Rullino
- *
- * Forma a capsula verticale con il nome dell'evento che corre
- * verticalmente lungo di essa, usata nell'"Archivio Rullini" a scorrimento orizzontale del profilo.
- */
-
-import { Component, Input } from '@angular/core';
+import {
+  Component,
+  Input
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 
+// Crea il "rullino" nella sezione archivio del rullino
 @Component({
   selector: 'app-film-canister',
   standalone: true,

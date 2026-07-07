@@ -1,13 +1,5 @@
-/**
- * ECHO — flag del tutorial di primo avvio
- *
- * Persistito con @capacitor/preferences, che usa in modo trasparente le native
- * UserDefaults/SharedPreferences su dispositivo e ricade su localStorage sul web — così
- * la stessa chiamata funziona ovunque. Pilota l'onboarding una tantum: il tutorial a 3 slide
- * è mostrato solo quando questo flag è assente (primissimo avvio su un nuovo dispositivo), poi
- * mai più (vedi guardiaTutorial in core/guards/guards.ts).
- */
-
+// Memorizziamo piccole informazioni su localStorage, in modo tale da capire se l'utente 
+// ha o meno visto la onBoarding
 import { Preferences } from '@capacitor/preferences';
 
 const KEY = 'hasSeenTutorial';

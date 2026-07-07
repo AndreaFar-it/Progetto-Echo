@@ -2,8 +2,8 @@
  * ECHO — Pagina Landing Pubblica (Analog Dark · layout "Digital Film Roll")
  *
  * Pagina di presentazione pubblica mostrata su WEB/PWA ad ogni visita su '/'
- * (vedi guardiaAutenticazione in core/guards/guards.ts), sia per utenti loggati che non.
- * Il guardiaLanding la esclude dall'app nativa — l'APK Android non la mostra mai.
+ * (vedi guardAuth in core/guards/guards.ts), sia per utenti loggati che non.
+ * Il guardLanding la esclude dall'app nativa — l'APK Android non la mostra mai.
  *
  * Struttura grafica fedele al mockup marketing 1:1:
  *   - Navbar con logo e CTA
@@ -257,7 +257,6 @@ interface PassoProcesso {
     }
 
 
-    <!-- ── Codice morto (rivedere) ── -->
     .hero-actions { display: flex; flex-direction: column; gap: 14px; max-width: 280px; }
     .cta-primary, .cta-secondary {
       padding: 15px;

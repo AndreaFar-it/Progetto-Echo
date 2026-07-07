@@ -18,10 +18,8 @@
                       e fa commit + push (innesca il redeploy su Render).
 
    Dev              : ambiente di sviluppo locale.
-                      Avvia l'emulatore + `ionic serve` (live reload su :8100).
-                      -Backend User (default) → punta al backend Render (durate reali).
-                      -Backend Dev            → avvia anche il backend LOCALE
-                                                (DEVELOPMENT_MODE=true, timer a 3 minuti).
+                      Avvia l'emulatore + `ionic serve` (live reload su :8100),
+                      frontend puntato sempre al backend online (Render).
 
    Run              : deploya il build su un emulatore in esecuzione
                       (assembleDebug + adb install -r + launch). -SkipClean per
@@ -31,14 +29,12 @@
    .\build-and-run.ps1                          # APK debug → echo-debug.apk
    .\build-and-run.ps1 -Publish                 # + aggiorna server e push Render
    .\build-and-run.ps1 -Mode Dev                # dev locale, frontend → backend Render
-   .\build-and-run.ps1 -Mode Dev -Backend Dev   # dev locale, backend locale 3 min
    .\build-and-run.ps1 -Mode Run                # installa sull'emulatore
 =====================================================================================
 #>
 
 param(
   [ValidateSet('Build', 'Dev', 'Run')] [string]$Mode = 'Build',
-  [ValidateSet('User', 'Dev')]         [string]$Backend = 'User',
   [switch]$Publish,
   [switch]$SkipClean
 )
@@ -127,9 +123,9 @@ function Invoke-Build {
   } else { Note 'Deep-clean saltata (-SkipClean).' }
 
   # 4. Build web con l'URL backend di PRODUZIONE (Render).
-  #    ionic:build = "ng build --configuration capacitor" → environment.capacitor.ts
-  #    (apiUrl = https://echo-backend-z9k5.onrender.com). Un "npm run build" semplice
-  #    userebbe localhost:3000 e l'APK non raggiungerebbe il backend dal telefono.
+  #    Un unico environment.ts punta sempre a Render, quindi anche "npm run build"
+  #    semplice andrebbe bene — usiamo comunque "ionic:build" (configurazione capacitor)
+  #    per le impostazioni di build specifiche per l'APK (niente source map, ecc.).
   Step 'Build web (configurazione capacitor / URL Render)...'
   Set-Location $Frontend
   Run 'npm run ionic:build'
@@ -177,25 +173,18 @@ function Invoke-Build {
 }
 
 # ------------------------------------------------------------------------------------
-# MODE: Dev — emulatore + ionic serve (+ backend locale opzionale).
+# MODE: Dev — emulatore + ionic serve, frontend puntato al backend online (Render).
 # ------------------------------------------------------------------------------------
 function Invoke-Dev {
-  if ($Backend -eq 'Dev') {
-    Step 'Avvio backend LOCALE (DEVELOPMENT_MODE=true, timer a 3 minuti)...'
-    Start-Process powershell -ArgumentList '-NoExit', '-Command', `
-      "Set-Location '$BackendDir'; `$env:TZ='Europe/Rome'; `$env:DEVELOPMENT_MODE='true'; npm run dev"
-  }
   Ensure-Emulator
 
-  $serve = if ($Backend -eq 'Dev') { 'ionic:serve:dev' } else { 'ionic:serve:user' }
-  Step "Avvio frontend (npm run $serve) su http://localhost:8100 ..."
+  Step 'Avvio frontend (npm run ionic:serve) su http://localhost:8100 ...'
   Start-Process powershell -ArgumentList '-NoExit', '-Command', `
-    "Set-Location '$Frontend'; npm run $serve"
+    "Set-Location '$Frontend'; npm run ionic:serve"
 
-  Write-Host "`n[ECHO] Servizi avviati (Backend = $Backend)." -ForegroundColor Green
+  Write-Host "`n[ECHO] Servizi avviati." -ForegroundColor Green
   Write-Host '  Browser  : http://localhost:8100'
-  if ($Backend -eq 'Dev') { Write-Host '  Backend  : http://localhost:3000 (locale, 3 min)' }
-  else                    { Write-Host '  Backend  : https://echo-backend-z9k5.onrender.com (online, durate reali)' }
+  Write-Host '  Backend  : https://echo-backend-z9k5.onrender.com (online, durate reali)'
 }
 
 # ------------------------------------------------------------------------------------

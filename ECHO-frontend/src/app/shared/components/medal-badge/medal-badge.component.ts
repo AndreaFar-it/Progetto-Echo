@@ -1,14 +1,12 @@
-/**
- * ECHO — Medaglia (Medal Badge)
- *
- * Medaglione circolare (oro/argento/bronzo) con un glifo a forma di fotocamera.
- */
-
-import { Component, Input } from '@angular/core';
+import {
+  Component,
+  Input
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 
 export type MedalTipo = 'oro' | 'argento' | 'bronzo';
 
+//Costruiamo una medaglia in maniera generale, e ne definiamo i colori per ogni sua forma
 @Component({
   selector: 'app-medal-badge',
   standalone: true,

@@ -267,8 +267,8 @@ export class PaginaProfilo implements OnInit, ViewWillEnter {
   /**
    * Costruisce l'URL completo della foto profilo.
    * foto_profilo_url è un percorso relativo al backend ("/uploads/profili/...") e deve
-   * essere risolto rispetto all'origine API (diversa da quella del frontend su web
-   * e specialmente sull'emulatore Android, che usa 10.0.2.2:3000 come host).
+   * essere risolto rispetto all'origine API (diversa da quella del frontend: l'app nativa
+   * Capacitor gira su un'origine locale, il backend è sempre su Render).
    */
   urlFoto(percorso: string): string {
     return `${environment.apiUrl}${percorso}`;

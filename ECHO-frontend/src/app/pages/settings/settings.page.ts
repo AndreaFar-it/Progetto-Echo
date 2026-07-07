@@ -221,8 +221,8 @@ export class PaginaImpostazioni implements OnInit {
   }
 
   /** foto_profilo_url è un percorso relativo al backend ("/uploads/profili/...") — va
-   *  risolto rispetto all'origine API, non a quella del frontend (differiscono sul web e
-   *  soprattutto sull'emulatore Android, che parla con 10.0.2.2:3000). */
+   *  risolto rispetto all'origine API, non a quella del frontend (l'app nativa Capacitor
+   *  gira su un'origine locale, il backend è sempre su Render). */
   photoUrl(path: string): string {
     return `${environment.apiUrl}${path}`;
   }

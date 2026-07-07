@@ -10,6 +10,10 @@ import { ApiService } from '../../services/api.service';
 import { EventoCard } from '../../models/index';
 import { ComponenteIntestazione, ComponenteEtichettaStato } from '../../shared/components';
 import { firstValueFrom, interval, Subscription } from 'rxjs';
+import { MS_PER_MINUTO, isoToMs } from '../../core/time.util';
+
+// Cadenza del ticker che rifà il fetch e aggiorna i countdown per card.
+const TICKER_MS = 60_000;
 
 @Component({
   selector: 'app-events', standalone: true,
@@ -208,7 +212,7 @@ export class PaginaEventi implements OnInit, OnDestroy, ViewWillEnter {
     // per card (statoCopy) restano live tra un fetch e l'altro. Memorizzato così può essere
     // smontato in ngOnDestroy — lasciarlo attivo farebbe trapelare una subscription (e
     // continuerebbe a innescare change detection) ogni volta che l'utente lascia questa pagina.
-    this.ticker = interval(60_000).subscribe(() => { this.contatore++; this.loadEvents(); });
+    this.ticker = interval(TICKER_MS).subscribe(() => { this.contatore++; this.loadEvents(); });
   }
   ngOnDestroy() { this.ticker?.unsubscribe(); }
   ionViewWillEnter() { this.loadEvents(); }
@@ -286,7 +290,7 @@ export class PaginaEventi implements OnInit, OnDestroy, ViewWillEnter {
   onEventTap(event: EventoCard) {
     switch (event.stato) {
       case 'in_corso':
-        // La fotocamera è solo nativa (vedi guardiaSoloNativo) — sul web non c'è nulla a cui
+        // La fotocamera è solo nativa (vedi guardCamera) — sul web non c'è nulla a cui
         // navigare, quindi spiega semplicemente invece di rimbalzare con un redirect di guardia.
         if (!this.platform.is('hybrid')) {
           this.toast("Per scattare le foto usa l'app ECHO sul tuo telefono", 'dark');
@@ -349,7 +353,7 @@ export class PaginaEventi implements OnInit, OnDestroy, ViewWillEnter {
         ? `L'evento è stato prolungato di ${this.extDurataLabel(e)}. Continua a scattare!`
         : "L'evento è ancora in corso. Goditelo!";
       case 'sviluppo': {
-        const r = this.formatRemaining(e.album_unlock_at);
+        const r = this.formatRemaining(e.album_sbloccato_at);
         return r ? `Le foto sono in fase di sviluppo. Torna tra ${r}` : 'Le foto sono in fase di sviluppo.';
       }
       case 'album_aperto': {
@@ -376,34 +380,34 @@ export class PaginaEventi implements OnInit, OnDestroy, ViewWillEnter {
   private remainingFromMs(targetMs: number): string {
     const diffMs = targetMs - Date.now();
     if (!Number.isFinite(diffMs) || diffMs <= 0) return '';
-    const totalMin = Math.ceil(diffMs / 60_000);
+    const totalMin = Math.ceil(diffMs / MS_PER_MINUTO);
     const h = Math.floor(totalMin / 60);
     const m = totalMin % 60;
     return h > 0 ? `${h}h ${m}m` : `${m}m`;
   }
 
-  /** Tempo rimanente verso un target ISO-naive (usato per le fasi sviluppo/album_aperto). */
+  /** Tempo rimanente verso un target ISO assoluto (usato per le fasi sviluppo/album_aperto). */
   formatRemaining(targetIso: string): string {
-    return this.remainingFromMs(new Date(targetIso).getTime());
+    return this.remainingFromMs(isoToMs(targetIso));
   }
 
   /** Tempo prima che un evento 'non_iniziata' inizi (data_inizio). */
   eventStartsIn(e: EventoCard): string {
-    return this.remainingFromMs(new Date(e.data_inizio).getTime());
+    return this.remainingFromMs(isoToMs(e.data_inizio));
   }
 
   /** Tempo prima che un evento 'in_corso' finisca. Usa data_fine_calc quando esteso (estensione_accettata=1),
    *  altrimenti usa data_inizio + durata_minuti (la fine originale configurata). */
   eventEndsIn(e: EventoCard): string {
     const fineMs = e.estensione_accettata === 1
-      ? new Date(e.data_fine_calc).getTime()
-      : new Date(e.data_inizio).getTime() + e.durata_minuti * TRASFORMA_IN_MINUTI;
+      ? isoToMs(e.data_fine_calc)
+      : isoToMs(e.data_inizio) + e.durata_minuti * MS_PER_MINUTO;
     return this.remainingFromMs(fineMs);
   }
 
   ctaLabel(e: EventoCard): string | null {
     switch (e.stato) {
-      // La fotocamera richiede il layer nativo CameraPreview (vedi guardiaSoloNativo) — la
+      // La fotocamera richiede il layer nativo CameraPreview (vedi guardCamera) — la
       // build web non ha un flusso fotocamera funzionante, quindi non mostrare la CTA lì.
       case 'in_corso':     return (this.platform.is('hybrid') && e.scatti_usati < e.scatti_per_utente) ? 'Scatta una foto' : null;
       case 'album_aperto':
@@ -425,7 +429,7 @@ export class PaginaEventi implements OnInit, OnDestroy, ViewWillEnter {
         return r ? `${label} — termina tra ${r}` : `${label}.`;
       }
       case 'sviluppo': {
-        const r = this.formatRemaining(e.album_unlock_at);
+        const r = this.formatRemaining(e.album_sbloccato_at);
         return r ? `Le foto sono in fase di sviluppo. Torna tra ${r}` : 'Le foto sono in fase di sviluppo.';
       }
       case 'album_aperto': return 'Le votazioni sono aperte.';

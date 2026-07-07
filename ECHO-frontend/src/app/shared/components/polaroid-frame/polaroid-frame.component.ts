@@ -1,13 +1,10 @@
-/**
- * ECHO — Cornice Polaroid
- *
- * Bordo bianco (più spesso in basso, come una stampa a sviluppo istantaneo) + ombra +
- * leggera rotazione. Avvolge l'immagine dell'avatar del profilo.
- */
-
-import { Component, Input } from '@angular/core';
+import {
+  Component,
+  Input
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 
+// Da un template per le foto che vediamo nella classifica in stile polaroid
 @Component({
   selector: 'app-polaroid-frame',
   standalone: true,

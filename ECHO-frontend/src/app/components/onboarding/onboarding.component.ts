@@ -3,7 +3,7 @@
  * 3 slide illustrate mostrate solo al PRIMISSIMO avvio su un nuovo dispositivo.
  * Slide: "Il Momento è Tutto" · "La Magia dell'Attesa" · "Sblocca, Esplora e Premia"
  *
- * Raggiunto via il redirect dalla radice (/ → /onboarding) e protetto da guardiaTutorial: se il
+ * Raggiunto via il redirect dalla radice (/ → /onboarding) e protetto da guardOnBoarding: se il
  * flag persistente hasSeenTutorial è già impostato, la guardia salta questo e va alla
  * landing page. Al termine dell'ultima slide (o Salta), il flag viene scritto via
  * @capacitor/preferences e l'utente è mandato alla landing page pubblica.

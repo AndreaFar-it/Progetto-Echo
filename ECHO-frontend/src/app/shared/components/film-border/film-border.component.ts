@@ -1,16 +1,7 @@
-/**
- * ECHO — Bordo Pellicola
- *
- * Avvolge contenuto fotografico con binari laterali
- * perforati simili alla pellicola 35mm.
- * Usato per le miniature della griglia galleria, 
- * la cornice di dettaglio galleria e le miniature 
- * della classifica.
- */
-
 import { Component, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
+// Crea il bordo su cui applicare le foto nella galleria
 @Component({
   selector: 'app-film-border',
   standalone: true,

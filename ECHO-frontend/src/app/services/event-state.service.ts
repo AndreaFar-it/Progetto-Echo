@@ -3,8 +3,13 @@ import { BehaviorSubject, Subscription, interval, switchMap, catchError, of } fr
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../environments/environment';
 import { EventoCard, StatoEventoAttivo } from '../models/index';
+import { MS_PER_MINUTO, isoToMs } from '../core/time.util';
 
 export type { EventoCard, StatoEventoAttivo };
+
+// Cadenza di aggiornamento: rifetch periodico degli eventi e tick per il countdown in UI.
+const POLLING_MS = 30_000;
+const TICK_MS = 1000;
 
 @Injectable({ providedIn: 'root' })
 export class ServizioStatoEvento implements OnDestroy {
@@ -24,8 +29,8 @@ export class ServizioStatoEvento implements OnDestroy {
 
   constructor(private http: HttpClient) {
     this.subs.add(this.fetch().subscribe());
-    this.subs.add(interval(30_000).pipe(switchMap(() => this.fetch())).subscribe());
-    this.ticker = interval(1000).subscribe(() => {
+    this.subs.add(interval(POLLING_MS).pipe(switchMap(() => this.fetch())).subscribe());
+    this.ticker = interval(TICK_MS).subscribe(() => {
       const prev = this._state$.getValue();
       this.push(this._events$.getValue());
       if (prev.secondsToNext > 0 && this._state$.getValue().secondsToNext <= 0) this.refresh();
@@ -70,16 +75,17 @@ export class ServizioStatoEvento implements OnDestroy {
       // "Attivamente in corso" termina a data_inizio + durata_minuti — il margine backend di
       // +120min (data_fine_calc) è un buffer di pianificazione interno e non deve trapelare in
       // ciò che viene comunicato all'utente sulla finestra di acquisizione live.
-      const activeEnd = new Date(inCorso.data_inizio).getTime() + inCorso.durata_minuti * TRASFORMA_IN_MINUTI;
+      const activeEnd = isoToMs(inCorso.data_inizio) + inCorso.durata_minuti * MS_PER_MINUTO;
       return { evento: inCorso, galleryEvento, showCamera: rem > 0, showGallery: !!galleryEvento, scattiRimanenti: rem,
         secondsToNext: Math.max(0, Math.floor((activeEnd - now) / 1000)),
         countdownLabel: 'Fine acquisizione' };
     }
     if (sviluppo) {
-      // album_unlock_at è calcolato lato server da sviluppo_started_at (il momento reale in
+      // album_sbloccato_at è calcolato lato server da sviluppo_started_at (il momento reale in
       // cui è iniziato lo sviluppo, sia puntuale sia via trigger di esaurimento anticipato) più
-      // il ritardo di sviluppo attivo del server — riflette automaticamente DEVELOPMENT_MODE.
-      const devEnd = new Date(sviluppo.album_unlock_at).getTime();
+      // il ritardo di sviluppo attivo del server — riflette automaticamente il dev_mode dell'evento.
+      // Diventa il valore reale non appena la galleria si sblocca davvero.
+      const devEnd = isoToMs(sviluppo.album_sbloccato_at);
       return { evento: sviluppo, galleryEvento, showCamera: false, showGallery: !!galleryEvento, scattiRimanenti: 0,
         secondsToNext: Math.max(0, Math.floor((devEnd - now) / 1000)), countdownLabel: 'Sblocco galleria' };
     }
@@ -88,7 +94,7 @@ export class ServizioStatoEvento implements OnDestroy {
       // attiva del server — normalmente la durata_votazione_ore reale dell'organizzatore, forzata
       // a 3min in dev_mode. Ricade su "ora" solo nella breve finestra prima che
       // album_sbloccato_at/voting_end_at siano popolati.
-      const voteEnd = albumAperto.voting_end_at ? new Date(albumAperto.voting_end_at).getTime() : now;
+      const voteEnd = albumAperto.voting_end_at ? isoToMs(albumAperto.voting_end_at) : now;
       return { evento: albumAperto, galleryEvento, showCamera: false, showGallery: true, scattiRimanenti: 0,
         secondsToNext: Math.max(0, Math.floor((voteEnd - now) / 1000)), countdownLabel: 'Fine votazione' };
     }

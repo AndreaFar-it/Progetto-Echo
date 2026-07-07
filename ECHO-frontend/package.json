@@ -9,8 +9,6 @@
     "test": "ng test",
     "ionic:build": "ng build --configuration capacitor",
     "ionic:serve": "ng serve --host=localhost --port=8100",
-    "ionic:serve:user": "ng serve --host=localhost --port=8100",
-    "ionic:serve:dev": "ng serve --configuration devlocal --host=localhost --port=8100",
     "start": "serve -s www -l $PORT",
     "postinstall": "patch-package"
   },

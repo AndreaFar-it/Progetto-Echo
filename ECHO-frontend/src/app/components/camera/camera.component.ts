@@ -35,6 +35,10 @@ import { Haptics, ImpactStyle } from '@capacitor/haptics';
 import { Subscription, interval, firstValueFrom } from 'rxjs';
 import { ServizioFotocamera, ShotState, CameraFacing, FlashMode } from '../../services/camera.service';
 import { ApiService } from '../../services/api.service';
+import { MS_PER_MINUTO, isoToMs } from '../../core/time.util';
+
+// Cadenza del ticker che tiene vivo il conto alla rovescia di sviluppo.
+const DEVELOPMENT_TICKER_MS = 60_000;
 
 @Component({
   selector: 'app-camera',
@@ -430,23 +434,24 @@ export class ComponenteFotocamera implements OnInit, OnDestroy {
   get flashLabel(): string { return this.flashMode.toUpperCase(); }
 
   /**
-   * Obiettivo di sblocco reale per QUESTO evento (album_unlock_at da /eventi/miei) — calcolato
+   * Obiettivo di sblocco reale per QUESTO evento (album_sbloccato_at da /eventi/miei) — calcolato
    * lato server da sviluppo_started_at (o, prima che sia impostato, data_fine_calc) più
-   * il ritardo di sviluppo attivo, così riflette automaticamente DEVELOPMENT_MODE e ogni
-   * trigger anticipato. null finché non è caricato, nel qual caso developmentWaitLabel ricade
-   * sul valore generico di default "24 ore".
+   * il ritardo di sviluppo attivo, così riflette automaticamente il dev_mode dell'evento e ogni
+   * trigger anticipato — e diventa il valore reale non appena la galleria si sblocca davvero.
+   * null finché non è caricato, nel qual caso developmentWaitLabel ricade sul valore generico
+   * di default "24 ore".
    */
   private developmentUnlockAt: string | null = null;
   private developmentTicker?: Subscription;
 
   /**
-   * Conto alla rovescia live verso album_unlock_at, ricalcolato rispetto a Date.now() a ogni
+   * Conto alla rovescia live verso album_sbloccato_at, ricalcolato rispetto a Date.now() a ogni
    * lettura — mai una durata statica/in cache. developmentTicker forza un re-render ogni minuto
    * così il valore mostrato continua a scendere mentre la schermata di blocco resta aperta.
    */
   get developmentWaitLabel(): string {
     if (!this.developmentUnlockAt) return '24 ore';
-    const remainingMinutes = Math.max(0, Math.round((new Date(this.developmentUnlockAt).getTime() - Date.now()) / 60_000));
+    const remainingMinutes = Math.max(0, Math.round((isoToMs(this.developmentUnlockAt) - Date.now()) / MS_PER_MINUTO));
     return this.formatDelay(remainingMinutes);
   }
 
@@ -477,14 +482,14 @@ export class ComponenteFotocamera implements OnInit, OnDestroy {
     this.loadDevelopmentTarget();
     // Re-render ogni minuto così il conto alla rovescia continua a scorrere rispetto a Date.now()
     // mentre la schermata di blocco è visibile, invece di mostrare un valore congelato al caricamento.
-    this.developmentTicker = interval(60_000).subscribe(() => this.cdr.markForCheck());
+    this.developmentTicker = interval(DEVELOPMENT_TICKER_MS).subscribe(() => this.cdr.markForCheck());
   }
 
   private async loadDevelopmentTarget(): Promise<void> {
     try {
       const res = await firstValueFrom(this.api.getMieiEventi());
       const ev = res.events.find(e => e.id_evento === this.id_evento);
-      if (ev?.album_unlock_at) this.developmentUnlockAt = ev.album_unlock_at;
+      if (ev?.album_sbloccato_at) this.developmentUnlockAt = ev.album_sbloccato_at;
       this.cdr.markForCheck();
     } catch { /* mantieni il fallback generico "24 ore" */ }
   }

@@ -243,7 +243,3 @@ ion-toolbar {
 ion-tab-bar {
   border-top: none;
 }
-
-/* Barra di scorrimento */
-::-webkit-scrollbar { width: 4px; background: var(--echo-bg); }
-::-webkit-scrollbar-thumb { background: var(--echo-ink-soft); border-radius: 2px; }
