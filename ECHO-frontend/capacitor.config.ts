@@ -11,6 +11,7 @@ const config: CapacitorConfig = {
     androidScheme: 'http',
   },
   plugins: {
+    CapacitorHttp: { enabled: true },
     Camera: { androidPermissions: ['android.permission.CAMERA'] },
     PushNotifications: { presentationOptions: ['badge','sound','alert'] },
     SplashScreen: {

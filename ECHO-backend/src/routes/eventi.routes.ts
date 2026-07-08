@@ -204,7 +204,7 @@ router.get('/miei', (req: reqAuth, res: Response) => {
     INNER JOIN PARTECIPA p ON p.id_evento = e.id_evento AND p.id_utente = ?
     LEFT JOIN CODICE_EVENTO c ON c.id_evento = e.id_evento
     ORDER BY e.data_inizio DESC`,
-    [idUtente, idUtente, idUtente, idUtente]
+    [idUtente, idUtente]
   ).map(e => ({
     ...e,
     // Valore reale se la galleria si è già sbloccata, altrimenti la stima corrente di quando
