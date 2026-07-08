@@ -1,4 +1,9 @@
-import { Component, EventEmitter, OnInit, Output } from '@angular/core';
+import {
+  Component,
+  EventEmitter,
+  OnInit,
+  Output
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 
 @Component({
@@ -86,15 +91,18 @@ import { CommonModule } from '@angular/common';
   `],
 })
 export class ComponenteSplash implements OnInit {
-  /** Emesso una volta che l'intera sequenza (dissolvenza in → pausa → dissolvenza out) è finita,
-   *  così il genitore può rimuovere questo componente dal DOM (es. via *ngIf). */
+  // Questo è un canale di comunicazione verso il genitore.
   @Output() done = new EventEmitter<void>();
 
   shown = false;
 
   ngOnInit(): void {
+    // Aspetta il millisecondo esatto in cui il browser sta per ridisegnare la pagina,
+    // e solo allora imposta shown = true
     requestAnimationFrame(() => { this.shown = true; });
+    // 1500 millisecondi di visibilità (durata splash screen)
     setTimeout(() => { this.shown = false; }, 1500);
+    // 480 ms dissolvenza
     setTimeout(() => { this.done.emit(); }, 1500 + 480);
   }
 }

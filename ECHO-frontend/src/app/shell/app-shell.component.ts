@@ -1,10 +1,26 @@
-import { Component, OnInit, OnDestroy, ChangeDetectionStrategy, ChangeDetectorRef, effect } from '@angular/core';
-import { Router, NavigationEnd } from '@angular/router';
+import {
+  Component,
+  OnInit,
+  OnDestroy,
+  ChangeDetectionStrategy,
+  ChangeDetectorRef,
+  effect
+} from '@angular/core';
+import {
+  Router,
+  NavigationEnd
+} from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { IonRouterOutlet } from '@ionic/angular/standalone';
 import { Platform } from '@ionic/angular/common';
-import { Subscription, filter } from 'rxjs';
-import { ServizioStatoEvento, StatoEventoAttivo } from '../services/event-state.service';
+import {
+  Subscription,
+  filter
+} from 'rxjs';
+import {
+  ServizioStatoEvento,
+  StatoEventoAttivo
+} from '../services/event-state.service';
 import { ServizioNotifiche } from '../services/notification.service';
 
 @Component({
@@ -31,7 +47,7 @@ import { ServizioNotifiche } from '../services/notification.service';
         </button>
 
         <button class="tab"
-          *ngIf="isNativo"
+          *ngIf="isHybrid"
           [class.tab-active]="tabAttiva==='camera'"
           [class.tab-on]="st?.showCamera"
           [disabled]="!st?.showCamera"
@@ -156,12 +172,12 @@ import { ServizioNotifiche } from '../services/notification.service';
 export class ComponenteShellApp implements OnInit, OnDestroy {
   // Stato corrente dell'evento (es. se c'è un evento attivo a cui si partecipa)
   st: StatoEventoAttivo | null = null;
-  
+
   // Tiene traccia della tab attualmente selezionata per evidenziarla
   tabAttiva: 'eventi' | 'camera' | 'partecipa' | 'profilo' = 'eventi';
-  
+
   /** La fotocamera si basa sul layer nativo CameraPreview — nascosta del tutto su web/desktop. */
-  readonly isNativo: boolean;
+  readonly isHybrid: boolean;
   private subs = new Subscription();
 
   constructor(
@@ -172,10 +188,11 @@ export class ComponenteShellApp implements OnInit, OnDestroy {
     // Iniettato solo per avviarlo non appena lo shell autenticato viene montato — non ha
     // un'API pubblica che lo shell debba chiamare, ascolta semplicemente ServizioStatoEvento da sé.
     _notifications: ServizioNotifiche,
-  ) {
+  ) 
+  {
     // Verifica se l'app gira su dispositivo mobile (iOS/Android) tramite Capacitor/Cordova
-    this.isNativo = platform.is('hybrid');
-    
+    this.isHybrid = platform.is('hybrid');
+
     // Aggiorna la vista automaticamente quando cambia il segnale dello stato dell'evento
     effect(() => {
       this.st = this.svc.segnaleStato();
@@ -197,14 +214,14 @@ export class ComponenteShellApp implements OnInit, OnDestroy {
     this.syncTab(this.router.url);
   }
 
-  ngOnDestroy() { 
+  ngOnDestroy() {
     // Evita memory leaks scollegando le iscrizioni (subscriptions)
-    this.subs.unsubscribe(); 
+    this.subs.unsubscribe();
   }
 
   // Navigazione generica
-  go(path: string) { 
-    this.router.navigateByUrl(path); 
+  go(path: string) {
+    this.router.navigateByUrl(path);
   }
 
   // Navigazione specifica per la fotocamera con passaggio di parametri (stato)
@@ -212,22 +229,22 @@ export class ComponenteShellApp implements OnInit, OnDestroy {
     const ev = this.st?.evento;
     // Blocca l'accesso se non c'è un evento o se la camera non deve essere mostrata
     if (!ev || !this.st?.showCamera) return;
-    
+
     // Passa i dati dell'evento alla rotta della camera senza metterli nell'URL
     this.router.navigate(['/camera', ev.id_evento], {
       state: {
-        scatti_usati:      ev.scatti_usati,
+        scatti_usati: ev.scatti_usati,
         scatti_per_utente: ev.scatti_per_utente,
-        eventoNome:        ev.nome,
+        eventoNome: ev.nome,
       },
     });
   }
 
   // Determina quale tab evidenziare in base all'URL corrente
   private syncTab(url: string) {
-    if      (url.startsWith('/camera'))           this.tabAttiva = 'camera';
+    if (url.startsWith('/camera')) this.tabAttiva = 'camera';
     else if (url.startsWith('/eventi/partecipa')) this.tabAttiva = 'partecipa';
-    else if (url.startsWith('/profilo'))          this.tabAttiva = 'profilo';
-    else                                          this.tabAttiva = 'eventi';
+    else if (url.startsWith('/profilo') || url.startsWith('/impostazioni')) this.tabAttiva = 'profilo';
+    else this.tabAttiva = 'eventi';
   }
 }

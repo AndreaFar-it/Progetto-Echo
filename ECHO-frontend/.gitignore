@@ -71,3 +71,7 @@ Thumbs.db
 
 # Firebase — secret, per-developer/per-environment, never commit
 /android/app/google-services.json
+
+# Filtro vintage/correzione EXIF — non più collegati a camera.service.ts, tenuti da parte
+# per una futura reintegrazione (non presentati all'esame).
+/src/app/utils/

@@ -122,10 +122,15 @@ const DEVELOPMENT_TICKER_MS = 60_000;
             (click)="previewFailed && retryPreview()"
           >{{ previewFailed ? 'Fotocamera non disponibile — tocca per riprovare' : 'Avvio fotocamera…' }}</p>
 
-          <!-- Suggerimento/indicatore zoom — i gesti pinch sono gestiti in JS per uno zoom limitato -->
-          <div class="zoom-arc" *ngIf="previewReady">
-            <span *ngIf="currentZoom <= 1.05">Pizzica per fare zoom</span>
-            <span *ngIf="currentZoom > 1.05">{{ formatZoom(currentZoom) }}×</span>
+          <!-- Zoom a bottoni — livelli fissi riportati dall'obiettivo attuale (es. 0.5x/1x/2x/3x) -->
+          <div class="zoom-row" *ngIf="previewReady && zoomLevels.length > 1">
+            <button
+              *ngFor="let level of zoomLevels"
+              class="zoom-btn"
+              type="button"
+              [class.active]="level === currentZoom"
+              (click)="setZoomLevel(level)"
+            >{{ formatZoomLabel(level) }}</button>
           </div>
 
           <!-- Riga di controlli funzionali: flash (cicla le modalità supportate) + cambio fotocamera -->
@@ -349,11 +354,14 @@ const DEVELOPMENT_TICKER_MS = 60_000;
       &.failed { color: #fff; cursor: pointer; text-decoration: underline; }
     }
 
-    /* Suggerimento zoom — il pinch-to-zoom è collegato nativamente (enableZoom), nessun controllo a schermo */
-    .zoom-arc {
-      display: flex; padding: 4px 0;
-      font-family: var(--echo-font-mono); font-size: 10px; letter-spacing: 0.12em;
-      text-transform: uppercase; color: rgba(255,255,255,0.55);
+    /* Zoom a bottoni — livelli fissi riportati dall'obiettivo attuale */
+    .zoom-row { display: flex; gap: 8px; padding: 4px 0; pointer-events: auto; }
+    .zoom-btn {
+      font-family: var(--echo-font-mono); font-size: 11px; font-weight: 700;
+      color: rgba(255,255,255,0.75); background: rgba(0,0,0,0.35);
+      border: 1px solid rgba(255,255,255,0.3); border-radius: var(--echo-radius-pill);
+      padding: 4px 10px; cursor: pointer; -webkit-tap-highlight-color: transparent;
+      &.active { color: #1E1209; background: #fff; border-color: #fff; }
     }
 
     /* Riga di controlli funzionali — flash + cambio fotocamera */
@@ -422,12 +430,12 @@ export class ComponenteFotocamera implements OnInit, OnDestroy {
   previewReady = false;
   previewFailed = false;
 
-  /** Controlli fotocamera (cambio obiettivo + flash). Lo zoom è gestito via gesti pinch JS. */
+  /** Controlli fotocamera (cambio obiettivo + flash + zoom a bottoni). */
   facing: CameraFacing = 'rear';
   flashMode: FlashMode = 'off';
   private supportedFlash: FlashMode[] = [];
   /** Ordine in cui il pulsante flash cicla, intersecato con ciò che l'obiettivo supporta. */
-  private readonly flashCycle: FlashMode[] = ['off', 'auto', 'on', 'torch'];
+  private readonly flashCycle: FlashMode[] = ['off', 'auto', 'on'];
 
   /** Il controllo flash è offerto solo quando l'obiettivo attuale riporta più del solo 'off'. */
   get flashAvailable(): boolean { return this.supportedFlash.filter(m => m !== 'off').length > 0; }
@@ -455,8 +463,9 @@ export class ComponenteFotocamera implements OnInit, OnDestroy {
     return this.formatDelay(remainingMinutes);
   }
 
-  /** Solo cosmetico. Lo zoom è ora gestito dal pinch NATIVO del plugin (enableZoom:true);
-   *  non c'è un driver di zoom JS. Tenuto a 1.0 così il suggerimento del mirino mostra "pinch to zoom". */
+  /** Livelli di zoom preimpostati per l'obiettivo attuale (es. [0.5, 1, 2, 3]), da getZoomButtonValues().
+   *  Vuoto finché non caricato, o se il plugin non li espone (es. sul web in sviluppo). */
+  zoomLevels: number[] = [];
   currentZoom = 1.0;
 
   private sub?: Subscription;
@@ -581,11 +590,13 @@ export class ComponenteFotocamera implements OnInit, OnDestroy {
     this.cdr.markForCheck();
   }
 
-  /** Sincronizza la UI flash/obiettivo con la sessione fotocamera live — chiamato dopo (ri)avvio e
-   *  dopo un cambio obiettivo, poiché le modalità flash supportate differiscono per obiettivo. */
+  /** Sincronizza la UI flash/obiettivo/zoom con la sessione fotocamera live — chiamato dopo (ri)avvio e
+   *  dopo un cambio obiettivo, poiché le modalità flash e i livelli di zoom differiscono per obiettivo. */
   private async refreshCameraControls(): Promise<void> {
     this.facing = this.cameraService.currentFacing;
     this.supportedFlash = await this.cameraService.getSupportedFlashModes();
+    this.zoomLevels = await this.cameraService.getZoomButtonValues();
+    this.currentZoom = this.zoomLevels.includes(1) ? 1 : (this.zoomLevels[0] ?? 1);
 
     // CRITICO: chiama il setFlashMode nativo SOLO quando questo obiettivo ha EFFETTIVAMENTE il flash.
     // Su una fotocamera senza flash (es. l'emulatore), il setFlashMode del plugin fa
@@ -614,19 +625,19 @@ export class ComponenteFotocamera implements OnInit, OnDestroy {
   }
 
   async switchCamera(): Promise<void> {
-    this.currentZoom = 1.0; // reimposta il suggerimento cosmetico al cambio obiettivo
     this.facing = await this.cameraService.flipCamera();
-    await this.refreshCameraControls();
+    await this.refreshCameraControls(); // ricarica anche i livelli di zoom del nuovo obiettivo
   }
 
- formatZoom(z: number): string { return z.toFixed(1); }
+  formatZoomLabel(level: number): string {
+    return (Number.isInteger(level) ? level.toFixed(0) : level.toFixed(1)) + '×';
+  }
 
-  // ── Zoom ──────────────────────────────────────────────────────────────────
-  // Il pinch-to-zoom è gestito interamente dal rilevatore di gesti NATIVO del plugin
-  // CameraPreview (enableZoom:true nelle opzioni di start). Qui NON ci sono handler di
-  // tocco JS, intenzionalmente: questa versione del plugin non espone un metodo zoom()
-  // programmatico, e qualsiasi gestione del tocco JS (preventDefault) non farebbe che
-  // assorbire i gesti che servono al layer nativo. Vedi camera.service.ts per il razionale di enableZoom.
+  async setZoomLevel(level: number): Promise<void> {
+    if (level === this.currentZoom) return;
+    await this.cameraService.setZoom(level);
+    this.currentZoom = level;
+  }
 
   retryPreview(): void {
     this.startCameraPreview();

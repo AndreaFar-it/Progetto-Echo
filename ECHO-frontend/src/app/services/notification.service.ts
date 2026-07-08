@@ -1,20 +1,3 @@
-/**
- * ECHO — Servizio Notifiche Push
- *
- * Registra questo dispositivo su Firebase Cloud Messaging e invia il token risultante al
- * backend (ApiService.registraPushToken()), che lo memorizza su UTENTE.push_token e lo usa
- * (inviaPushNotifica() in eventLifecycle.service.ts) per consegnare notifiche reali per le
- * transizioni del ciclo di vita (evento iniziato, foto in sviluppo, album sbloccato, votazioni
- * chiuse) — anche mentre l'app è completamente chiusa, poiché la consegna avviene a livello
- * OS/FCM, non tramite polling dell'app. Solo nativo; sul web la UI live riflette già i cambi
- * di stato direttamente, nessun push necessario.
- *
- * Richiede un progetto Firebase configurato: google-services.json in android/app/ (client) e
- * la variabile d'ambiente FIREBASE_SERVICE_ACCOUNT_JSON sul backend (invio). Senza, la
- * registrazione gira comunque ma il token che il backend riceve non corrisponderà a nulla
- * che FCM possa raggiungere; no-op innocuo finché Firebase non è configurato.
- */
-
 import { Injectable } from '@angular/core';
 import { Platform } from '@ionic/angular/common';
 import { PushNotifications } from '@capacitor/push-notifications';
@@ -22,16 +5,21 @@ import { ApiService } from './api.service';
 
 @Injectable({ providedIn: 'root' })
 export class ServizioNotifiche {
-  private readonly isNativo: boolean;
+  private readonly isHybrid: boolean;
 
+  // Controlla se il dispositivo è mobile e nel caso lo registra al servizio PushNotification
   constructor(private api: ApiService, platform: Platform) {
-    this.isNativo = platform.is('hybrid');
-    if (this.isNativo) this.register();
+    this.isHybrid = platform.is('hybrid');
+    if (this.isHybrid) this.register();
   }
 
+  // Metodo per registrare i dispositivi alla ricezione di notifiche
   private async register(): Promise<void> {
+
+    // Aspetta che l'utente accetti l'invio delle notifiche
+    // Se rifiutata, non inviamo notifiche e può cambiare l'opzione nelle impostazioni successivamente
     const perm = await PushNotifications.requestPermissions().catch(() => null);
-    if (perm?.receive !== 'granted') return; // utente ha rifiutato — può concedere dopo nelle impostazioni OS
+    if (perm?.receive !== 'granted') return;
 
     PushNotifications.addListener('registration', token => {
       this.api.registraPushToken(token.value).subscribe({
@@ -41,11 +29,7 @@ export class ServizioNotifiche {
     PushNotifications.addListener('registrationError', errore => {
       console.warn('[ServizioNotifiche] FCM registration error', errore);
     });
-    // Consegna in foreground: la UI live (badge delle tab, countdown) riflette già lo stesso
-    // cambio di stato, quindi logga solo per visibilità invece di duplicarlo come toast.
-    PushNotifications.addListener('pushNotificationReceived', n => {
-      console.log('[ServizioNotifiche] push received in foreground', n);
-    });
+    PushNotifications.addListener('pushNotificationReceived', n => { /** Successo */ });
 
     await PushNotifications.register();
   }
