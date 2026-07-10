@@ -26,7 +26,8 @@ import {
   MINUTI_ESTENSIONE,
   MINUTI_MODALITA_DEV,
   NOTIFICA_ESTENSIONE,
-  NOTIFICA_ESTENSIONE_DEV
+  NOTIFICA_ESTENSIONE_DEV,
+  calcolaMinutiSviluppo
 } from '../config';
 import { inviaPushNotifica } from '../services/eventLifecycle.service';
 
@@ -214,16 +215,14 @@ router.get('/miei', (req: reqAuth, res: Response) => {
     ...e,
     // Valore reale se la galleria si è già sbloccata, altrimenti la stima corrente di quando
     // succederà (24h dopo la fine delle riprese, o 3min in modalità rapida) — un solo campo,
-    // sempre valorizzato, che diventa "definitivo" non appena il vero sblocco avviene.
-    album_sbloccato_at: e.dev_mode == 1 
-  ? aggiungiMinutiUTC(e.sviluppo_started_at ?? e.data_fine_calc, MINUTI_SVILUPPO_DEV)
-  : (e.album_sbloccato_at ?? aggiungiMinutiUTC(e.sviluppo_started_at ?? e.data_fine_calc, MINUTI_RITARDO_SVILUPPO)),
+    // sempre valorizzato, che diventa "definitivo" non ap  pena il vero sblocco avviene.
+    album_sbloccato_at: aggiungiMinutiUTC(e.sviluppo_started_at ?? e.data_fine_calc ,calcolaMinutiSviluppo(e.dev_mode === 1)),
     // Vero solo per l'organizzatore mentre attende la sua res al prompt di estensione
     needs_estensione_response: !!(e.is_organiser && e.estensione_richiesta && e.estensione_accettata === null),
     // Vero solo per i partecipanti non-organizzatori dopo che l'organizzatore ha accettato l'estensione
     needs_permanenza_response: !!(!e.is_organiser && e.estensione_accettata === 1 && e.rimane_esteso === null),
     // Scadenza della finestra di votazione
-    voting_end_at: e.album_sbloccato_at ? aggiungiMinutiUTC(e.album_sbloccato_at, calcolaMinutiVotazione(e.durata_votazione_ore)) : null,
+    voting_end_at: e.album_sbloccato_at ? aggiungiMinutiUTC(e.album_sbloccato_at, calcolaMinutiVotazione(e.durata_votazione_ore, e.dev_mode === 1)) : null,
   }));
 
   return res.json({ events: eventi });
