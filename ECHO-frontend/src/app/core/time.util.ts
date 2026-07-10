@@ -5,3 +5,8 @@ export const MS_PER_MINUTO = 60_000;
 export function isoToMs(iso: string): number {
   return new Date(iso).getTime();
 }
+
+// Converte un valore in una stringa ISO UTC assoluta e univoca..
+export function localDatetimeToIsoUtc(localDatetime: string): string {
+  return new Date(localDatetime).toISOString();
+}

@@ -1,47 +1,58 @@
-/**
- * ECHO — Componente Galleria (Analog Dark)
- *
- * Galleria collettiva, accessibile solo dopo le 24h di sviluppo (spec §3.4.1).
- *
- * REGOLE UX CRITICHE (spec §3.4.2):
- *   - Griglia di tutte le foto dell'evento, ordinate per timestamp
- *   - Tap → modale di dettaglio a schermo intero: foto + nome/avatar dell'autore
- *   - Pulsante voto: anello dorato, DISABILITATO IMMEDIATAMENTE al click (prima della risposta server)
- *     per imporre il peso psicologico del meccanismo di scarsità "1 voto per evento".
- *   - Una volta che ha_votato = true in questa sessione, il pulsante è bloccato in modo permanente —
- *     anche in caso di errore — per prevenire race condition da doppio tap.
- *   - I punteggi sono nascosti finché ha_votato = false (previene il voto strategico).
- */
-
-import { Component, OnInit, OnDestroy, Input, ChangeDetectorRef } from '@angular/core';
+import {
+  Component,
+  OnInit,
+  OnDestroy,
+  Input,
+  ChangeDetectorRef
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
-import { IonContent, IonRefresher, IonRefresherContent, ToastController } from '@ionic/angular/standalone';
+import {
+  IonContent,
+  IonRefresher,
+  IonRefresherContent,
+  ToastController
+} from '@ionic/angular/standalone';
 import type { RefresherCustomEvent } from '@ionic/angular/standalone';
 import { Platform } from '@ionic/angular/common';
 import { ApiService } from '../../services/api.service';
 import { environment } from '../../../environments/environment';
-import { firstValueFrom, Subscription, interval } from 'rxjs';
+import {
+  firstValueFrom,
+  Subscription,
+  interval
+} from 'rxjs';
 import JSZip from 'jszip';
 import { saveAs } from 'file-saver';
-import { Filesystem, Directory } from '@capacitor/filesystem';
+import {
+  Filesystem,
+  Directory
+} from '@capacitor/filesystem';
 import { Share } from '@capacitor/share';
-import { FilmBorderComponent, ComponenteMedaglia, MedalTipo } from '../../shared/components';
-import { MS_PER_MINUTO, isoToMs } from '../../core/time.util';
+import {
+  FilmBorderComponent,
+  ComponenteMedaglia,
+  MedalTipo
+} from '../../shared/components';
+import {
+  MS_PER_MINUTO,
+  isoToMs
+} from '../../core/time.util';
 
-// Cadenza del ticker che rifà il fetch e ricalcola il countdown "vota entro".
 const VOTING_TICKER_MS = 60_000;
 
-/** Filesystem.writeFile() wants raw base64 — strip FileReader's "data:<mime>;base64," prefix. */
+// Funzione di utilità asincrona per convertire un oggetto Blob in una stringa codificata in Base64.
 function blobToBase64(blob: Blob): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
+    // Callback scatenata quando la lettura viene completata: estrae il puro Base64 rimuovendo il prefisso del mime type.
     reader.onloadend = () => resolve((reader.result as string).split(',')[1] ?? '');
     reader.onerror = reject;
-    reader.readAsDataURL(blob);
+    reader.readAsDataURL(blob); //da blob a base64
   });
 }
 
+// Interfaccia che definisce i dati per una foto.
 interface FotoGalleria {
   id_foto: string;
   url_originale: string;
@@ -55,10 +66,16 @@ interface FotoGalleria {
   user_has_voted_this: boolean;
 }
 
-interface PodiumEntry {
-  posizione: 1 | 2 | 3; nome: string; cognome: string;
-  foto_profilo_url: string | null; id_foto: string; url_originale: string;
-  punteggio_voti: number; badge: 'oro' | 'argento' | 'bronzo';
+// Interfaccia che definisce la struttura della classifica.
+interface strutturaClassifica {
+  posizione: 1 | 2 | 3;
+  nome: string;
+  cognome: string;
+  foto_profilo_url: string | null;
+  id_foto: string;
+  url_originale: string;
+  punteggio_voti: number;
+  badge: 'oro' | 'argento' | 'bronzo';
 }
 
 @Component({
@@ -67,26 +84,26 @@ interface PodiumEntry {
   imports: [CommonModule, IonContent, IonRefresher, IonRefresherContent, FilmBorderComponent, ComponenteMedaglia],
   template: `
 
-    <!-- ── Loading ──────────────────────────────────────────────────── -->
+    <!-- ── Caricamento ──────────────────────────────────────────────────── -->
     <div class="gallery-loading" *ngIf="caricamento">
       <div class="film-loader" aria-hidden="true"></div>
       <p class="loading-label">Sviluppo in corso…</p>
     </div>
 
-    <!-- ── Error / not yet available ────────────────────────────────── -->
+    <!-- ── Errore ────────────────────────────────── -->
     <div class="gallery-error" *ngIf="!caricamento && errorMessage">
       <div class="error-symbol">⏳</div>
       <p class="error-title">Galleria non disponibile</p>
       <p class="error-body">{{ errorMessage }}</p>
     </div>
 
-    <!-- ── Main gallery ─────────────────────────────────────────────── -->
+    <!-- ── Galleria ─────────────────────────────────────────────── -->
     <ion-content *ngIf="!caricamento && !errorMessage" class="gallery-content">
       <ion-refresher slot="fixed" (ionRefresh)="handleRefresh($event)">
         <ion-refresher-content></ion-refresher-content>
       </ion-refresher>
 
-      <!-- Plain event-title header (no ECHO branding here — see mockups) -->
+      <!-- Apertura album -->
       <header class="gallery-title-block">
         <h1 class="event-title">{{ eventoNome }}</h1>
         <div class="status-pill" *ngIf="stato === 'chiusa'; else votingPill">
@@ -128,7 +145,7 @@ interface PodiumEntry {
           <span class="banner-text">Voto espresso · Risultati alla chiusura</span>
         </div>
 
-        <!-- Griglia foto — stile masonry a 3 colonne -->
+        <!-- Griglia foto -->
         <div class="photo-grid">
           <div class="photo-cell" *ngFor="let photo of foto" (click)="openDetail(photo)">
             <app-film-border>
@@ -179,7 +196,7 @@ interface PodiumEntry {
         </ng-template>
       </div>
 
-      <!-- ── Barra inferiore: indietro · etichetta voto ── -->
+      <!-- ── Barra inferiore: indietro ed etichetta voto ── -->
       <div class="gallery-bottom-bar">
   <button class="bottom-back" (click)="goBack()" aria-label="Indietro">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 18px; height: 18px;">
@@ -191,22 +208,16 @@ interface PodiumEntry {
 
     </ion-content>
 
-    <!-- ════════════════════════════════════════════════════════════════ -->
-    <!-- DETAIL MODAL                                                    -->
-    <!-- Full-screen overlay (no ion-modal to avoid fixed positioning)  -->
-    <!-- ════════════════════════════════════════════════════════════════ -->
-    <div class="detail-overlay" *ngIf="selectedPhoto" (click)="closeOnBackdrop($event)">
-      <div class="detail-panel" #detailPanel>
-
-        <!-- Header: close -->
+    <!-- Dettagli foto(in full-screen) -->
+    <div class="detail-overlay" *ngIf="selectedPhoto" (click)="chiusuraAlTocco($event)">
+      <div class="detail-panel">
         <div class="detail-header">
           <span class="detail-author-label" *ngIf="selectedPhoto">Scatto di: {{ selectedPhoto.nome | uppercase }}</span>
           <button class="detail-close" (click)="closeDetail()" aria-label="Chiudi">✕</button>
         </div>
 
         <!-- Foto intera — avvolta nella cornice a perforazioni, pulsante voto in basso a destra.
-             Cerchio bianco semplice in stile otturatore (nessun cuore), secondo il mockup: vuoto
-             quando votabile, piccolo glifo fotocamera una volta votato. -->
+             Cerchio bianco semplice in stile otturatore . -->
         <div class="detail-photo-wrap">
           <app-film-border [rounded]="false">
             <img
@@ -251,21 +262,12 @@ interface PodiumEntry {
           </div>
         </div>
 
-        <!-- ───────────────────────────────────────────────────────── -->
-        <!-- TESTO DI STATO VOTO                                       -->
-        <!--                                                           -->
-        <!-- CRITICO (spec §3.4.2): castVote() disabilita il voto      -->
-        <!-- IMMEDIATAMENTE al click. this.ha_votato è messo a true    -->
-        <!-- PRIMA che parta la chiamata API — il meccanismo di        -->
-        <!-- scarsità va sentito nella UI nell'istante in cui l'utente -->
-        <!-- si impegna. Nessun annullamento.                          -->
-        <!-- ───────────────────────────────────────────────────────── -->
+        <!-- Stato del voto  -->
         <div class="detail-vote">
           <p class="vote-own-msg" *ngIf="selectedPhoto.is_own_photo">Questa è una tua foto — non puoi votarla</p>
           <p class="vote-hint" *ngIf="!selectedPhoto.is_own_photo && !ha_votato">Hai 1 solo voto — non si può cambiare.</p>
           <p class="vote-hint" *ngIf="ha_votato && !selectedPhoto.user_has_voted_this">Voto già espresso su un'altra foto.</p>
         </div>
-
       </div>
     </div>
 
@@ -280,18 +282,18 @@ interface PodiumEntry {
           margin: 0 auto;
         }
     /* Desktop: allarga la galleria a una colonna centrata e immersiva (host + barra inferiore
-       si allargano insieme così la barra sticky resta allineata), in linea con landing/dashboard. */
+       si allargano insieme così la barra sticky resta allineata), in linea con landing/dashboard. 
+       DEVE ESSERE LA GALLERIA SEMPRE A 3 COLONNE*/
     @media (min-width:768px){
       :host { max-width: 1180px; }
     }
 
-    /* ── Loading ── */
+    /* ── Caricamento ── */
     .gallery-loading {
       display: flex; flex-direction: column; align-items: center;
       justify-content: center; height: 60vh; gap: 24px;
     }
 
-    /* Fix 5: animazione di scorrimento della pellicola (due file di perforazioni che vanno a sinistra) */
     .film-loader {
       width: 200px; height: 48px;
       overflow: hidden;
@@ -324,7 +326,7 @@ interface PodiumEntry {
       text-transform: uppercase; color: #666655; margin: 0;
     }
 
-    /* ── Error ── */
+    /* ── Errore ── */
     .gallery-error {
       display: flex; flex-direction: column; align-items: center;
       justify-content: center; height: 60vh; text-align: center; padding: 32px;
@@ -336,10 +338,8 @@ interface PodiumEntry {
     }
     .error-body { font-size: 13px; color: #666655; line-height: 1.6; margin: 0; }
 
-    /* ── Gallery content ── */
     ion-content.gallery-content { --background: var(--echo-bg); }
 
-    /* ── Title block + status pill ── */
     .gallery-title-block { text-align: center; padding: 20px 20px 12px; }
     .event-title {
       font-family: var(--echo-font-serif); font-weight: 400;
@@ -351,7 +351,7 @@ interface PodiumEntry {
       letter-spacing: 0.04em; color: var(--echo-ink); line-height: 1.5;
     }
 
-    /* ── Rullino / Classifica tabs ── */
+    /* ── Rullino / Classifica ── */
     .tab-switcher { display: flex; padding: 0 16px 14px; gap: 0; }
     .tab-pill {
       flex: 1; padding: 11px; border: none; cursor: pointer;
@@ -362,10 +362,6 @@ interface PodiumEntry {
     .tab-pill:first-child { border-radius: var(--echo-radius-md) 0 0 0; }
     .tab-pill:last-child  { border-radius: 0 var(--echo-radius-md) 0 0; }
     .tab-pill.active { background: var(--echo-surface-dark); }
-
-    /* Fix 1: il tab-panel non porta più un proprio sfondo — traspare lo sfondo di ion-content
-       (--echo-bg). Questo impedisce al layer scuro della pellicola di sconfinare sull'area
-       bianca della barra inferiore sotto la griglia foto. */
     .tab-panel { background: transparent; padding-top: 4px; }
 
     /* ── Banner voto ── */
@@ -378,12 +374,6 @@ interface PodiumEntry {
 
     /* ── Scarica Album Completo ── */
     .download-row { padding: 8px 16px 18px; }
-    /*
-     * CTA primaria, Vintage Warm. Prima era testo crema + bordo crema sullo sfondo
-     * crema (--echo-bg) della galleria → invisibile. Ora una pillola PIENA marrone scuro
-     * con testo crema e l'ombra di pressione 3D caratteristica dell'app (come .lock-cta e
-     * le CTA della landing), così si legge come l'azione di download chiara e prominente.
-     */
     .download-btn {
       width: 100%;
       display: flex; align-items: center; justify-content: center; gap: 8px;
@@ -473,35 +463,34 @@ interface PodiumEntry {
 
     /* ── Bottom bar ── */
     .gallery-bottom-bar {
-  position: sticky; 
-  bottom: 0;
-  display: flex; 
-  align-items: center; 
-  justify-content: space-between;
-  padding: 14px 20px calc(14px + env(safe-area-inset-bottom, 0px));
-  background: var(--echo-bg);
-  z-index: 10; 
-  /* AGGIUNGI QUESTE RIGHE PER CORREGGERE IL LAYOUT OUTOUT */
-  width: 100%;
-  max-width: 600px;
-  box-sizing: border-box;
-}
+      position: sticky; 
+      bottom: 0;
+      display: flex; 
+      align-items: center; 
+      justify-content: space-between;
+      padding: 14px 20px calc(14px + env(safe-area-inset-bottom, 0px));
+      background: var(--echo-bg);
+      z-index: 10; 
+      /* AGGIUNGI QUESTE RIGHE PER CORREGGERE IL LAYOUT OUTOUT */
+      width: 100%;
+      max-width: 600px;
+      box-sizing: border-box;
+    }
     /* Mantieni la barra inferiore sticky allineata con l':host allargato su desktop. */
     @media (min-width:768px){ .gallery-bottom-bar{ max-width: 1180px; } }
     .bottom-back {
-  width: 36px; height: 36px; border-radius: 50%; flex-shrink: 0;
-  background: transparent; border: 1.5px solid var(--echo-ink); color: var(--echo-ink);
-  cursor: pointer; 
-  display: flex; align-items: center; justify-content: center;
-  padding: 0;
-}
+      width: 36px; height: 36px; border-radius: 50%; flex-shrink: 0;
+      background: transparent; border: 1.5px solid var(--echo-ink); color: var(--echo-ink);
+      cursor: pointer; 
+      display: flex; align-items: center; justify-content: center;
+      padding: 0;
+    }
     .bottom-label {
       max-width: 110px;
       font-family: var(--echo-font-mono); font-size: 9px; letter-spacing: 0.06em;
       text-transform: uppercase; color: var(--echo-ink-soft); text-align: right;
     }
 
-    /* ── Detail overlay ── */
     .detail-overlay {
       position: fixed;
       inset: 0;
@@ -613,21 +602,15 @@ export class ComponenteGalleria implements OnInit, OnDestroy {
   selectedPhoto: FotoGalleria | null = null;
   isVoting = false;
 
-  /** 'album_aperto' | 'chiusa' — la galleria è raggiungibile solo in uno di questi due stati
-   *  (imposto lato backend). Determina se mostrare il banner di voto o la classifica finale. */
   stato = '';
-  ranking: PodiumEntry[] = [];
+  ranking: strutturaClassifica[] = [];
 
   downloadingZip = false;
+  // Contatore che tiene traccia di quante foto sono state processate ed impacchettate nello ZIP.
   downloadProgress = 0;
 
-  /** album_sbloccato_at + durata_votazione_ore, in epoch ms — il target reale e fisso rispetto al
-   *  quale il countdown sotto è calcolato a ogni lettura (nessuna stringa di durata in cache). */
   private voteEndAt: number | null = null;
   private votingTicker?: Subscription;
-
-  /** Solo stato di vista — sia le foto che la classifica arrivano già nella stessa risposta
-   *  getGalleria(), quindi cambiare tab non innesca mai una nuova chiamata API. */
   activeTab: 'rullino' | 'classifica' = 'rullino';
 
   constructor(
@@ -636,66 +619,68 @@ export class ComponenteGalleria implements OnInit, OnDestroy {
     private cdr: ChangeDetectorRef,
     private platform: Platform,
     private router: Router,
-  ) {}
+  ) { }
 
+  // ciclo di vita invocato subito dopo l'inizializzazione del componente.
   ngOnInit() {
     this.loadGallery();
-    // Ogni minuto: rifà il fetch (nuove foto / voti / transizioni di stato avvengono lato server)
-    // e ri-renderizza così il countdown "vota entro" continua a scorrere rispetto a Date.now()
-    // tra un fetch e l'altro.
-    this.votingTicker = interval(VOTING_TICKER_MS).subscribe(() => { this.cdr.markForCheck(); this.loadGallery(); });
+    this.votingTicker = interval(VOTING_TICKER_MS).subscribe(() => {
+      this.cdr.markForCheck();
+      this.loadGallery();
+    });
   }
 
-  ngOnDestroy() { this.votingTicker?.unsubscribe(); }
+  ngOnDestroy() {
+    this.votingTicker?.unsubscribe();
+  }
 
-  /** Handler del pull-to-refresh — rifà il fetch e segnala al refresher di fermare lo spinner. */
+  // Metodo associato all'evento "pull-to-refresh".
   async handleRefresh(event: RefresherCustomEvent) {
     await this.loadGallery();
     event.target.complete();
   }
 
-  /** Etichetta live "tempo rimasto per votare" ("23h 45m" / "45m"), ricalcolata rispetto a
-   *  Date.now() a ogni lettura. '' una volta chiusa la votazione o se non applicabile. */
+  // Getter che costruisce e restituisce una stringa user-friendly del tipo "3h 45m" o "12m".
   get votingTimeLabel(): string {
     if (!this.voteEndAt) return '';
     const remainingMs = this.voteEndAt - Date.now();
     if (remainingMs <= 0) return '';
     const totalMin = Math.ceil(remainingMs / MS_PER_MINUTO);
-    const h = Math.floor(totalMin / 60);
-    const m = totalMin % 60;
-    return h > 0 ? `${h}h ${m}m` : `${m}m`;
+    const ore = Math.floor(totalMin / 60);
+    const minuti = totalMin % 60;
+    return ore > 0 ? `${ore}h ${minuti}m` : `${minuti}m`;
   }
 
+  // Metodo per far contattare al servizio API il backend.
   private async loadGallery() {
-  try {
-    const res = await firstValueFrom(this.api.getGalleria(this.id_evento));
-    
-    // Fallback ?? [] per sicurezza, nel caso il server restituisca un payload incompleto
-    this.foto = res?.foto ?? [];
-    this.ha_votato = res?.ha_votato ?? false;
-    this.stato = res?.stato ?? '';
-    
-    // voting_end_at è calcolato lato server...
-    this.voteEndAt = res.voting_end_at ? isoToMs(res.voting_end_at) : null;
-    const BADGES: ('oro' | 'argento' | 'bronzo')[] = ['oro', 'argento', 'bronzo'];
-    this.ranking = (res.classifica ?? []).slice(0, 3).map((c, i) => ({
-      posizione: (i + 1) as 1 | 2 | 3,
-      nome: c.nome, cognome: c.cognome, foto_profilo_url: c.foto_profilo_url,
-      id_foto: c.id_foto, url_originale: c.url_originale, punteggio_voti: c.punteggio_voti,
-      badge: BADGES[i],
-    }));
-  } catch (errore: unknown) {
-    this.errorMessage = (errore as { error?: { error?: string } })?.error?.error ?? 'Galleria non disponibile.';
-  } finally {
-    this.caricamento = false;
-  }
-}
+    try {
+      const res = await firstValueFrom(this.api.getGalleria(this.id_evento));
 
-  /** Toccare una riga del podio riusa la modale esistente di dettaglio/voto della singola foto. */
-  openPodiumPhoto(entry: PodiumEntry) {
+      this.foto = res?.foto ?? [];
+      this.ha_votato = res?.ha_votato ?? false;
+      this.stato = res?.stato ?? '';
+
+      this.voteEndAt = res.voting_end_at ? isoToMs(res.voting_end_at) : null;
+      const BADGES: ('oro' | 'argento' | 'bronzo')[] = ['oro', 'argento', 'bronzo'];
+      this.ranking = (res.classifica ?? []).slice(0, 3).map((c, i) => ({
+        posizione: (i + 1) as 1 | 2 | 3,
+        nome: c.nome, cognome: c.cognome, foto_profilo_url: c.foto_profilo_url,
+        id_foto: c.id_foto, url_originale: c.url_originale, punteggio_voti: c.punteggio_voti,
+        badge: BADGES[i],
+      }));
+    } catch (errore: unknown) {
+      this.errorMessage = (errore as { error?: { error?: string } })?.error?.error ?? 'Galleria non disponibile.';
+    } finally {
+      this.caricamento = false;
+    }
+  }
+
+  // Apre la foto ingrandita quando un utente tocca un gradino del podio con la medaglia.
+  openPodiumPhoto(entry: strutturaClassifica) {
     const photo = this.foto.find(p => p.id_foto === entry.id_foto);
     if (photo) this.openDetail(photo);
   }
+
   photoUrl(path: string): string {
     return `${environment.apiUrl}${path}`;
   }
@@ -704,26 +689,20 @@ export class ComponenteGalleria implements OnInit, OnDestroy {
     return ({ oro: 'Oro', argento: 'Argento', bronzo: 'Bronzo' } as Record<MedalTipo, string>)[tipo];
   }
 
+  // Torna a "I miei eventi".
   goBack(): void {
     this.router.navigate(['/eventi/miei']);
   }
 
+  // Genera dinamicamente le scritte visibili in fondo alla schermata, in base a varianti logiche intrecciate.
   bottomLabel(): string {
     if (this.stato === 'chiusa') return 'Classifica Finale';
     return this.ha_votato ? 'Hai assegnato il tuo unico voto' : 'Assegna il tuo unico voto';
   }
 
-  /** Scarica ogni foto come blob (in parallelo, il CORS lo consente già — vedi l'override
-   *  CORP di /uploads in server.ts) e le zippa lato client. Nessun coinvolgimento del backend:
-   *  le foto sono già URL pubblici che la galleria stessa usa.
-   *
-   *  La consegna poi si divide per piattaforma: le WebView native (Android/iOS) non supportano
-   *  affatto il trigger HTML5 <a download> / file-saver — non c'è una UI cartella "Download"
-   *  in cui possa atterrare — quindi su `capacitor` scriviamo invece lo zip nella cache dir
-   *  dell'app via @capacitor/filesystem e lo passiamo al foglio di condivisione dell'OS
-   *  (@capacitor/share), lasciando che l'utente lo salvi dove vuole (Drive, File, invio via chat, ecc).
-   *  Sul web, il download browser originale via file-saver resta invariato. */
+  // Scarica ogni singola foto raggruppandole e creando localmente l'archivio ZIP.
   async downloadAlbum() {
+    // Se c'è un download attivo non fa accavallare due ZIP
     if (this.downloadingZip || !this.foto.length) return;
     this.downloadingZip = true;
     this.downloadProgress = 0;
@@ -732,13 +711,16 @@ export class ComponenteGalleria implements OnInit, OnDestroy {
     const filename = `ECHO-${this.sanitizeFilename(this.eventoNome || 'Album')}.zip`;
 
     try {
+      // Contenitore zip
       const zip = new JSZip();
       await Promise.all(this.foto.map(async (photo, i) => {
         const blob = await fetch(this.photoUrl(photo.url_originale)).then(r => r.blob());
-        zip.file(`${String(i + 1).padStart(3, '0')}-${photo.nome}-${photo.id_foto}.jpg`, blob);
+        // Appende questo Blob fisicamente dentro allo ZIP
+        zip.file(`${String(i + 1).padStart(4, '0')}-${photo.nome}-${photo.id_foto}.jpg`, blob); // prende l'array partendo da 1 e ordina le foto 
         this.downloadProgress++;
         this.cdr.markForCheck();
       }));
+      // Fa elaborare un oggetto Blob dell'archivio in cui racchiude tutte le JPG compresse.
       const zipped = await zip.generateAsync({ type: 'blob' });
 
       if (this.platform.is('capacitor')) {
@@ -754,52 +736,53 @@ export class ComponenteGalleria implements OnInit, OnDestroy {
     }
   }
 
-  /** Scrive lo zip in Directory.Cache (base64, come richiesto dall'API writeFile del plugin
-   *  Filesystem) e apre il foglio di condivisione nativo sull'URI file:// risultante. Un utente
-   *  che chiude il foglio di condivisione non è un errore — catturato separatamente così non
-   *  mostra il toast generico "preparazione fallita" per un file salvato con successo. */
+  // Condivide lo zip nel sistema integrato (Whatsapp, AirDrop, etc.).
   private async saveAndShareNative(zipped: Blob, filename: string): Promise<void> {
+    // Si deve tradurre dal tipo Blob JavaScript al tipo stringa testuale grezza base64 che i plugin Capacitor tollerano di base per interagire col FileSystem locale.
     const base64Data = await blobToBase64(zipped);
+    // Tramite plugin Capacitor ordina al OS di memorizzare l'intera stringa in formato file dentro la cache del telefono (utile perché se ne sbarazzerà da solo non intasando la ROM).
     const result = await Filesystem.writeFile({ path: filename, data: base64Data, directory: Directory.Cache });
     try {
+      // Innalza a video tramite le api native l'opzione "cosa vuoi farne del file che ha URI x".
       await Share.share({ url: result.uri, title: filename, dialogTitle: 'Salva o condividi l\'album' });
-    } catch { /* utente ha chiuso il foglio di condivisione — lo zip è comunque salvato in cache, non è un errore */ }
+    } catch {
+      /* Nel caso in cui si preme annulla */
+    }
   }
 
+  // Metodo che previene illegal file name exception del file zip.
   private sanitizeFilename(name: string): string {
     return name.replace(/[^a-zA-Z0-9 _-]/g, '_').trim() || 'Album';
   }
 
+  // Apre la foto
   openDetail(photo: FotoGalleria) { this.selectedPhoto = photo; }
+
   closeDetail() { this.selectedPhoto = null; }
 
-  closeOnBackdrop(event: MouseEvent) {
+  // Se non tocchiamo elementi della foto ingrandita, considera il tocco come chiusura
+  chiusuraAlTocco(event: MouseEvent) {
     if ((event.target as HTMLElement).classList.contains('detail-overlay')) {
       this.closeDetail();
     }
   }
 
+  // Gestisce la votazione
   async castVote(photo: FotoGalleria) {
     if (this.ha_votato || photo.is_own_photo || this.isVoting) return;
-
-    // CRITICO: disabilita il pulsante di voto IMMEDIATAMENTE — prima di ogni chiamata di rete.
-    // Questo è il cuore della UX di scarsità: l'utente vede la conseguenza nel momento
-    // dell'impegno, non 200ms dopo quando il server risponde.
-    // Anche se la chiamata API fallisce manteniamo ha_votato = true per prevenire il rage-tapping.
     this.isVoting = true;
     this.ha_votato = true;
     this.cdr.markForCheck();
 
     try {
       await firstValueFrom(
-        this.api.votaFoto(photo.id_foto )
+        this.api.votaFoto(photo.id_foto)
       );
       photo.user_has_voted_this = true;
-      photo.punteggio_voti += 1; // optimistic local update
-      this.toast('Voto registrato ♥', 'success');
+      photo.punteggio_voti += 1;
+      this.toast('Voto registrato', 'success');
     } catch (errore: unknown) {
       const msg = (errore as { error?: { error?: string } })?.error?.error ?? 'Errore nel voto';
-      // ha_votato remains true even on error (ambiguous state = safer than allowing retry)
       this.toast(msg, 'danger');
     } finally {
       this.isVoting = false;

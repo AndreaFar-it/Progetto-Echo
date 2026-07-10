@@ -1,7 +1,9 @@
 import { Injectable } from '@angular/core';
+import { HttpErrorResponse } from '@angular/common/http';
 import { BehaviorSubject } from 'rxjs';
 import { ApiService } from './api.service';
 import { ServizioStatoEvento } from './event-state.service';
+import { ServizioCodaUpload } from './upload-queue.service';
 import { ConfermaCaricamento } from '../models/index';
 
 export interface ShotResult { scatti_usati: number; scatti_totali: number; esauriti: boolean; }
@@ -18,7 +20,11 @@ export class ServizioFotocamera {
   //inizializzazione facing della fotocamera
   private facing: CameraFacing = 'rear';
 
-  constructor(private api: ApiService, private eventState: ServizioStatoEvento) { }
+  constructor(
+    private api: ApiService,
+    private eventState: ServizioStatoEvento,
+    private codaUpload: ServizioCodaUpload,
+  ) { }
 
   // Chiamato dalla pagina per inizializzare lo stato della fotocamera
   initState(usati: number, totali: number): void {
@@ -38,6 +44,7 @@ export class ServizioFotocamera {
           y: 0,
           width: window.innerWidth, // legge la larghezza esatta del display dello smartphone
           height: window.innerHeight, // leggendo l'altezza esatta del display dello smartphone
+          aspectMode: 'cover', // Riempie tutto lo schermo ritagliando l'immagine, invece di lasciare bordi vuoti (letterbox)
           disableAudio: true,
           lockAndroidOrientation: true,
           storeToFile: false,
@@ -133,7 +140,8 @@ export class ServizioFotocamera {
       // Controllo se esiste ciò che abbiamo preso
       if (!value) throw new Error('CAPTURE_EMPTY');
 
-      // Prende l'immagine da locale e la converte in blob
+      // Prende l'immagine da locale e la converte in blob; l'orientamento è gestito
+      // dal plugin nativo (disableExifHeaderStripping incorpora i metadati EXIF corretti).
       blob = await fetch(`data:image/jpeg;base64,${value}`).then(r => r.blob());
     } catch (captureErr: unknown) {
       throw new Error('CAPTURE_FAILED');
@@ -159,13 +167,29 @@ export class ServizioFotocamera {
           scatti_totali: ack.scatti_totali,
           esauriti: ack.esauriti,
         });
-        if (ack.esauriti) this.eventState.refresh();
+        if (ack.esauriti) void this.eventState.refresh();
       },
-      error: (errore) => {
-        // Annulla il pallino ottimistico — lo scatto non è mai stato realmente registrato
-        console.error('[ServizioFotocamera] Upload failed, reverting optimistic state:', errore);
+      error: (errore: unknown) => {
+        const statoHttp = errore instanceof HttpErrorResponse ? errore.status : 0;
+        const problemaDiRete = statoHttp === 0 || !navigator.onLine;
+
+        if (problemaDiRete) {
+          // Rete assente o instabile: lo scatto è prezioso e NON va perso — finisce nella
+          // coda offline (IndexedDB) e verrà caricato automaticamente al ritorno della rete.
+          this.codaUpload.accoda(id_evento, blob).catch(() => {
+            // IndexedDB non disponibile: ripiega sul vecchio comportamento (annulla lo scatto)
+            console.error('[ServizioFotocamera] Coda offline non disponibile, ripristino lo stato');
+            this._shot$.next(cur);
+            void this.eventState.refresh();
+          });
+          return;
+        }
+
+        // Il server ha risposto ma ha rifiutato (evento chiuso, scatti esauriti…):
+        // annulla il pallino ottimistico — lo scatto non è mai stato realmente registrato.
+        console.error('[ServizioFotocamera] Upload rifiutato dal server, ripristino lo stato:', errore);
         this._shot$.next(cur);
-        this.eventState.refresh();
+        void this.eventState.refresh();
       },
     });
 

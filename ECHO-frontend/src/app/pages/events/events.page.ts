@@ -1,18 +1,39 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import {
+  Component,
+  OnInit,
+  OnDestroy
+} from '@angular/core';
 import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
-import { IonContent, IonRefresher, IonRefresherContent, ToastController, AlertController, LoadingController } from '@ionic/angular/standalone';
+import {
+  IonContent,
+  IonRefresher,
+  IonRefresherContent,
+  ToastController,
+  AlertController,
+  LoadingController
+} from '@ionic/angular/standalone';
 import { Clipboard } from '@capacitor/clipboard';
 import type { RefresherCustomEvent } from '@ionic/angular/standalone';
 import { ViewWillEnter } from '@ionic/angular';
 import { Platform } from '@ionic/angular/common';
 import { ApiService } from '../../services/api.service';
+import { ServizioStatoEvento } from '../../services/event-state.service';
 import { EventoCard } from '../../models/index';
-import { ComponenteIntestazione, ComponenteEtichettaStato } from '../../shared/components';
-import { firstValueFrom, interval, Subscription } from 'rxjs';
-import { MS_PER_MINUTO, isoToMs } from '../../core/time.util';
+import {
+  ComponenteIntestazione,
+  ComponenteEtichettaStato
+} from '../../shared/components';
+import {
+  firstValueFrom,
+  interval,
+  Subscription
+} from 'rxjs';
+import {
+  MS_PER_MINUTO,
+  isoToMs
+} from '../../core/time.util';
 
-// Cadenza del ticker che rifà il fetch e aggiorna i countdown per card.
 const TICKER_MS = 60_000;
 
 @Component({
@@ -171,25 +192,15 @@ const TICKER_MS = 60_000;
   `],
 })
 export class PaginaEventi implements OnInit, OnDestroy, ViewWillEnter {
-  // Elenco completo degli eventi dell'utente (sia come organizzatore che partecipante).
   eventi: EventoCard[] = [];
-  // True finché il primo caricamento dal server non è completato.
   caricamento = true;
-  /** Suddivisione lato client sugli eventi già caricati — nessuna chiamata API extra. */
   modalitaVista: 'partecipante' | 'creatore' = 'partecipante';
-  /** Evento la cui modale "Mostra codice" è aperta, null quando è chiusa. */
   eventoConCodice: EventoCard | null = null;
   codiceCopiate = false;
-
-  /** Ri-renderizzato ogni minuto così i countdown per card (statoCopy) restano live senza
-   *  un re-fetch. Incrementato a ogni tick solo per innescare il change detection; il tempo
-   *  rimanente effettivo è calcolato da Date.now() dentro statoCopy(). */
   contatore = 0;
-  private ticker?: Subscription;
 
-  /** Id degli eventi per cui un popup estensione/permanenza è già aperto o ha avuto risposta
-   *  in questa sessione — loadEvents() rifà il fetch ogni 60s, e senza questa guardia lo
-   *  stesso prompt riapparirebbe prima che il server rifletta la risposta dell'utente. */
+  private ticker?: Subscription;
+  private subEventi?: Subscription;
   private promptedIds = new Set<string>();
 
   get eventiFiltrati(): EventoCard[] {
@@ -203,45 +214,60 @@ export class PaginaEventi implements OnInit, OnDestroy, ViewWillEnter {
     private alertCtrl: AlertController,
     private loadingCtrl: LoadingController,
     private platform: Platform,
-  ) {}
+    private svc: ServizioStatoEvento,
+  ) { }
 
   ngOnInit() {
-    this.loadEvents();
-    // Tick di 1 minuto: rifà il fetch dal server (le transizioni di stato come sviluppo →
-    // album_aperto avvengono lato server via cron) E incrementa `contatore` così i countdown
-    // per card (statoCopy) restano live tra un fetch e l'altro. Memorizzato così può essere
-    // smontato in ngOnDestroy — lasciarlo attivo farebbe trapelare una subscription (e
-    // continuerebbe a innescare change detection) ogni volta che l'utente lascia questa pagina.
-    this.ticker = interval(TICKER_MS).subscribe(() => { this.contatore++; this.loadEvents(); });
-  }
-  ngOnDestroy() { this.ticker?.unsubscribe(); }
-  ionViewWillEnter() { this.loadEvents(); }
+    this.subEventi = this.svc.eventi$.subscribe(events => {
+      this.eventi = events;
+      this.checkExtensionPrompts();
+    });
 
-  /** Handler del pull-to-refresh — rifà il fetch e segnala al refresher di fermare lo spinner. */
+    this.loadEvents();
+
+    this.ticker = interval(TICKER_MS).subscribe(() => {
+      this.contatore++;
+    });
+  }
+
+  ngOnDestroy() {
+    this.ticker?.unsubscribe();
+    this.subEventi?.unsubscribe();
+  }
+
+  ionViewWillEnter() {
+    this.loadEvents();
+  }
+
   async handleRefresh(event: RefresherCustomEvent) {
     await this.loadEvents();
     event.target.complete();
   }
 
+  // Forza un fetch tramite il servizio condiviso: la lista arriva poi via subEventi.
   async loadEvents() {
-    try {
-      const res = await firstValueFrom(this.api.getMieiEventi());
-      this.eventi = res.events;
-      this.checkExtensionPrompts();
-    } catch { this.toast('Impossibile caricare gli eventi', 'danger'); }
-    finally { this.caricamento = false; }
+    const ok = await this.svc.refresh();
+    if (!ok) {
+      await this.toast('Impossibile caricare gli eventi', 'danger');
+    }
+    this.caricamento = false;
   }
 
-  /** Scansiona gli eventi appena caricati per un prompt in sospeso "vuoi estendere?" (organizzatore)
-   *  o "desideri rimanere?" (partecipante) e apre un alert per il primo trovato. Uno alla volta per
-   *  scelta — sono rari (al massimo uno per evento) e impilare più dialog di conferma confonderebbe. */
+  // Controlla se bisogna inviare un alert per l'estensione dell'evento
   private checkExtensionPrompts() {
     const toEstendi = this.eventi.find(e => e.needs_estensione_response && !this.promptedIds.has(e.id_evento));
-    if (toEstendi) { this.promptEstensione(toEstendi); return; }
+    if (toEstendi) {
+      this.promptEstensione(toEstendi);
+      return;
+    }
+
     const toPermanenza = this.eventi.find(e => e.needs_permanenza_response && !this.promptedIds.has(e.id_evento));
-    if (toPermanenza) this.promptPermanenza(toPermanenza);
+    if (toPermanenza) {
+      this.promptPermanenza(toPermanenza);
+    }
   }
 
+  // Mostra un alert per chiedere all'organizzatore se vuole estendere l'evento
   private async promptEstensione(event: EventoCard) {
     this.promptedIds.add(event.id_evento);
     const durata = this.extDurataLabel(event);
@@ -257,14 +283,18 @@ export class PaginaEventi implements OnInit, OnDestroy, ViewWillEnter {
     await alert.present();
   }
 
+  // Gestisce la risposta dell'utente alla richiesta di estensione
   private async rispondiEstensione(event: EventoCard, accetta: boolean) {
     try {
       await firstValueFrom(this.api.estendiEvento(event.id_evento, accetta));
       await this.toast(accetta ? `Evento esteso di ${this.extDurataLabel(event)}` : 'Evento terminerà come previsto', 'success');
       await this.loadEvents();
-    } catch { await this.toast('Impossibile registrare la risposta', 'danger'); }
+    } catch {
+      await this.toast('Impossibile registrare la risposta', 'danger');
+    }
   }
 
+  // Mostra un alert ai partecipanti per notificare che l'evento è stato esteso e chiedere se rimangono
   private async promptPermanenza(event: EventoCard) {
     this.promptedIds.add(event.id_evento);
     const alert = await this.alertCtrl.create({
@@ -279,53 +309,66 @@ export class PaginaEventi implements OnInit, OnDestroy, ViewWillEnter {
     await alert.present();
   }
 
+  // Gestisce la risposta dei partecipanti riguardo il rimanere all'evento esteso
   private async rispondiPermanenza(event: EventoCard, rimane: boolean) {
     try {
       await firstValueFrom(this.api.rimaniEvento(event.id_evento, rimane));
       await this.toast(rimane ? "Bene, ci vediamo all'evento!" : 'Sei libero per altri impegni', 'success');
       await this.loadEvents();
-    } catch { await this.toast('Impossibile registrare la risposta', 'danger'); }
+    } catch {
+      await this.toast('Impossibile registrare la risposta', 'danger');
+    }
   }
 
+  // Gestisce l'interazione del click/tap su un'intera card evento
   onEventTap(event: EventoCard) {
     switch (event.stato) {
       case 'in_corso':
-        // La fotocamera è solo nativa (vedi guardCamera) — sul web non c'è nulla a cui
-        // navigare, quindi spiega semplicemente invece di rimbalzare con un redirect di guardia.
         if (!this.platform.is('hybrid')) {
           this.toast("Per scattare le foto usa l'app ECHO sul tuo telefono", 'dark');
         } else if (event.scatti_usati < event.scatti_per_utente) {
           this.router.navigate(['/camera', event.id_evento], {
             state: { scatti_usati: event.scatti_usati, scatti_per_utente: event.scatti_per_utente, eventoNome: event.nome }
           });
-        } else { this.toast('Hai già esaurito i tuoi scatti', 'warning'); }
+        } else {
+          this.toast('Hai già esaurito i tuoi scatti', 'warning');
+        }
         break;
       case 'album_aperto': case 'chiusa':
         this.router.navigate(['/galleria', event.id_evento], { state: { eventoNome: event.nome } });
         break;
-      case 'sviluppo': this.toast('Il rullino è in sviluppo — torna tra poco!', 'dark'); break;
-      case 'non_iniziata': this.toast("L'evento non è ancora iniziato", 'dark'); break;
+      case 'sviluppo':
+        this.toast('Il rullino è in sviluppo — torna tra poco!', 'dark');
+        break;
+      case 'non_iniziata':
+        this.toast("L'evento non è ancora iniziato", 'dark');
+        break;
     }
   }
 
+  // Metodo per andare alle analitcs
   openAnalytics(event: EventoCard, $event: MouseEvent) {
     $event.stopPropagation();
     this.router.navigate(['/eventi', event.id_evento, 'analytics'], { state: { eventoNome: event.nome } });
   }
 
+  // Chiede conferma prima di procedere all'eliminazione dell'evento
   async confirmDelete(event: EventoCard, $event: MouseEvent) {
+    // Evita che il click sul bottone elimini apra accidentalmente i dettagli dell'evento
     $event.stopPropagation();
     const alert = await this.alertCtrl.create({
       header: 'Elimina evento',
       message: `Vuoi eliminare "${event.nome}"? L'azione è irreversibile.`,
       buttons: [
         { text: 'Annulla', role: 'cancel' },
+        // Pulsante di conferma (stile distruttivo per segnalare pericolo), chiama deleteEvent se premuto
         { text: 'Elimina', role: 'destructive', handler: () => this.deleteEvent(event.id_evento) },
       ],
     });
     await alert.present();
   }
 
+  // Esegue l'eliminazione effettiva dell'evento invocando le API
   async deleteEvent(id: string) {
     const loading = await this.loadingCtrl.create({ message: 'Eliminazione…' });
     await loading.present();
@@ -340,8 +383,12 @@ export class PaginaEventi implements OnInit, OnDestroy, ViewWillEnter {
     }
   }
 
-  makePips(n: number): number[] { return Array.from({ length: n }); }
+  // Funzione di utilità per creare un array di lunghezza 'n'
+  makePips(n: number): number[] {
+    return Array.from({ length: n });
+  }
 
+  // Restituisce la stringa descrittiva dello stato per la visualizzazione partecipante
   statoCopy(e: EventoCard): string {
     const esteso = e.estensione_accettata === 1;
     switch (e.stato) {
@@ -349,9 +396,10 @@ export class PaginaEventi implements OnInit, OnDestroy, ViewWillEnter {
         const r = this.eventStartsIn(e);
         return r ? `Inizia tra ${r}` : "Preparati all'evento! Ricordati di portare con te il telefono.";
       }
-      case 'in_corso':     return esteso
-        ? `L'evento è stato prolungato di ${this.extDurataLabel(e)}. Continua a scattare!`
-        : "L'evento è ancora in corso. Goditelo!";
+      case 'in_corso':
+        return esteso
+          ? `L'evento è stato prolungato di ${this.extDurataLabel(e)}. Continua a scattare!`
+          : "L'evento è ancora in corso. Goditelo!";
       case 'sviluppo': {
         const r = this.formatRemaining(e.album_sbloccato_at);
         return r ? `Le foto sono in fase di sviluppo. Torna tra ${r}` : 'Le foto sono in fase di sviluppo.';
@@ -360,23 +408,20 @@ export class PaginaEventi implements OnInit, OnDestroy, ViewWillEnter {
         const r = e.voting_end_at ? this.formatRemaining(e.voting_end_at) : '';
         return r ? `Il rullino è pronto! Vota — scade tra ${r}` : 'Il rullino è pronto! Vota la tua foto preferita.';
       }
-      case 'chiusa':       return esteso
-        ? 'Evento prolungato e concluso! Le foto sono state sviluppate.'
-        : 'Le foto sono state sviluppate!';
-      default:              return '';
+      case 'chiusa':
+        return esteso
+          ? 'Evento prolungato e concluso! Le foto sono state sviluppate.'
+          : 'Le foto sono state sviluppate!';
+      default: return '';
     }
   }
 
-  /** Ritorna l'etichetta della durata di estensione, usando la durata dev-mode per eventi brevi
-   *  (durata_minuti ≤ 5 è il proxy per dev_mode poiché il modello EventoCard non espone dev_mode
-   *  direttamente — gli eventi dev sono sempre creati con durate di 3 minuti). */
+  // Ritorna l'etichetta della durata di estensione
   private extDurataLabel(e: EventoCard): string {
     return e.durata_minuti <= 5 ? '3 minuti' : '2 ore';
   }
 
-  /** Tempo rimanente leggibile da ora a un target epoch-ms ("23h 45m", "45m").
-   *  Ritorna '' una volta passato il target, così i chiamanti possono ricadere su testo statico.
-   *  Legge Date.now() live; il ticker di 1 minuto (this.contatore) guida la rivalutazione. */
+  // Tempo rimanente leggibile da ora a un target epoch-ms ("23h 45m", "45m").
   private remainingFromMs(targetMs: number): string {
     const diffMs = targetMs - Date.now();
     if (!Number.isFinite(diffMs) || diffMs <= 0) return '';
@@ -386,18 +431,16 @@ export class PaginaEventi implements OnInit, OnDestroy, ViewWillEnter {
     return h > 0 ? `${h}h ${m}m` : `${m}m`;
   }
 
-  /** Tempo rimanente verso un target ISO assoluto (usato per le fasi sviluppo/album_aperto). */
+  // Tempo rimanente verso un target ISO assoluto (usato per le fasi sviluppo/album_aperto).
   formatRemaining(targetIso: string): string {
     return this.remainingFromMs(isoToMs(targetIso));
   }
 
-  /** Tempo prima che un evento 'non_iniziata' inizi (data_inizio). */
+  // Tempo prima che un evento 'non_iniziata' inizi (basato su data_inizio).
   eventStartsIn(e: EventoCard): string {
     return this.remainingFromMs(isoToMs(e.data_inizio));
   }
 
-  /** Tempo prima che un evento 'in_corso' finisca. Usa data_fine_calc quando esteso (estensione_accettata=1),
-   *  altrimenti usa data_inizio + durata_minuti (la fine originale configurata). */
   eventEndsIn(e: EventoCard): string {
     const fineMs = e.estensione_accettata === 1
       ? isoToMs(e.data_fine_calc)
@@ -405,17 +448,20 @@ export class PaginaEventi implements OnInit, OnDestroy, ViewWillEnter {
     return this.remainingFromMs(fineMs);
   }
 
+  // Genera l'etichetta del bottone di Call To Action (azione principale)
   ctaLabel(e: EventoCard): string | null {
     switch (e.stato) {
-      // La fotocamera richiede il layer nativo CameraPreview (vedi guardCamera) — la
-      // build web non ha un flusso fotocamera funzionante, quindi non mostrare la CTA lì.
-      case 'in_corso':     return (this.platform.is('hybrid') && e.scatti_usati < e.scatti_per_utente) ? 'Scatta una foto' : null;
+      case 'in_corso':
+        return (this.platform.is('hybrid') && e.scatti_usati < e.scatti_per_utente) ? 'Scatta una foto' : null;
       case 'album_aperto':
-      case 'chiusa':        return 'Guarda il rullino';
-      default:               return null;
+      case 'chiusa':
+        return 'Guarda il rullino';
+      default:
+        return null;
     }
   }
 
+  // Restituisce la stringa descrittiva dello stato per la visualizzazione dell'organizzatore (creatore)
   creatorStatoCopy(e: EventoCard): string {
     const esteso = e.estensione_accettata === 1;
     switch (e.stato) {
@@ -433,25 +479,36 @@ export class PaginaEventi implements OnInit, OnDestroy, ViewWillEnter {
         return r ? `Le foto sono in fase di sviluppo. Torna tra ${r}` : 'Le foto sono in fase di sviluppo.';
       }
       case 'album_aperto': return 'Le votazioni sono aperte.';
-      case 'chiusa':       return esteso
-        ? 'Esteso e concluso con successo! Guarda il report.'
-        : 'È stato un successo! Guarda il report.';
-      default:              return '';
+      case 'chiusa':
+        return esteso
+          ? 'Esteso e concluso con successo! Guarda il report.'
+          : 'È stato un successo! Guarda il report.';
+      default:
+        return '';
     }
   }
 
+  // Prepara e apre l'interfaccia/modale (o mostra una porzione UI) del codice dell'evento
   showCode(event: EventoCard, $event: MouseEvent) {
     $event.stopPropagation();
     this.eventoConCodice = event;
     this.codiceCopiate = false;
   }
 
+  // Attiva la funzionalità nativa di condivisione del dispositivo o la copia appunti per il codice invito
   async shareCode(event: EventoCard) {
     const text = `Sei invitato a "${event.nome}"! Usa il codice ${event.codice} per partecipare su ECHO.`;
     const nav = navigator as Navigator & { share?: (data: ShareData) => Promise<void> };
+
     if (nav.share) {
-      try { await nav.share({ title: 'ECHO', text }); return; } catch { /* fall through */ }
+      try {
+        await nav.share({ title: 'ECHO', text });
+        return;
+      } catch {
+      }
     }
+
+    // Scrive il messaggio nella clipboard del dispositivo
     await Clipboard.write({ string: text });
     this.codiceCopiate = true;
     setTimeout(() => (this.codiceCopiate = false), 2500);

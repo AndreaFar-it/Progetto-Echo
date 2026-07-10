@@ -70,16 +70,18 @@ async function avviaServer() {
   process.on('SIGTERM', () => spegniServer('SIGTERM')); // È il segnale standard di spegnimento inviato da servizi cloud (nel nostro caso Render)
   process.on('SIGINT', () => spegniServer('SIGINT')); // È il segnale inviato quando si preme Ctrl+C nel terminale per interrompere il processo.
 
-  //AutoPing del server ogni 14 minuti per evitare che il server si spenga da solo (Render spegne i server inattivi dopo 15 minuti)
+  //AutoPing del server ogni 14 minuti per evitare che il server si spenga da solo (Render spegne i server inattivi dopo 15 minuti).
   if (process.env['NODE_ENV'] === 'production') {
-    const SELF_URL = `http://localhost:${PORT}/health`; // CAMBIARE URL
-    setInterval(() => {
-      //importa il modulo http base di Node in modo dinamico 
-      // e invia una richiesta GET a SELF_URL per mantenere il server attivo. Se c'è un errore, viene ignorato.
-      import('http').then(({ default: http }) =>
-        http.get(SELF_URL, res => res.resume()).on('error', () => { })
-      );
-    }, 14 * MS_PER_MINUTO); // calcola 14 minuti in millisecondi
+    const urlPubblico = process.env['RENDER_EXTERNAL_URL'];
+    if (urlPubblico) {
+      setInterval(() => {
+        import('https').then(({ default: https }) =>
+          https.get(`${urlPubblico}/health`, res => res.resume()).on('error', () => { })
+        );
+      }, 14 * MS_PER_MINUTO); // calcola 14 minuti in millisecondi
+    } else {
+      console.warn('[Server] RENDER_EXTERNAL_URL non impostata: keep-alive disattivato (il servizio può andare in sleep).');
+    }
   }
 }
 

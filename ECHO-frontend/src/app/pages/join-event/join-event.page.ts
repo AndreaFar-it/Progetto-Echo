@@ -1,24 +1,22 @@
-/**
- * ECHO — Pagina unificata di ingresso evento (Partecipa / Crea)
- *
- * Una singola rotta che ospita sia il flusso di partecipazione tramite codice sia il form di
- * creazione evento, commutati via un <ion-segment>. Sostituisce le due precedenti pagine separate
- * così l'utente atterra in un unico posto e cambia intento, invece di navigare tra le rotte.
- *
- *   • Segmento "Partecipa" → inserimento codice a 5 cifre (visivamente 5 caselle, un input nascosto
- *     che le pilota), chiama ApiService.partecipaEvento() — invariato rispetto a prima.
- *   • Segmento "Crea Evento" → <app-create-event>, il vecchio form di create-event.page.ts
- *     estratto in un componente figlio, con tutta la sua logica/validazione/API intatta.
- *
- * Entrambe le rotte che prima puntavano alle due pagine (eventi/partecipa, eventi/crea) ora
- * caricano questa; `data.tab` della rotta sceglie il segmento iniziale.
- */
-
-import { Component, ElementRef, ViewChild } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
+import {
+  AfterViewInit,
+  Component,
+  ElementRef,
+  ViewChild
+} from '@angular/core';
+import {
+  ActivatedRoute,
+  Router
+} from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { IonContent, IonSegment, IonSegmentButton, IonLabel, ToastController } from '@ionic/angular/standalone';
+import {
+  IonContent,
+  IonSegment,
+  IonSegmentButton,
+  IonLabel,
+  ToastController
+} from '@ionic/angular/standalone';
 import { ApiService } from '../../services/api.service';
 import { ComponenteIntestazione } from '../../shared/components';
 import { CreateEventComponent } from '../events/create-event.component';
@@ -30,8 +28,14 @@ const CODE_LENGTH = 5;
   selector: 'app-event-entry',
   standalone: true,
   imports: [
-    CommonModule, FormsModule, IonContent, IonSegment, IonSegmentButton, IonLabel,
-    ComponenteIntestazione, CreateEventComponent,
+    CommonModule, 
+    FormsModule, 
+    IonContent, 
+    IonSegment, 
+    IonSegmentButton, 
+    IonLabel,
+    ComponenteIntestazione, 
+    CreateEventComponent,
   ],
   template: `
     <app-echo-header></app-echo-header>
@@ -152,7 +156,8 @@ const CODE_LENGTH = 5;
     @keyframes spin { to { transform: rotate(360deg); } }
   `],
 })
-export class PaginaPartecipaEvento {
+export class PaginaPartecipaEvento implements AfterViewInit {
+  // Tramite @ViewChild, ottiene un riferimento all'elemento HTML (es. un tag input) contrassegnato con #hiddenInput nel template
   @ViewChild('hiddenInput') hiddenInput!: ElementRef<HTMLInputElement>;
 
   segment: 'partecipa' | 'crea' = 'partecipa';
@@ -165,13 +170,13 @@ export class PaginaPartecipaEvento {
     private api: ApiService,
     private toastCtrl: ToastController,
   ) {
-    // `data.tab` della rotta sceglie il segmento iniziale: eventi/crea apre su "Crea",
-    // eventi/partecipa (default) apre su "Partecipa".
     const tab = this.route.snapshot.data['tab'];
     if (tab === 'crea') this.segment = 'crea';
   }
 
   ngAfterViewInit() {
+    // Se ci troviamo nel tab 'partecipa', imposta un ritardo di 200 millisecondi 
+    // prima di dare il focus all'input nascosto per far aprire la tastiera
     if (this.segment === 'partecipa') setTimeout(() => this.hiddenInput?.nativeElement.focus(), 200);
   }
 
@@ -179,6 +184,7 @@ export class PaginaPartecipaEvento {
     this.hiddenInput?.nativeElement.focus();
   }
 
+  // Metodo che viene innescato ogni volta che l'utente digita qualcosa nell'input
   onCodeChange(value: string) {
     this.code = value.replace(/\D/g, '').slice(0, CODE_LENGTH);
   }

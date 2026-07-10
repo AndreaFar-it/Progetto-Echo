@@ -1,14 +1,3 @@
-/**
- * ECHO — Tutorial di onboarding (pagina instradata a /onboarding, spec §3.2.1)
- * 3 slide illustrate mostrate solo al PRIMISSIMO avvio su un nuovo dispositivo.
- * Slide: "Il Momento è Tutto" · "La Magia dell'Attesa" · "Sblocca, Esplora e Premia"
- *
- * Raggiunto via il redirect dalla radice (/ → /onboarding) e protetto da guardOnBoarding: se il
- * flag persistente hasSeenTutorial è già impostato, la guardia salta questo e va alla
- * landing page. Al termine dell'ultima slide (o Salta), il flag viene scritto via
- * @capacitor/preferences e l'utente è mandato alla landing page pubblica.
- */
-
 import { Component } from '@angular/core';
 import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
@@ -223,7 +212,6 @@ export class ComponenteOnboarding {
 
   private async finish() {
     await markTutorialSeen();
-    // Atterra sulla pagina di presentazione pubblica; da lì l'utente sceglie Accedi/Registrati.
     this.router.navigate(['/benvenuto']);
   }
 }

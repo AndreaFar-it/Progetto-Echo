@@ -1,21 +1,3 @@
-/**
- * ECHO — Pagina Landing Pubblica (Analog Dark · layout "Digital Film Roll")
- *
- * Pagina di presentazione pubblica mostrata su WEB/PWA ad ogni visita su '/'
- * (vedi guardAuth in core/guards/guards.ts), sia per utenti loggati che non.
- * Il guardLanding la esclude dall'app nativa — l'APK Android non la mostra mai.
- *
- * Struttura grafica fedele al mockup marketing 1:1:
- *   - Navbar con logo e CTA
- *   - Hero con viewfinder HUD (fotocamera vintage)
- *   - Sezione "come funziona" a 3 passi con bordo pellicola scallop
- *   - CTA download app
- *   - Footer completo
- *
- * I link di navigazione senza destinazione reale (FAQ, About, social, newsletter, legal)
- * sono renderizzati per fedeltà visiva ma sono inattivi — scelta deliberata, non dimenticanza.
- */
-
 import { Component } from '@angular/core';
 import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
@@ -23,17 +5,11 @@ import { IonContent } from '@ionic/angular/standalone';
 import { AuthService } from '../../services/auth.service';
 import { environment } from '../../../environments/environment';
 
-/** Struttura dati per ogni passo del processo "come funziona". */
 interface PassoProcesso {
-  /** Colore CSS dell'evidenziazione testuale (variabile CSS custom). */
   accent: string;
-  /** Testo in evidenza (colorato) all'inizio del corpo del testo. */
   lead: string;
-  /** Corpo principale del testo descrittivo. */
   body: string;
-  /** Titolo del passo. */
   title: string;
-  /** Percorso all'illustrazione SVG del passo. */
   illustration: string;
 }
 
@@ -48,7 +24,7 @@ interface PassoProcesso {
       <header class="nav">
         <div class="nav-inner">
           <div class="nav-brand">
-            <img src="assets/echo-wordmark-wide.svg" alt="echo — The Persistance of the Moment" class="brand-logo">
+            <img src="assets/echo-hero-dark.svg" alt="echo — The Persistance of the Moment" class="brand-logo">
           </div>
 
           <nav class="nav-links">
@@ -148,7 +124,7 @@ interface PassoProcesso {
       <footer class="site-footer">
         <div class="footer-top">
           <div class="footer-brand">
-            <img src="assets/echo-wordmark-stacked.svg" alt="echo — The Persistance of the Moment" class="footer-logo">
+            <img src="assets/echo-hero-dark.svg" alt="echo — The Persistance of the Moment" class="footer-logo">
           </div>
 
           <div class="footer-col">
@@ -174,9 +150,8 @@ interface PassoProcesso {
   styles: [`
     ion-content.landing-content { --background: var(--echo-bg); --overflow: auto; overflow-x: hidden; }
 
-    /* Limita l'espansione su schermi larghissimi (4K, dezoom browser).
-       Applicato agli INNER container per non troncare i bg full-width delle sezioni. */
-    .nav-inner, .hero-grid, .process-grid, .download-section > *, .footer-top, .footer-bottom {
+    /* Limita l'espansione su schermi larghissimi */
+    .nav-inner, .hero-grid, .process-grid, .download > *, .footer-top, .footer-bottom {
       max-width: 1180px;
       margin-left: auto;
       margin-right: auto;
@@ -226,7 +201,7 @@ interface PassoProcesso {
       white-space: nowrap;
     }
 
-    /* ── Hero — sfondo marrone scuro, uguale alle sezioni process/footer ── */
+    /* ── Hero — sfondo marrone scuro */
     .hero { background: var(--echo-surface-dark); padding: 40px clamp(20px, 4vw, 64px) 64px; }
     .hero-grid { display: flex; flex-direction: column; gap: 36px; }
 
@@ -372,8 +347,7 @@ interface PassoProcesso {
       padding-bottom: 8px;
     }
     .step-icon { width: 76px; height: 96px; }
-    /* Le tre illustrazioni SVG condividono la stessa altezza intrinseca (317.25) e differiscono
-       solo in larghezza: sizing per altezza (non per larghezza) le allinea visivamente. */
+    /* Le tre illustrazioni SVG */
     .card-illustration-img { height: 260px; width: auto; max-width: 100%; }
     .step-dots { display: flex; gap: 8px; }
     .step-dot {
@@ -400,9 +374,7 @@ interface PassoProcesso {
     }
     .step-lead { font-weight: 700; opacity: 1; }
 
-    /* Bordo scallop al margine tra la sezione scura e quella chiara.
-       Ogni pezzo è ritagliato esattamente a un dente + un gap (65px + 65px a questa background-size)
-       per permettere la ripetizione seamless con repeat-x. */
+    /* Archetti chiaro scuro */
     .scallop-seam { position: absolute; left: 0; right: 0; bottom: 0; height: 0; }
     .scallop-piece {
       position: absolute;
@@ -540,11 +512,13 @@ interface PassoProcesso {
   `],
 })
 export class PaginaBenvenuto {
+  
   readonly apkUrl = `${environment.apiUrl}/downloads/echo.apk`;
 
-  constructor(public auth: AuthService, private router: Router) {}
+  constructor(
+    public auth: AuthService, 
+    private router: Router) {}
 
-  /** I 3 passi del processo "come funziona", con illustrazioni e testi marketing. */
   readonly passi: PassoProcesso[] = [
     {
       accent: 'var(--echo-teal)',
@@ -569,18 +543,14 @@ export class PaginaBenvenuto {
     },
   ];
 
-  /** Naviga alla pagina di autenticazione nella modalità specificata (login o registrazione). */
   vaiAllAutenticazione(modalita: 'login' | 'register') {
     this.router.navigate(['/auth'], { queryParams: { mode: modalita } });
   }
 
-  /** Naviga a /auth con replaceUrl per azzerare lo stack Ionic (evita che il back button
-   *  o la cache del router outlet ripristini la pagina precedente della sessione vecchia). */
   entraInApp() {
     this.router.navigateByUrl('/auth', { replaceUrl: true });
   }
 
-  /** Scrolla con animazione fluida alla sezione "come funziona". */
   scorriAlProcesso() {
     document.getElementById('echo-process')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }

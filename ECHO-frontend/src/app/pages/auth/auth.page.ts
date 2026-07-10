@@ -1,14 +1,18 @@
-/**
- * ECHO — Pagina Autenticazione (Analog Dark)
- * Login + Registrazione. (Il tutorial di primo avvio è una pagina instradata a parte —
- * /onboarding, protetta da guardOnBoarding — non più mostrata da qui.)
- */
-
-import { Component, OnInit } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
+import {
+  Component,
+  OnInit
+} from '@angular/core';
+import {
+  ActivatedRoute,
+  Router
+} from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { IonContent, ToastController, AlertController } from '@ionic/angular/standalone';
+import {
+  IonContent,
+  ToastController,
+  AlertController
+} from '@ionic/angular/standalone';
 import { AuthService } from '../../services/auth.service';
 import { ApiService } from '../../services/api.service';
 import { firstValueFrom } from 'rxjs';
@@ -23,19 +27,10 @@ import { firstValueFrom } from 'rxjs';
 
         <!-- Logo block -->
         <header class="auth-header">
-          <svg class="corner-camera" viewBox="0 0 100 70">
-            <rect x="6" y="18" width="88" height="46" rx="4" fill="#2A1A0E"/>
-            <rect x="30" y="6" width="22" height="14" rx="2" fill="#2A1A0E"/>
-            <circle cx="50" cy="42" r="19" fill="#F5EFE6"/>
-            <circle cx="50" cy="42" r="13" fill="#2A1A0E"/>
-          </svg>
-          <div class="logo">ECHO</div>
-          <p class="tagline">The Persistence of the Moment</p>
+          <img class="hero-logo" src="assets/echo-hero-dark.svg" alt="ECHO — The Persistence of the Moment">
         </header>
 
-        <!-- ════════════════════════════════════════════════════════════
-             STEP 1 — credentials (both login & register use this view)
-             ════════════════════════════════════════════════════════════ -->
+        <!-- STEP 1 — credentials -->
         <ng-container *ngIf="step === 'credentials'">
           <div class="reel-label">
             <svg class="reel-icon" viewBox="0 0 24 32">
@@ -66,7 +61,7 @@ import { firstValueFrom } from 'rxjs';
               Password dimenticata?
             </button>
 
-            <!-- Inline error -->
+            <!-- Errore -->
             <p class="auth-error" *ngIf="errorMsg">{{ errorMsg }}</p>
 
             <button class="auth-submit echo-btn" [class.loading]="caricamento"
@@ -86,9 +81,7 @@ import { firstValueFrom } from 'rxjs';
           </div>
         </ng-container>
 
-        <!-- ════════════════════════════════════════════════════════════
-             STEP 2 — profile (register only): avatar + nome/cognome
-             ════════════════════════════════════════════════════════════ -->
+        <!--STEP 2 — avatar + nome/cognome-->
         <ng-container *ngIf="step === 'profile'">
           <div class="reel-label">
             <svg class="reel-icon" viewBox="0 0 24 32">
@@ -161,31 +154,12 @@ import { firstValueFrom } from 'rxjs';
     /* ── Logo ── */
     .auth-header { text-align: center; margin-bottom: 32px; position: relative; width: 100%; }
 
-    .corner-camera {
-      position: absolute;
-      top: -16px;
-      right: 0;
-      width: 64px;
-      opacity: 0.9;
+    .hero-logo {
+      height: 90px;
+      object-fit: contain;
     }
 
-    .logo {
-      font-family: var(--echo-font-display);
-      font-size: 44px;
-      color: var(--echo-ink);
-      line-height: 1;
-    }
-
-    .tagline {
-      margin-top: 4px;
-      font-family: var(--echo-font-mono);
-      font-size: 10px;
-      letter-spacing: 0.18em;
-      text-transform: uppercase;
-      color: var(--echo-ink-soft);
-    }
-
-    /* ── Avatar picker (registration) ── */
+    /* ── Avatar ── */
     .reel-label {
       display: flex;
       align-items: center;
@@ -269,7 +243,7 @@ import { firstValueFrom } from 'rxjs';
       border-radius: 0 2px 2px 0;
     }
 
-    /* Submit button — reuses .echo-btn's dark-pill + pressed-shadow look */
+    /* Bottone invio */
     .auth-submit {
       width: 100%;
       margin-top: 8px;
@@ -303,8 +277,7 @@ import { firstValueFrom } from 'rxjs';
       a { color: var(--echo-ink); text-decoration: underline; cursor: pointer; }
     }
 
-    /* "Torna indietro" secondario sotto il submit dello step profilo — solo testo, riporta
-       allo step credenziali così l'utente non resta mai intrappolato nel completamento profilo. */
+    /* "Torna indietro" */
     .back-link {
       display: block;
       width: 100%;
@@ -355,8 +328,7 @@ export class PaginaAutenticazione implements OnInit {
   avatarFile: File | null = null;
   avatarPreview: string | null = null;
 
-  /** 'credentials' (email+password, sia login che registrazione) → 'profile' (solo
-   *  registrazione: avatar+nome+cognome). Il login non avanza mai oltre 'credentials'. */
+  // 2 step per la fase di registrazione
   step: 'credentials' | 'profile' = 'credentials';
 
   constructor(
@@ -366,25 +338,21 @@ export class PaginaAutenticazione implements OnInit {
     private route: ActivatedRoute,
     private toastCtrl: ToastController,
     private alertCtrl: AlertController,
-  ) {}
+  ) { }
 
-  /** Impostato da guardAuth quando rimbalza a /auth una visita non autenticata/scaduta da un
-   *  deep link specifico (es. /profilo) — login() sotto rimanda l'utente lì invece di atterrare
-   *  sempre su /eventi/miei, così un re-login forzato non perde la pagina che stava
-   *  effettivamente cercando di raggiungere. */
+  // Variabile privata per memorizzare un eventuale URL a cui tornare dopo il login.
   private returnUrl: string | null = null;
 
   ngOnInit() {
-    // Se il token è ancora valido, salta il form — l'utente è già autenticato.
-    // Il replaceUrl:true nelle navigate verso /auth (guard + landing) garantisce che non
-    // ci sia la vecchia pagina profilo nello stack, quindi questo redirect è sicuro.
     if (this.auth.isLoggedIn) {
+      // Recupera l'URL di ritorno dai parametri della rotta, altrimenti usa '/eventi/miei' di default
       const dest = this.route.snapshot.queryParamMap.get('returnUrl') ?? '/eventi/miei';
       this.router.navigateByUrl(dest.startsWith('/auth') ? '/eventi/miei' : dest, { replaceUrl: true });
       return;
     }
     if (this.route.snapshot.queryParamMap.get('mode') === 'register') this.mode = 'register';
     const returnUrl = this.route.snapshot.queryParamMap.get('returnUrl');
+    // Se c'è un returnUrl valido e non è un redirect ciclico verso '/auth', lo salva nella variabile di classe
     if (returnUrl && !returnUrl.startsWith('/auth')) this.returnUrl = returnUrl;
   }
 
@@ -394,20 +362,12 @@ export class PaginaAutenticazione implements OnInit {
     this.errorMsg = '';
   }
 
-  /** "Torna indietro" sullo step profilo → ritorno allo step credenziali. Non esiste ancora un
-   *  account e nessun token viene emesso finché submit() non riesce sullo step profilo, quindi
-   *  non c'è sessione/token parziale da pulire qui — solo lo stato del form in memoria, che
-   *  manteniamo intenzionalmente (email/password preservate) così l'utente può correggere un
-   *  errore senza riscrivere tutto. */
   backToCredentials() {
     this.step = 'credentials';
     this.errorMsg = '';
   }
 
-  /** Submit dello step 1. Il login autentica subito; la registrazione valida email e password
-   *  PRIMA di avanzare allo step 2 — l'utente non deve raggiungere il completamento del profilo
-   *  con un'email già registrata o una password non valida (altrimenti fallirebbero solo alla
-   *  fine, dopo aver inserito nome/avatar). */
+  // Metodo asincrono invocato al click del submit sul form del primo step (credenziali)
   async onCredentialsSubmit() {
     this.errorMsg = '';
     if (!this.form.email || !this.form.password) {
@@ -419,14 +379,20 @@ export class PaginaAutenticazione implements OnInit {
       return;
     }
 
-    // ── Registrazione: regola l'avanzamento allo step profilo ──
     const email = this.form.email.trim();
+    // Valida l'email utilizzando una Regex standard
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       this.errorMsg = 'Inserisci un indirizzo email valido.';
       return;
     }
-    if (this.form.password.length < 8) {
-      this.errorMsg = 'La password deve avere almeno 8 caratteri.';
+    if (
+      this.form.password.length < 8 ||
+      !/[A-Z]/.test(this.form.password) ||
+      !/[a-z]/.test(this.form.password) ||
+      !/[0-9]/.test(this.form.password) ||
+      !/[^A-Za-z0-9]/.test(this.form.password)
+    ) {
+      this.errorMsg = 'Password non soddisfa i criteri di sicurezza. Deve contenere almeno un carattere maiuscolo, uno minuscolo, un numero e un simbolo speciale.';
       return;
     }
 
@@ -438,8 +404,6 @@ export class PaginaAutenticazione implements OnInit {
         return;
       }
     } catch {
-      // checkEmail è una scorciatoia UX — se irraggiungibile, procedi comunque.
-      // L'endpoint /registrazione impone l'unicità con un 409.
     } finally {
       this.caricamento = false;
     }
@@ -455,39 +419,44 @@ export class PaginaAutenticazione implements OnInit {
         this.router.navigateByUrl(this.returnUrl ?? '/eventi/miei');
       } else {
         await firstValueFrom(this.auth.register(
-          this.form.nome, this.form.cognome, this.form.email, this.form.password
+          this.form.nome,
+          this.form.cognome,
+          this.form.email,
+          this.form.password
         ));
-        // L'avatar è opzionale ed era stato acquisito solo lato client (non esisteva ancora un
-        // account a cui allegarlo) — register() sopra autentica già la nuova sessione, quindi
-        // l'endpoint foto-profilo esistente può essere chiamato subito. Best-effort:
-        // un upload fallito non deve bloccare il resto del flusso di registrazione.
+        // Se durante lo step 'profile' l'utente aveva selezionato un'immagine di profilo
         if (this.avatarFile) {
-          try { await firstValueFrom(this.api.uploadFotoProfilo(this.avatarFile)); } catch { /* ignore */ }
+          try {
+            await firstValueFrom(this.api.uploadFotoProfilo(this.avatarFile));
+          } catch {
+          }
         }
         this.router.navigate(['/eventi/miei']);
       }
     } catch (errore: unknown) {
-      const he = errore as { status?: number; error?: { error?: string } | string; message?: string };
-      const serverMsg = typeof he?.error === 'object' ? he?.error?.error : undefined;
-      const status = he?.status ?? 0;
-      this.errorMsg = serverMsg ?? `Errore ${status}: ${he?.message ?? 'connessione fallita'}`;
+      const moduloErrore = errore as { status?: number; error?: { error?: string } | string; message?: string };
+      const serverMsg = typeof moduloErrore?.error === 'object' ? moduloErrore?.error?.error : undefined;
+      const status = moduloErrore?.status ?? 0;
+      this.errorMsg = serverMsg ?? `Errore ${status}: ${moduloErrore?.message ?? 'connessione fallita'}`;
       if (this.mode === 'register') this.step = 'credentials';
     } finally {
       this.caricamento = false;
     }
   }
 
+  // Metodo agganciato all'evento 'change' dell'input type="file" per selezionare l'avatar
   onAvatarSelected(event: Event) {
     const file = (event.target as HTMLInputElement).files?.[0];
     if (!file) return;
     this.avatarFile = file;
     const reader = new FileReader();
-    reader.onload = () => { this.avatarPreview = reader.result as string; };
+    reader.onload = () => {
+      this.avatarPreview = reader.result as string;
+    };
     reader.readAsDataURL(file);
   }
 
   async openForgotPassword() {
-    // Step 1: ask for email, send OTP
     const step1 = await this.alertCtrl.create({
       header: 'Password dimenticata?',
       message: 'Inserisci la tua email per ricevere il codice OTP.',
@@ -502,7 +471,6 @@ export class PaginaAutenticazione implements OnInit {
             if (!email) return false;
             try {
               await firstValueFrom(this.api.forgotPassword(email));
-              // Step 2: ask for OTP + new password
               setTimeout(() => this.openOtpStep(email), 300);
             } catch {
               this.toast('Errore durante l\'invio. Riprova più tardi.', 'danger');
@@ -531,8 +499,14 @@ export class PaginaAutenticazione implements OnInit {
           handler: async (data: { otp?: string; password?: string }) => {
             const otp = String(data.otp ?? '').trim();
             const nuova_password = data.password ?? '';
-            if (!otp || nuova_password.length < 8) {
-              this.toast('Inserisci OTP e una password di almeno 8 caratteri.', 'danger');
+            const passwordValida =
+              nuova_password.length >= 8 &&
+              /[A-Z]/.test(nuova_password) &&
+              /[a-z]/.test(nuova_password) &&
+              /[0-9]/.test(nuova_password) &&
+              /[^A-Za-z0-9]/.test(nuova_password);
+            if (!otp || !passwordValida) {
+              this.toast('Inserisci OTP e una password valida (8+ caratteri, maiuscola, minuscola, numero e simbolo).', 'danger');
               return false;
             }
             try {
