@@ -5,11 +5,13 @@ import {
 import { CommonModule } from '@angular/common';
 import {
   IonApp,
-  IonRouterOutlet
+  IonRouterOutlet,
+  ToastController
 } from '@ionic/angular/standalone';
+import { SwUpdate, VersionReadyEvent } from '@angular/service-worker';
 import { ComponenteSplash } from './shell/splash-overlay.component';
 import { ApiService } from './services/api.service';
-import { firstValueFrom } from 'rxjs';
+import { firstValueFrom, filter } from 'rxjs';
 
 @Component({
   selector: 'app-root',
@@ -63,11 +65,40 @@ export class AppComponent implements OnInit {
   // Stato per la visibilità del banner di "risveglio" del server
   waking = false;
 
-  constructor(private api: ApiService) { }
+  constructor(
+    private api: ApiService,
+    private swUpdate: SwUpdate,
+    private toastCtrl: ToastController,
+  ) { }
 
   ngOnInit() {
     // Inizia la procedura di "risveglio" del server all'avvio dell'app
     this.prewarmBackend();
+    // Ascolta le nuove versioni pubblicate dal service worker
+    this.ascoltaAggiornamentiApp();
+  }
+
+  // Appena la nuova versione è pronta (VERSION_READY) proponiamo l'aggiornamento con un toast.
+  private ascoltaAggiornamentiApp(): void {
+    if (!this.swUpdate.isEnabled) return; // service worker assente (dev mode) o non registrato
+
+    this.swUpdate.versionUpdates
+      .pipe(filter((e): e is VersionReadyEvent => e.type === 'VERSION_READY'))
+      .subscribe(async () => {
+        const toast = await this.toastCtrl.create({
+          message: 'È disponibile una nuova versione di ECHO',
+          position: 'bottom',
+          color: 'dark',
+          buttons: [{ text: 'Aggiorna', role: 'confirm' }],
+          duration: 10000,
+        });
+        await toast.present();
+        const { role } = await toast.onDidDismiss();
+        if (role === 'confirm') {
+          await this.swUpdate.activateUpdate();
+          document.location.reload();
+        }
+      });
   }
 
   private async prewarmBackend() {

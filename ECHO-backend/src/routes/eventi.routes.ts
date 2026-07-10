@@ -187,9 +187,13 @@ router.get('/miei', (req: reqAuth, res: Response) => {
   const idUtente = req.user.id_utente;
 
   const eventi = all<{
-    data_fine_calc: string; sviluppo_started_at: string | null;
-    album_sbloccato_at: string | null; durata_votazione_ore: number;
-    is_organiser: number; estensione_req: number; estensione_accettata: number | null;
+    data_fine_calc: string; 
+    sviluppo_started_at: string | null;
+    album_sbloccato_at: string | null; 
+    durata_votazione_ore: number;
+    is_organiser: number; 
+    estensione_richiesta: number; 
+    estensione_accettata: number | null;
     rimane_esteso: number | null;
     [key: string]: unknown;
   }>(
@@ -212,7 +216,7 @@ router.get('/miei', (req: reqAuth, res: Response) => {
     // sempre valorizzato, che diventa "definitivo" non appena il vero sblocco avviene.
     album_sbloccato_at: e.album_sbloccato_at ?? aggiungiMinutiUTC(e.sviluppo_started_at ?? e.data_fine_calc, MINUTI_RITARDO_SVILUPPO),
     // Vero solo per l'organizzatore mentre attende la sua res al prompt di estensione
-    needs_estensione_response: !!(e.is_organiser && e.estensione_req && e.estensione_accettata === null),
+    needs_estensione_response: !!(e.is_organiser && e.estensione_richiesta && e.estensione_accettata === null),
     // Vero solo per i partecipanti non-organizzatori dopo che l'organizzatore ha accettato l'estensione
     needs_permanenza_response: !!(!e.is_organiser && e.estensione_accettata === 1 && e.rimane_esteso === null),
     // Scadenza della finestra di votazione
@@ -230,13 +234,13 @@ router.post('/:id/estendi', (req: reqAuth, res: Response) => {
 
   if (typeof accetta !== 'boolean') return res.status(400).json({ error: 'Campo "accetta" mancante' });
 
-  const evento = get<{ id_organizzatore: string; stato: string; nome: string; data_fine_calc: string; estensione_req: number; estensione_accettata: number | null; dev_mode: number }>(
-    'SELECT id_organizzatore,stato,nome,data_fine_calc,estensione_req,estensione_accettata,dev_mode FROM EVENTO WHERE id_evento=?', [id]);
+  const evento = get<{ id_organizzatore: string; stato: string; nome: string; data_fine_calc: string; estensione_richiesta: number; estensione_accettata: number | null; dev_mode: number }>(
+    'SELECT id_organizzatore,stato,nome,data_fine_calc,estensione_richiesta,estensione_accettata,dev_mode FROM EVENTO WHERE id_evento=?', [id]);
 
   if (!evento) return res.status(404).json({ error: 'Evento non trovato' });
   if (evento.id_organizzatore !== idUtente) return res.status(403).json({ error: "Solo l'organizzatore può rispondere" });
   if (evento.stato !== 'in_corso') return res.status(409).json({ error: 'Evento non più in corso' });
-  if (!evento.estensione_req) return res.status(409).json({ error: 'Nessuna req di estensione in sospeso' });
+  if (!evento.estensione_richiesta) return res.status(409).json({ error: 'Nessuna richiesta di estensione in sospeso' });
   if (evento.estensione_accettata !== null) return res.status(409).json({ error: 'Hai già risposto' });
 
   let nuovaDataFine = evento.data_fine_calc;

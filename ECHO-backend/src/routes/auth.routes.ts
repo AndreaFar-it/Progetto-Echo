@@ -17,8 +17,8 @@ import { adessoUTC, aggiungiMinutiUTC } from '../utils/time';
 
 const router = Router();
 
-// Hash fittizio per prevenire attacchi di timing durante il login
-const falsoHash = '$2a$12$invalidhashpadding00000000000000000';
+// Hash fittizio per prevenire attacchi di timing durante il login.
+const falsoHash = bcrypt.hashSync('echo-password-fittizia-anti-timing', GIRI_BCRYPT);
 
 //Richiesta di registrazione di un nuovo utente.
 //La password viene hashata con bcrypt prima di essere salvata nel database.

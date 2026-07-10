@@ -30,10 +30,13 @@
   "dataGroups": [
     {
       "name": "api-events",
-      "urls": ["/api/eventi/**"],
+      "urls": [
+        "https://echo-backend-z9k5.onrender.com/api/eventi/**"
+      ],
       "cacheConfig": {
         "maxSize": 20,
         "maxAge": "2m",
+        "timeout": "5s",
         "strategy": "freshness"
       }
     }

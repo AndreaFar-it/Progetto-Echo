@@ -1,15 +1,45 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
+import {
+  Component,
+  OnInit,
+  OnDestroy,
+  ViewChild,
+  ElementRef
+} from '@angular/core';
+import {
+  ActivatedRoute,
+  Router
+} from '@angular/router';
 import { CommonModule } from '@angular/common';
-import { IonContent, IonRefresher, IonRefresherContent, ToastController } from '@ionic/angular/standalone';
+import {
+  IonContent,
+  IonRefresher,
+  IonRefresherContent,
+  ToastController
+} from '@ionic/angular/standalone';
 import type { RefresherCustomEvent } from '@ionic/angular/standalone';
 import { Platform } from '@ionic/angular/common';
-import { interval, Subscription, switchMap, catchError, of, firstValueFrom } from 'rxjs';
+import {
+  interval,
+  Subscription,
+  switchMap,
+  catchError,
+  of,
+  firstValueFrom
+} from 'rxjs';
 import { ApiService } from '../../services/api.service';
 import { environment } from '../../../environments/environment';
-import { AnalyticsData, RankEntry } from '../../models/index';
-import { ComponenteCornicePolaroid, ComponenteEtichettaStato } from '../../shared/components';
-import { Filesystem, Directory } from '@capacitor/filesystem';
+import {
+  AnalyticsData,
+  RankEntry
+} from '../../models/index';
+import {
+  ComponenteCornicePolaroid,
+  ComponenteEtichettaStato
+} from '../../shared/components';
+import {
+  Filesystem,
+  Directory
+} from '@capacitor/filesystem';
 import { Share } from '@capacitor/share';
 import jsPDF from 'jspdf';
 
@@ -34,16 +64,16 @@ const POLLING_MS = 20_000;
         <div class="loading" *ngIf="caricamento"><p>Caricamento…</p></div>
         <div class="denied" *ngIf="!caricamento && accessDenied"><p>Solo l'organizzatore può vedere il report.</p></div>
 
-        <div class="report-card" *ngIf="!caricamento && !accessDenied && data">
+        <div class="report-card" #reportCard *ngIf="!caricamento && !accessDenied && data">
           <p class="report-intro">Questo documento certifica la prospettiva autentica e senza filtri del tuo pubblico</p>
 
-          <!-- ── Partecipanti — gauge ───────────────────────────── -->
-          <div class="metric-row" *ngFor="let m of gaugeMetrics">
-            <svg viewBox="0 0 36 36" class="gauge">
-              <path class="gauge-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-              <path class="gauge-fill" [attr.stroke-dasharray]="m.percent + ', 100'"
+          <!-- ── Partecipanti — Torta ───────────────────────────── -->
+          <div class="metric-row" *ngFor="let m of TortaMetrics">
+            <svg viewBox="0 0 36 36" class="Torta">
+              <path class="Torta-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+              <path class="Torta-fill" [attr.stroke-dasharray]="m.percent + ', 100'"
                 d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-              <text x="18" y="20" class="gauge-text">{{ m.percent }}%</text>
+              <text x="18" y="20" class="Torta-text">{{ m.percent }}%</text>
             </svg>
             <div class="metric-info">
               <span class="metric-label">{{ m.label }}</span>
@@ -81,7 +111,9 @@ const POLLING_MS = 20_000;
 
           <div class="report-actions">
             <button class="echo-btn btn-light" (click)="codeModalOpen = true">Visualizza il codice</button>
-            <button class="echo-btn btn-light" (click)="exportPdf()">Esporta in PDF</button>
+            <button class="echo-btn btn-light" (click)="exportPdf()" [disabled]="esportazioneInCorso">
+              {{ esportazioneInCorso ? 'Esportazione…' : 'Esporta in PDF' }}
+            </button>
             <button class="echo-btn btn-light" (click)="router.navigate(['/eventi/miei'])">I tuoi eventi</button>
           </div>
         </div>
@@ -114,10 +146,10 @@ const POLLING_MS = 20_000;
     .report-intro{font-family:var(--echo-font-mono);font-size:11px;color:rgba(245,239,230,0.7);text-align:center;line-height:1.6;margin:0 0 28px}
 
     .metric-row{display:flex;align-items:center;gap:18px;margin-bottom:32px}
-    .gauge{width:80px;height:80px;flex-shrink:0}
-    .gauge-bg{fill:none;stroke:rgba(245,239,230,0.2);stroke-width:2.6}
-    .gauge-fill{fill:none;stroke:var(--echo-teal);stroke-width:2.6;stroke-linecap:round;transition:stroke-dasharray 400ms ease-out}
-    .gauge-text{fill:var(--echo-cream);font-size:7px;font-family:var(--echo-font-mono);text-anchor:middle;dominant-baseline:middle}
+    .Torta{width:80px;height:80px;flex-shrink:0}
+    .Torta-bg{fill:none;stroke:rgba(245,239,230,0.2);stroke-width:2.6}
+    .Torta-fill{fill:none;stroke:var(--echo-teal);stroke-width:2.6;stroke-linecap:round;transition:stroke-dasharray 400ms ease-out}
+    .Torta-text{fill:var(--echo-cream);font-size:7px;font-family:var(--echo-font-mono);text-anchor:middle;dominant-baseline:middle}
     .metric-info{display:flex;flex-direction:column;gap:4px}
     .metric-label{font-family:var(--echo-font-mono);font-weight:700;font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--echo-cream)}
     .metric-value{font-family:var(--echo-font-mono);font-size:12px;color:rgba(245,239,230,0.7)}
@@ -150,10 +182,18 @@ export class PaginaAnalisi implements OnInit, OnDestroy {
   data: AnalyticsData | null = null;
   ranking: RankEntry[] = [];
   eventoNome = '';
-  caricamento = true; accessDenied = false; isLive = false; isFinal = false;
+  caricamento = true;
+  accessDenied = false;
+  isLive = false;
+  isFinal = false;
   codeModalOpen = false;
+  // Impedisce doppi click sul bottone di export mentre la cattura è in corso
+  esportazioneInCorso = false;
   private id_evento = '';
   private pollSub?: Subscription;
+
+  // Riferimento alla card del report nel template: è l'elemento che viene "fotografato" per il PDF
+  @ViewChild('reportCard') private reportCardRef?: ElementRef<HTMLElement>;
 
   constructor(
     private route: ActivatedRoute,
@@ -161,37 +201,46 @@ export class PaginaAnalisi implements OnInit, OnDestroy {
     private api: ApiService,
     private platform: Platform,
     private toastCtrl: ToastController,
-  ) {}
+  ) { }
 
+  // Il flusso di avvio si legge come una sequenza di passi: leggi i parametri, carica i dati.
   ngOnInit() {
-    this.id_evento  = this.route.snapshot.paramMap.get('id') ?? '';
+    // Estrae l'ID dall'URL corrente 
+    this.id_evento = this.route.snapshot.paramMap.get('id') ?? '';
+    // Tenta di recuperare il nome dell'evento dallo stato di navigazione della history, con fallback a stringa vuota
     this.eventoNome = ((history.state) as Record<string, unknown>)?.['eventoNome'] as string ?? '';
     this.load();
   }
-  ngOnDestroy() { this.pollSub?.unsubscribe(); }
 
-  /** Partecipanti + Scatti Effettuati — i due indicatori circolari. Voti Espressi è
-   *  renderizzato separatamente come pittogramma (vedi getter `pictogram`), non come gauge. */
-  get gaugeMetrics(): ReportMetric[] {
+  ngOnDestroy() {
+    this.pollSub?.unsubscribe();
+  }
+
+  // Getter che costruisce l'array di metriche (Partecipanti e Scatti)
+  get TortaMetrics(): ReportMetric[] {
+    // Se i dati non sono ancora stati caricati, restituisce un array vuoto
     if (!this.data) return [];
-    const iscritti   = this.data.partecipanti.totale;
-    const max        = this.data.max_partecipanti;
-    const scattiPoss = iscritti * this.data.scatti_per_utente;
+    const iscritti = this.data.partecipanti.totale;
+    const max = this.data.max_partecipanti;
+    const scattiPossibili = iscritti * this.data.scatti_per_utente;
     const pct = (num: number, den: number) => den > 0 ? Math.min(100, Math.round((num / den) * 100)) : 0;
+
     return [
-      { label: 'Partecipanti',      percent: pct(iscritti, max),                    valueLabel: `${iscritti}/${max}` },
-      { label: 'Scatti Effettuati', percent: pct(this.data.foto.totale, scattiPoss), valueLabel: `${this.data.foto.totale}/${scattiPoss}` },
+      { label: 'Partecipanti', percent: pct(iscritti, max), valueLabel: `${iscritti}/${max}` },
+      // Metrica relativa agli scatti totali effettuati su quelli massimi possibili
+      { label: 'Scatti Effettuati', percent: pct(this.data.foto.totale, scattiPossibili), valueLabel: `${this.data.foto.totale}/${scattiPossibili}` },
     ];
   }
 
-  /** Griglia fissa di 50 icone che rappresenta il rapporto di voti espressi — un pittogramma
-   *  letterale a 1 icona per partecipante sarebbe illimitato (gli eventi possono avere fino a 500 partecipanti). */
+  // Getter per calcolare i dati del pittogramma
   get pictogram(): { icons: boolean[]; valueLabel: string } | null {
     if (!this.data) return null;
     const iscritti = this.data.partecipanti.totale;
     const voti = this.data.voti.totale_voti;
+    // Calcola quante delle 50 icone devono essere "piene", in base al rapporto voti/iscritti
     const filled = iscritti > 0 ? Math.round((voti / iscritti) * 50) : 0;
     return {
+      // Genera un array di 50 booleani; true se l'indice è minore delle icone calcolate (filled), altrimenti false
       icons: Array.from({ length: 50 }, (_, i) => i < filled),
       valueLabel: `${voti}/${iscritti}`,
     };
@@ -201,280 +250,140 @@ export class PaginaAnalisi implements OnInit, OnDestroy {
     return `${environment.apiUrl}${path}`;
   }
 
+  // Esporta il report in PDF "fotografando" la card visibile a schermo (html2canvas)
+  // e incorporando l'immagine in un A4: la pagina che l'utente vede E' il report.
   async exportPdf(): Promise<void> {
-    if (!this.data) return;
-    const doc = new jsPDF({ unit: 'mm', format: 'a4' });
-    const W = doc.internal.pageSize.getWidth();
-    const H = doc.internal.pageSize.getHeight();
+    const card = this.reportCardRef?.nativeElement;
+    if (!this.data || !card || this.esportazioneInCorso) return;
+    this.esportazioneInCorso = true;
 
-    // ── Palette — valori esatti da variables.scss ─────────────────────────────
-    const RUST   : [number,number,number] = [184,  92,  56];  // --echo-rust
-    const INK    : [number,number,number] = [ 42,  26,  14];  // --echo-ink
-    const SURFACE: [number,number,number] = [ 59,  35,  20];  // --echo-surface-dark
-    const CREAM  : [number,number,number] = [245, 239, 230];  // --echo-cream
-    const TEAL   : [number,number,number] = [ 91, 168, 160];  // --echo-teal
-    const RING_BG: [number,number,number] = [ 90,  62,  40];  // cream 20% on surface
-    const CREAM70: [number,number,number] = [200, 194, 186];  // cream a 70% su scuro
-    const GOLD   : [number,number,number] = [212, 175,  55];  // --echo-medal-gold
-    const SILVER : [number,number,number] = [168, 169, 173];  // --echo-medal-silver
-    const BRONZE : [number,number,number] = [205, 127,  50];  // --echo-medal-bronze
+    try {
+      // Import dinamico: html2canvas pesa ~200 KB e serve solo qui
+      const { default: html2canvas } = await import('html2canvas');
 
-    const now = new Date().toLocaleDateString('it-IT', { day: '2-digit', month: 'long', year: 'numeric' });
+      // Cattura la card in un canvas: scale 2 per la nitidezza, useCORS per le foto dei
+      // vincitori (servite dal backend); i bottoni-azione vengono esclusi dallo scatto.
+      const canvas = await html2canvas(card, {
+        scale: 2,
+        useCORS: true,
+        backgroundColor: null,
+        ignoreElements: el => el.classList?.contains('report-actions'),
+      });
 
-    // ── Header band (rust) ───────────────────────────────────────────────────
-    doc.setFillColor(...RUST);
-    doc.rect(0, 0, W, 26, 'F');
+      // Compone l'A4: banda header con logo/evento/data + screenshot centrato e adattato
+      const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+      const pagW = doc.internal.pageSize.getWidth();
+      const pagH = doc.internal.pageSize.getHeight();
+      const dataOdierna = new Date().toLocaleDateString('it-IT', { day: '2-digit', month: 'long', year: 'numeric' });
 
-    doc.setTextColor(...CREAM);
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(20);
-    doc.text('ECHO', 14, 13);
-
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(8);
-    doc.text('The Persistence of the Moment', 14, 20);
-
-    doc.setFontSize(9);
-    doc.text(this.eventoNome || 'Evento', W - 14, 13, { align: 'right' });
-    doc.setFontSize(8);
-    doc.text(now, W - 14, 20, { align: 'right' });
-
-    // ── Dark card (replica visiva del .report-card) ──────────────────────────
-    const cardX = 10, cardY = 30, cardW = W - 20, cardH = H - 42;
-    doc.setFillColor(...SURFACE);
-    doc.roundedRect(cardX, cardY, cardW, cardH, 4, 4, 'F');
-
-    let y = cardY + 14;
-
-    // Titolo "Report"
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(20);
-    doc.setTextColor(...CREAM);
-    doc.text('Report', W / 2, y, { align: 'center' });
-    y += 8;
-
-    // Status chip — stessi colori delle classi .echo-stato-*
-    const statoConfig: Record<string, { bg: [number,number,number]; text: [number,number,number]; label: string }> = {
-      'non_iniziata': { bg: [220,228,237], text: [47,69,102],  label: 'NON INIZIATA' },
-      'in_corso':     { bg: [227,238,221], text: [47,107,54],  label: 'IN CORSO' },
-      'sviluppo':     { bg: [246,232,201], text: [122,84,25],  label: 'IN SVILUPPO' },
-      'album_aperto': { bg: [243,220,210], text: [138,63,35],  label: 'VOTAZIONI APERTE' },
-      'chiusa':       { bg: [227,215,192], text: [107,87,68],  label: 'CONCLUSO' },
-    };
-    const sc = statoConfig[this.data.stato] ?? { bg: RING_BG, text: CREAM, label: this.data.stato.toUpperCase() };
-    doc.setFontSize(7);
-    const chipW = doc.getTextWidth(sc.label) + 10;
-    doc.setFillColor(...sc.bg);
-    doc.roundedRect((W - chipW) / 2, y - 3.5, chipW, 6, 3, 3, 'F');
-    doc.setTextColor(...sc.text);
-    doc.text(sc.label, W / 2, y, { align: 'center' });
-    y += 11;
-
-    // Intro (replica .report-intro)
-    doc.setFont('helvetica', 'italic');
-    doc.setFontSize(8);
-    doc.setTextColor(...CREAM70);
-    doc.text(
-      'Questo documento certifica la prospettiva autentica e senza filtri del tuo pubblico.',
-      W / 2, y, { align: 'center', maxWidth: cardW - 24 }
-    );
-    y += 15;
-
-    // ── Gauge circolari (replica .gauge SVG) ─────────────────────────────────
-    const gauges = this.gaugeMetrics;
-    const GAUGE_R = 16, STROKE = 2.8;
-    const g1x = W / 2 - 36, g2x = W / 2 + 36;
-    const gCY = y + GAUGE_R;
-
-    for (let i = 0; i < Math.min(gauges.length, 2); i++) {
-      const g = gauges[i];
-      const cx = i === 0 ? g1x : g2x;
-
-      this.pdfArcRing(doc, cx, gCY, GAUGE_R, 0, 360, STROKE, RING_BG);
-      if (g.percent > 0)
-        this.pdfArcRing(doc, cx, gCY, GAUGE_R, -90, -90 + (g.percent / 100) * 360, STROKE, TEAL);
-
+      doc.setFillColor(184, 92, 56);                       // banda header color --echo-rust
+      doc.rect(0, 0, pagW, 22, 'F');
+      doc.setTextColor(245, 239, 230);                     // testi header color --echo-cream
       doc.setFont('helvetica', 'bold');
-      doc.setFontSize(11);
-      doc.setTextColor(...CREAM);
-      doc.text(`${g.percent}%`, cx, gCY + 1.5, { align: 'center' });
-
-      doc.setFont('helvetica', 'normal');
-      doc.setFontSize(6);
-      doc.setTextColor(...CREAM70);
-      doc.text(g.valueLabel, cx, gCY + 6, { align: 'center' });
-
-      doc.setFont('helvetica', 'bold');
-      doc.setFontSize(7);
-      doc.setTextColor(...CREAM);
-      doc.text(g.label.toUpperCase(), cx, gCY + GAUGE_R + 6, { align: 'center' });
-    }
-
-    y = gCY + GAUGE_R + 15;
-
-    // Divider
-    doc.setDrawColor(...RING_BG);
-    doc.setLineWidth(0.3);
-    doc.line(cardX + 16, y, cardX + cardW - 16, y);
-    y += 8;
-
-    // ── Pictogram voti (replica .pictogram — griglia 10×5 = 50 icone) ────────
-    if (this.pictogram) {
-      const pic = this.pictogram;
-      const COLS = 10, ROWS = 5, DOT_R = 1.0, STEP = 3.2;
-      const startX = W / 2 - (COLS * STEP) / 2 + STEP / 2;
-
-      doc.setFont('helvetica', 'bold');
-      doc.setFontSize(7);
-      doc.setTextColor(...CREAM);
-      doc.text('VOTI ESPRESSI', W / 2, y, { align: 'center' });
-      y += 6;
-
-      for (let row = 0; row < ROWS; row++) {
-        for (let col = 0; col < COLS; col++) {
-          const cx2 = startX + col * STEP;
-          const cy2 = y + row * STEP;
-          if (pic.icons[row * COLS + col]) {
-            doc.setFillColor(...TEAL);
-            doc.circle(cx2, cy2, DOT_R, 'F');
-          } else {
-            doc.setDrawColor(...RING_BG);
-            doc.setLineWidth(0.3);
-            doc.circle(cx2, cy2, DOT_R, 'S');
-          }
-        }
-      }
-
+      doc.setFontSize(18);
+      doc.text('ECHO', 14, 12);
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(8);
-      doc.setTextColor(...CREAM70);
-      doc.text(pic.valueLabel, W / 2, y + ROWS * STEP + 5, { align: 'center' });
-      y += ROWS * STEP + 13;
+      doc.text('The Persistence of the Moment', 14, 18);
+      doc.text(this.eventoNome || 'Evento', pagW - 14, 12, { align: 'right' });
+      doc.text(`Generato il ${dataOdierna}`, pagW - 14, 18, { align: 'right' });
+
+      // Adatta lo screenshot alla pagina mantenendo le proporzioni (mai deformato, mai tagliato)
+      const margine = 10;
+      const topContenuto = 22 + margine;
+      const scala = Math.min((pagW - margine * 2) / canvas.width, (pagH - topContenuto - margine) / canvas.height);
+      const imgW = canvas.width * scala;
+      const imgH = canvas.height * scala;
+      // PNG per conservare la trasparenza degli angoli arrotondati della card
+      doc.addImage(canvas.toDataURL('image/png'), 'PNG', (pagW - imgW) / 2, topContenuto, imgW, imgH);
+
+      await this.salvaOCondividi(doc, `report-${this.sanitizeFilename(this.eventoNome || 'evento')}.pdf`);
+    } catch {
+      // Cattura fallita (es. canvas "tainted" da immagini cross-origin senza CORS) o scrittura file fallita
+      const t = await this.toastCtrl.create({ message: "Errore durante l'esportazione del PDF.", duration: 2800, color: 'danger', position: 'bottom' });
+      t.present();
+    } finally {
+      this.esportazioneInCorso = false;
     }
+  }
 
-    // ── Vincitori (solo stato chiusa) ─────────────────────────────────────────
-    if (this.isFinal && this.ranking.length) {
-      doc.setDrawColor(...RING_BG);
-      doc.setLineWidth(0.3);
-      doc.line(cardX + 16, y, cardX + cardW - 16, y);
-      y += 8;
-
-      doc.setFont('helvetica', 'bold');
-      doc.setFontSize(8);
-      doc.setTextColor(...CREAM);
-      doc.text('VINCITORI', W / 2, y, { align: 'center' });
-      y += 9;
-
-      const medalColors: [number,number,number][] = [GOLD, SILVER, BRONZE];
-      const BADGE_LABELS: Record<string, string> = { oro: 'ECHO Oro', argento: 'ECHO Argento', bronzo: 'ECHO Bronzo' };
-
-      for (const [i, e] of this.ranking.entries()) {
-        doc.setFillColor(...medalColors[i]);
-        doc.circle(cardX + 22, y, 4, 'F');
-        doc.setFont('helvetica', 'bold');
-        doc.setFontSize(8);
-        doc.setTextColor(...INK);
-        doc.text(String(e.posizione), cardX + 22, y + 1.5, { align: 'center' });
-
-        doc.setTextColor(...CREAM);
-        doc.setFont('helvetica', 'bold');
-        doc.setFontSize(11);
-        doc.text(`${e.nome} ${e.cognome}`, cardX + 32, y + 1);
-
-        doc.setFont('helvetica', 'normal');
-        doc.setFontSize(8);
-        doc.setTextColor(...CREAM70);
-        doc.text(`${BADGE_LABELS[e.badge] ?? e.badge}  ·  ${e.punteggio_voti} ${e.punteggio_voti === 1 ? 'voto' : 'voti'}`, cardX + 32, y + 7);
-
-        y += 17;
-      }
-    }
-
-    // ── Footer ───────────────────────────────────────────────────────────────
-    doc.setFillColor(...INK);
-    doc.rect(0, H - 12, W, 12, 'F');
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(8);
-    doc.setTextColor(...CREAM);
-    doc.text('ECHO — The Persistence of the Moment', 14, H - 4);
-    doc.text(`Generato il ${now}`, W - 14, H - 4, { align: 'right' });
-
-    // ── Save / share ─────────────────────────────────────────────────────────
-    const filename = `report-${this.sanitizeFilename(this.eventoNome || 'evento')}.pdf`;
+  // Salva il PDF: su app nativa lo scrive in cache e apre la share sheet, sul web avvia il download
+  private async salvaOCondividi(doc: jsPDF, filename: string): Promise<void> {
     if (this.platform.is('capacitor')) {
+      // Estrae il Base64 del file PDF togliendo l'header URI generato da jsPDF
+      const base64 = doc.output('datauristring').split(',')[1] ?? '';
+      // Scrive il file nella directory temporanea (Cache) tramite Capacitor Filesystem
+      const result = await Filesystem.writeFile({ path: filename, data: base64, directory: Directory.Cache });
       try {
-        const base64 = doc.output('datauristring').split(',')[1] ?? '';
-        const result = await Filesystem.writeFile({ path: filename, data: base64, directory: Directory.Cache });
-        try {
-          await Share.share({ url: result.uri, title: filename, dialogTitle: 'Salva o condividi il report' });
-        } catch { /* user dismissed */ }
+        // Apre la modale nativa di condivisione per salvarlo/esportarlo
+        await Share.share({ url: result.uri, title: filename, dialogTitle: 'Salva o condividi il report' });
       } catch {
-        const t = await this.toastCtrl.create({ message: "Errore durante l'esportazione del PDF.", duration: 2800, color: 'danger', position: 'bottom' });
-        t.present();
+        // L'utente ha chiuso la share sheet volontariamente: nessuna azione necessaria
       }
     } else {
+      // Sul web: download diretto del file
       doc.save(filename);
     }
   }
 
-  /** Disegna un arco circolare in jsPDF approssimandolo con segmenti di linea.
-   *  startDeg/endDeg in gradi; 0° = destra, angoli in senso orario (coord schermo). */
-  private pdfArcRing(
-    doc: jsPDF,
-    cx: number, cy: number, r: number,
-    startDeg: number, endDeg: number,
-    lineW: number,
-    color: [number,number,number],
-  ): void {
-    const STEPS = 64;
-    const a0 = (startDeg * Math.PI) / 180;
-    const a1 = (endDeg   * Math.PI) / 180;
-    const range = a1 - a0;
-    doc.setDrawColor(...color);
-    doc.setLineWidth(lineW);
-    for (let i = 0; i < STEPS; i++) {
-      const ta = a0 + range * i / STEPS;
-      const tb = a0 + range * (i + 1) / STEPS;
-      doc.line(cx + r * Math.cos(ta), cy + r * Math.sin(ta),
-               cx + r * Math.cos(tb), cy + r * Math.sin(tb));
-    }
-  }
-
+  // Funzione privata per normalizzare i nomi dei file stringa rimpiazzando qualsiasi cosa non sia alfanumerica
   private sanitizeFilename(name: string): string {
     return name.replace(/[^a-zA-Z0-9 _-]/g, '_').trim() || 'evento';
   }
 
-  /** Handler del pull-to-refresh — rifà il fetch e segnala al refresher di fermare lo spinner. */
+  // Gestore per l'evento "Pull-to-refresh"
   async handleRefresh(event: RefresherCustomEvent) {
     await this.load();
     event.target.complete();
   }
 
+  // Metodo privato responsabile di inizializzare e aggiornare tutti i dati prelevandoli da rete (API)
   private async load() {
     try {
+      // Esegue la chiamata tramite il servizio api e attende (firstValueFrom) che il primo risultato sia ritornato per l'assegnazione a `data`
       this.data = await firstValueFrom(this.api.getAnalisi(this.id_evento));
+      // Calcola e istanzia tutti gli stati ricavandoli dai dati ottenuti
       this.deriveState();
+
       if (this.isLive && !this.pollSub) {
         this.pollSub = interval(POLLING_MS).pipe(
+          // SwitchMap intercetta il timer e ad ogni scatto scambia lo stream emettendo una nuova chiamata HTTP GET
           switchMap(() => this.api.getAnalisi(this.id_evento).pipe(catchError(() => of(null))))
-        ).subscribe(d => { if (d) { this.data = d; this.deriveState(); if (this.isFinal) { this.pollSub?.unsubscribe(); this.isLive = false; } } });
+        ).subscribe(data => {
+          if (data) {
+            this.data = data;
+            this.deriveState();
+            if (this.isFinal) {
+              this.pollSub?.unsubscribe();
+              this.isLive = false;
+            }
+          }
+        });
       }
     } catch (errore: unknown) {
-      if ((errore as { status?: number })?.status === 403) this.accessDenied = true;
-    } finally { this.caricamento = false; }
+      if ((errore as { status?: number })?.status === 403)
+        this.accessDenied = true;
+    } finally {
+      this.caricamento = false;
+    }
   }
 
-  /** stato arriva direttamente dalla risposta analytics di questo evento — non da un'euristica
-   *  globale "evento attualmente attivo", che potrebbe puntare a un evento del tutto diverso. */
+  // Metodo helper che converte i valori dello 'stato'
   private deriveState() {
-    const stato  = this.data?.stato ?? 'chiusa';
+    const stato = this.data?.stato ?? 'chiusa';
     this.isFinal = stato === 'chiusa';
-    this.isLive  = !this.isFinal && stato !== 'non_iniziata';
+    this.isLive = !this.isFinal && stato !== 'non_iniziata';
+
     const BADGES: ('oro' | 'argento' | 'bronzo')[] = ['oro', 'argento', 'bronzo'];
+
     this.ranking = (this.data?.classifica ?? []).slice(0, 3).map((c, i) => ({
       posizione: (i + 1) as 1 | 2 | 3,
-      nome: c.nome, cognome: c.cognome, foto_profilo_url: c.foto_profilo_url,
-      url_originale: c.url_originale, punteggio_voti: c.punteggio_voti, badge: BADGES[i],
+      nome: c.nome,
+      cognome: c.cognome,
+      foto_profilo_url: c.foto_profilo_url,
+      url_originale: c.url_originale,
+      punteggio_voti: c.punteggio_voti,
+      badge: BADGES[i],
     }));
   }
 }

@@ -1,9 +1,12 @@
 import {
   Component,
   OnInit,
+  AfterViewInit,
   OnDestroy,
   ChangeDetectionStrategy,
   ChangeDetectorRef,
+  ElementRef,
+  ViewChild,
   effect
 } from '@angular/core';
 import {
@@ -34,7 +37,7 @@ import { ServizioNotifiche } from '../services/notification.service';
       <div class="shell-content">
         <ion-router-outlet></ion-router-outlet>
       </div>
-      <nav class="tab-bar">
+      <nav class="tab-bar" #tabBar [class.tab-bar-overlay]="tabAttiva === 'camera'">
 
         <button class="tab" [class.tab-active]="tabAttiva==='eventi'" (click)="go('/eventi/miei')">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
@@ -91,6 +94,7 @@ import { ServizioNotifiche } from '../services/notification.service';
       height: 100vh;
       height: 100dvh;
       overflow: hidden;
+      position: relative;
     }
 
     /* Il router outlet riempie tutto lo spazio rimanente sopra la tab bar */
@@ -112,6 +116,11 @@ import { ServizioNotifiche } from '../services/notification.service';
       border-top: 1px solid rgba(0,0,0,0.25);
       padding-bottom: env(safe-area-inset-bottom, 4px);
       z-index: 1000;
+    }
+
+    .tab-bar-overlay {
+      position: absolute;
+      left: 0; right: 0; bottom: 0;
     }
 
     /* Stile generale per i pulsanti della tab bar */
@@ -169,7 +178,7 @@ import { ServizioNotifiche } from '../services/notification.service';
     }
   `],
 })
-export class ComponenteShellApp implements OnInit, OnDestroy {
+export class ComponenteShellApp implements OnInit, AfterViewInit, OnDestroy {
   // Stato corrente dell'evento (es. se c'è un evento attivo a cui si partecipa)
   st: StatoEventoAttivo | null = null;
 
@@ -179,6 +188,8 @@ export class ComponenteShellApp implements OnInit, OnDestroy {
   /** La fotocamera si basa sul layer nativo CameraPreview — nascosta del tutto su web/desktop. */
   readonly isHybrid: boolean;
   private subs = new Subscription();
+
+  @ViewChild('tabBar') tabBarRef!: ElementRef<HTMLElement>;
 
   constructor(
     private svc: ServizioStatoEvento,
@@ -201,6 +212,9 @@ export class ComponenteShellApp implements OnInit, OnDestroy {
   }
 
   ngOnInit() {
+    // Avvia polling e countdown dello stato evento SOLO ora: il servizio non interroga mai il server da sloggati.
+    this.svc.start();
+
     // Ascolta i cambiamenti di rotta (URL) per mantenere sincronizzata la tab bar
     this.subs.add(
       this.router.events
@@ -214,9 +228,20 @@ export class ComponenteShellApp implements OnInit, OnDestroy {
     this.syncTab(this.router.url);
   }
 
+  ngAfterViewInit() {
+    // Espone l'altezza reale della tab bar come variabile CSS, così le pagine che la fanno
+    // galleggiare sopra il proprio contenuto (es. camera fullscreen) sanno quanto spazio riservare.
+    document.documentElement.style.setProperty(
+      '--echo-tab-bar-height',
+      this.tabBarRef.nativeElement.offsetHeight + 'px'
+    );
+  }
+
   ngOnDestroy() {
     // Evita memory leaks scollegando le iscrizioni (subscriptions)
     this.subs.unsubscribe();
+    // La shell muore quando si esce dall'area autenticata (logout): ferma polling e ticker.
+    this.svc.stop();
   }
 
   // Navigazione generica

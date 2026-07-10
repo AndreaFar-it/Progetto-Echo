@@ -1,25 +1,3 @@
-/**
- * ECHO — Componente Creazione Evento (create-event.component.ts)
- *
- * Form di creazione evento estratto dalla vecchia pagina standalone (create-event.page.ts)
- * e incorporato come componente figlio nella pagina unificata "Crea / Partecipa"
- * (event-entry.page.ts) sotto un <ion-segment>.
- *
- * Comportamento invariato rispetto alla pagina originale:
- *   - Form a singolo scroll (spec §3.3.1 — nessun wizard)
- *   - Chiamata ApiService.creaEvento()
- *   - Validazione in-form con messaggi d'errore inline
- *   - Modal di successo con codice generato, copia negli appunti e condivisione
- *
- * Differenza rispetto alla pagina originale: non include <app-echo-header> né
- * <ion-content> — la pagina host li fornisce.
- *
- * Modalità sviluppo rapido (Dev Mode):
- *   Se la durata viene impostata a 0 ore e 3 minuti esatti, viene attivata una
- *   modalità speciale che bypassa i limiti di durata (1h-6h) e comprime l'intero
- *   ciclo di vita dell'evento a 3 minuti per i test end-to-end.
- */
-
 import { Component } from '@angular/core';
 import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
@@ -28,6 +6,7 @@ import { ToastController } from '@ionic/angular/standalone';
 import { Clipboard } from '@capacitor/clipboard';
 import { ApiService } from '../../services/api.service';
 import { firstValueFrom } from 'rxjs';
+import { localDatetimeToIsoUtc } from '../../core/time.util';
 
 @Component({
   selector: 'app-create-event',
@@ -126,7 +105,7 @@ import { firstValueFrom } from 'rxjs';
       </button>
     </div>
 
-    <!-- ── Modal di Successo ── -->
+    <!-- ── Evento creato ── -->
     <div class="success-overlay" *ngIf="codiceCreatoEvento">
       <div class="success-modal">
         <h2 class="success-title">Evento creato!</h2>
@@ -250,7 +229,7 @@ import { firstValueFrom } from 'rxjs';
     }
     @keyframes spin { to { transform: rotate(360deg); } }
 
-    /* ── Modal di successo ── */
+    /* ── Evento creato ── */
     .success-overlay {
       position: fixed; inset: 0; z-index: 200;
       background: rgba(42,26,14,0.6);
@@ -281,28 +260,13 @@ import { firstValueFrom } from 'rxjs';
   `],
 })
 export class CreateEventComponent {
-  /** True dopo il primo tentativo di submit — attiva la visualizzazione degli errori inline. */
   campiToccati = false;
-
-  /** True mentre la richiesta di creazione è in corso (disabilita il bottone). */
   inCreazione = false;
-
-  /** True per 2.5 secondi dopo aver copiato il testo di invito negli appunti. */
   copiato = false;
-
-  /** Codice a 5 cifre dell'evento appena creato; vuoto finché la creazione non va a buon fine. */
   codiceCreatoEvento = '';
-
-  /** Messaggio di errore globale del form (visualizzato sopra il bottone di submit). */
   messaggioErrore = '';
-
-  /** Messaggio di errore specifico per il campo durata. */
   erroredurata = '';
-
-  /** True se la durata è impostata a 0h 3min — attiva il ciclo di vita rapido (3 min totali). */
   modalitaSviluppo = false;
-
-  /** Dati del form legati ai campi input tramite ngModel. */
   form = {
     nome: '',
     luogo: '',
@@ -314,15 +278,10 @@ export class CreateEventComponent {
     durata_votazione_ore: 24,
   };
 
-  /**
-   * Richiamata ad ogni modifica di durata_ore o durata_min.
-   * Rileva la modalità sviluppo (0h 3min) e valida i limiti (1h-6h).
-   */
   aggiornaDurata(): void {
     const ore = Math.floor(this.form.durata_ore ?? 0);
     const min = Math.floor(this.form.durata_min ?? 0);
 
-    // La combinazione esatta 0h 3min attiva la modalità sviluppo rapido
     this.modalitaSviluppo = ore === 0 && min === 3;
     this.erroredurata = '';
 
@@ -338,14 +297,12 @@ export class CreateEventComponent {
     }
   }
 
-  /** Calcola la durata totale in minuti sommando ore e minuti del form. */
   private get durataTotaleMinuti(): number {
     const ore = Math.floor(this.form.durata_ore ?? 0);
     const min = Math.floor(this.form.durata_min ?? 0);
     return ore * 60 + min;
   }
 
-  /** Testo dell'invito da condividere o copiare negli appunti. */
   get testoInvito(): string {
     return `Sei invitato a ${this.form.nome}! Usa il codice ${this.codiceCreatoEvento} per partecipare su ECHO.`;
   }
@@ -356,18 +313,10 @@ export class CreateEventComponent {
     private toastCtrl: ToastController,
   ) {}
 
-  /**
-   * Valida il form e invia la richiesta di creazione evento al backend.
-   * Mostra il modal di successo con il codice generato se la creazione va a buon fine.
-   */
   async creaEvento() {
     this.campiToccati = true;
     this.messaggioErrore = '';
-
-    // Validazione campi obbligatori
     if (!this.form.nome || !this.form.luogo || !this.form.data_inizio) return;
-
-    // Validazione durata (la modalità sviluppo bypassa i limiti 1h-6h)
     const totaleMinuti = this.durataTotaleMinuti;
     if (!this.modalitaSviluppo) {
       if (this.erroredurata) { this.messaggioErrore = this.erroredurata; return; }
@@ -377,8 +326,8 @@ export class CreateEventComponent {
       }
     }
 
-    // Validazione parametri con controllo di intervallo
     const nelRange = (v: number, min: number, max: number) => Number.isFinite(v) && v >= min && v <= max;
+    
     if (!nelRange(this.form.max_partecipanti, 1, 500))  { this.messaggioErrore = 'I partecipanti devono essere tra 1 e 500.'; return; }
     if (!nelRange(this.form.scatti_per_utente, 1, 5))   { this.messaggioErrore = 'Gli scatti devono essere tra 1 e 5.'; return; }
     if (!nelRange(this.form.durata_votazione_ore, 12, 72))  { this.messaggioErrore = 'La finestra di votazione deve essere tra 12h e 72h.'; return; }
@@ -389,7 +338,7 @@ export class CreateEventComponent {
         this.api.creaEvento({
           nome: this.form.nome,
           luogo: this.form.luogo,
-          data_inizio: this.form.data_inizio,
+          data_inizio: localDatetimeToIsoUtc(this.form.data_inizio),
           durata_minuti: totaleMinuti,
           max_partecipanti: this.form.max_partecipanti,
           scatti_per_utente: this.form.scatti_per_utente,
@@ -397,7 +346,6 @@ export class CreateEventComponent {
           dev_mode: this.modalitaSviluppo,
         })
       );
-      // Mostra il modal con il codice generato
       this.codiceCreatoEvento = risposta.codice;
     } catch (errore: unknown) {
       const messaggio = (errore as { error?: { error?: string } })?.error?.error ?? 'Errore nella creazione';
@@ -408,10 +356,6 @@ export class CreateEventComponent {
     }
   }
 
-  /**
-   * Condivide il testo di invito tramite la Web Share API (se disponibile),
-   * altrimenti copia il testo negli appunti tramite Capacitor Clipboard.
-   */
   async condividiInvito() {
     const nav = navigator as Navigator & { share?: (data: ShareData) => Promise<void> };
     if (nav.share) {
@@ -419,7 +363,6 @@ export class CreateEventComponent {
         await nav.share({ title: 'ECHO', text: this.testoInvito });
         return;
       } catch {
-        // L'utente ha annullato o la condivisione è fallita — fallback agli appunti
       }
     }
     await Clipboard.write({ string: this.testoInvito });

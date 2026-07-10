@@ -1,13 +1,18 @@
-/**
- * ECHO — Settings Page (Analog Dark)
- * Lingua · Foto profilo · Modifica password · Esci · Elimina profilo
- */
-
-import { Component, OnInit, ViewChild, ElementRef } from '@angular/core';
+import {
+  Component,
+  OnInit
+} from '@angular/core';
 import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { IonContent, IonHeader, IonToolbar, ToastController, AlertController, LoadingController } from '@ionic/angular/standalone';
+import {
+  IonContent,
+  IonHeader,
+  IonToolbar,
+  ToastController,
+  AlertController,
+  LoadingController
+} from '@ionic/angular/standalone';
 import { AuthService } from '../../services/auth.service';
 import { ApiService } from '../../services/api.service';
 import { environment } from '../../../environments/environment';
@@ -29,7 +34,7 @@ import { firstValueFrom } from 'rxjs';
     <ion-content>
       <div class="settings-shell">
 
-        <!-- ── Foto profilo ────────────────────────────────────────── -->
+        <!-- Foto profilo  -->
         <section class="section">
           <p class="section__label">Cambio immagine profilo</p>
           <div class="avatar-row">
@@ -37,8 +42,8 @@ import { firstValueFrom } from 'rxjs';
               <img [src]="avatarUrl ? photoUrl(avatarUrl) : 'assets/default-avatar.svg'" alt="Foto profilo" />
             </div>
             <div class="avatar-actions">
-              <button class="echo-btn-outline" [disabled]="uploadingPhoto" (click)="fileInput.click()">
-                {{ uploadingPhoto ? 'Caricamento…' : 'Cambia foto' }}
+              <button class="echo-btn-outline" [disabled]="caricamentoFoto" (click)="fileInput.click()">
+                {{ caricamentoFoto ? 'Caricamento…' : 'Cambia foto' }}
               </button>
               <p class="field-hint">JPEG, PNG o WebP — max 15MB</p>
             </div>
@@ -47,7 +52,7 @@ import { firstValueFrom } from 'rxjs';
           </div>
         </section>
 
-        <!-- ── Modifica password ───────────────────────────────────── -->
+        <!--  Modifica password  -->
         <section class="section">
           <p class="section__label">Modifica password</p>
           <div class="field-group">
@@ -71,7 +76,7 @@ import { firstValueFrom } from 'rxjs';
           </button>
         </section>
 
-        <!-- ── Lingua ──────────────────────────────────────────────── -->
+        <!--  Lingua  -->
         <section class="section">
           <p class="section__label">Cambio lingua</p>
           <div class="lang-list">
@@ -80,7 +85,7 @@ import { firstValueFrom } from 'rxjs';
               <span class="lang-name">Italiano</span>
               <span class="lang-check">✓</span>
             </div>
-            <div class="lang-row lang-row--disabled" *ngFor="let l of otherLanguages">
+            <div class="lang-row lang-row--disabled" *ngFor="let l of altreLingue">
               <span class="lang-dot"></span>
               <span class="lang-name">{{ l }}</span>
               <span class="lang-soon">Presto</span>
@@ -88,12 +93,12 @@ import { firstValueFrom } from 'rxjs';
           </div>
         </section>
 
-        <!-- ── Esci ────────────────────────────────────────────────── -->
+        <!-- Esci  -->
         <section class="section">
           <button class="echo-btn-outline echo-btn-block" (click)="logout()">Esci</button>
         </section>
 
-        <!-- ── Elimina profilo ─────────────────────────────────────── -->
+        <!--  Elimina profilo  -->
         <section class="section section--danger">
           <p class="section__label">Zona pericolosa</p>
           <button class="danger-btn" [disabled]="deleting" (click)="confirmDelete()">
@@ -188,13 +193,15 @@ import { firstValueFrom } from 'rxjs';
   `],
 })
 export class PaginaImpostazioni implements OnInit {
-  @ViewChild('fileInput') fileInputRef!: ElementRef<HTMLInputElement>;
-
-  otherLanguages = ['English', 'Español'];
+  altreLingue = ['English', 'Español'];
   avatarUrl: string | null = null;
-  uploadingPhoto = false;
+  caricamentoFoto = false;
 
-  pwForm = { attuale: '', nuova: '', conferma: '' };
+  pwForm = {
+    attuale: '',
+    nuova: '',
+    conferma: ''
+  };
   pwError = '';
   pwLoading = false;
 
@@ -207,33 +214,33 @@ export class PaginaImpostazioni implements OnInit {
     private toastCtrl: ToastController,
     private alertCtrl: AlertController,
     private loadingCtrl: LoadingController,
-  ) {}
+  ) { }
 
   ngOnInit() {
     this.loadAvatar();
   }
 
+  // Metodo privato asincrono per ottenere la foto profilo dell'utente al caricamento della pagina
   private async loadAvatar() {
     try {
       const profilo = await firstValueFrom(this.api.getProfilo());
       this.avatarUrl = profilo.utente.foto_profilo_url;
-    } catch { /* mantieni il placeholder avatar di default */ }
+    } catch {
+    }
   }
 
-  /** foto_profilo_url è un percorso relativo al backend ("/uploads/profili/...") — va
-   *  risolto rispetto all'origine API, non a quella del frontend (l'app nativa Capacitor
-   *  gira su un'origine locale, il backend è sempre su Render). */
   photoUrl(path: string): string {
     return `${environment.apiUrl}${path}`;
   }
 
+  // Metodo asincrono che si attiva quando l'utente sceglie un file dall'input type="file"
   async onPhotoSelected(event: Event) {
     const input = event.target as HTMLInputElement;
     const file = input.files?.[0];
-    input.value = ''; // allow re-selecting the same file later
+    input.value = '';
     if (!file) return;
 
-    this.uploadingPhoto = true;
+    this.caricamentoFoto = true;
     try {
       const res = await firstValueFrom(this.api.uploadFotoProfilo(file));
       this.avatarUrl = res.foto_profilo_url;
@@ -242,18 +249,25 @@ export class PaginaImpostazioni implements OnInit {
       const msg = (errore as { error?: { error?: string } })?.error?.error ?? 'Errore durante il caricamento';
       this.toast(msg, 'danger');
     } finally {
-      this.uploadingPhoto = false;
+      this.caricamentoFoto = false;
     }
   }
 
+  // Metodo asincrono per gestire la logica di invio del form "Cambia Password"
   async changePassword() {
     this.pwError = '';
     if (!this.pwForm.attuale || !this.pwForm.nuova || !this.pwForm.conferma) {
       this.pwError = 'Compila tutti i campi.';
       return;
     }
-    if (this.pwForm.nuova.length < 8) {
-      this.pwError = 'La nuova password deve avere almeno 8 caratteri.';
+    if (
+      this.pwForm.nuova.length < 8 ||
+      !/[A-Z]/.test(this.pwForm.nuova) ||
+      !/[a-z]/.test(this.pwForm.nuova) ||
+      !/[0-9]/.test(this.pwForm.nuova) ||
+      !/[^A-Za-z0-9]/.test(this.pwForm.nuova)
+    ) {
+      this.pwError = 'Password non soddisfa i criteri di sicurezza. Deve contenere almeno un carattere maiuscolo, uno minuscolo, un numero e un simbolo speciale.';
       return;
     }
     if (this.pwForm.nuova !== this.pwForm.conferma) {
@@ -275,7 +289,6 @@ export class PaginaImpostazioni implements OnInit {
 
   logout() {
     this.auth.logout();
-    // /benvenuto si adatta automaticamente: il web mostra la landing per ospiti, il nativo rimbalza a /auth.
     this.router.navigate(['/benvenuto']);
   }
 
@@ -303,6 +316,7 @@ export class PaginaImpostazioni implements OnInit {
     await second.present();
   }
 
+  // Metodo asincrono e privato che invia la vera e propria richiesta di rimozione al server
   private async deleteAccount() {
     this.deleting = true;
     const loading = await this.loadingCtrl.create({ message: 'Eliminazione account…' });

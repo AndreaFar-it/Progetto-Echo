@@ -1,26 +1,25 @@
-/**
- * ECHO — Pagina Profilo (profile.page.ts)
- *
- * Mostra il profilo pubblico dell'utente autenticato con:
- *   - Avatar in formato Polaroid con nome e data di iscrizione
- *   - Griglia statistiche (scatti totali, eventi partecipati, voti ricevuti)
- *   - Bacheca trofei con i badge conquistati (oro/argento/bronzo), disposti a "parete"
- *   - Archivio rullini: tutti gli eventi passati, navigabili se hanno una galleria
- *
- * Spec §3.2.4 — Avatar · stats grid · badge trophy wall · event archive
- */
-
-import { Component, OnInit } from '@angular/core';
+import {
+  Component,
+  OnInit
+} from '@angular/core';
 import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
-import { IonContent, ToastController } from '@ionic/angular/standalone';
+import {
+  IonContent,
+  ToastController
+} from '@ionic/angular/standalone';
 import { ViewWillEnter } from '@ionic/angular';
 import { ApiService } from '../../services/api.service';
 import { environment } from '../../../environments/environment';
 import { firstValueFrom } from 'rxjs';
-import { ComponenteIntestazione, ComponenteCornicePolaroid, ComponenteMedaglia, ComponenteRullino, MedalTipo } from '../../shared/components';
+import {
+  ComponenteIntestazione,
+  ComponenteCornicePolaroid,
+  ComponenteMedaglia,
+  ComponenteRullino,
+  MedalTipo
+} from '../../shared/components';
 
-/** Struttura dati del profilo utente restituita dal backend. */
 interface DatiProfilo {
   utente: {
     nome: string;
@@ -31,8 +30,16 @@ interface DatiProfilo {
     voti_ricevuti: number;
   };
   eventi_count: number;
-  badge: { id_badge: string; tipo: string; etichetta: string; data_emissione: string }[];
-  archivio: { id_evento: string; nome: string; data_inizio: string; stato: string }[];
+  badge: { 
+    id_badge: string; 
+    tipo: string; 
+    etichetta: string; 
+    data_emissione: string }[];
+  archivio: { 
+    id_evento: string; 
+    nome: string; 
+    data_inizio: string; 
+    stato: string }[];
 }
 
 @Component({
@@ -40,7 +47,7 @@ interface DatiProfilo {
   standalone: true,
   imports: [CommonModule, IonContent, ComponenteIntestazione, ComponenteCornicePolaroid, ComponenteMedaglia, ComponenteRullino],
   template: `
-    <app-echo-header [showTagline]="false">
+    <app-echo-header>
       <button class="toolbar-gear" (click)="router.navigate(['/impostazioni'])" aria-label="Impostazioni">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
           <circle cx="12" cy="12" r="3"></circle>
@@ -150,9 +157,7 @@ interface DatiProfilo {
       margin-bottom: 20px;
     }
     .profile-avatar { width: 70px; flex-shrink: 0; }
-    /* Solo la larghezza è impostata qui — il componente Polaroid deriva l'altezza tramite
-       aspect-ratio:1/1, così qualsiasi foto caricata (verticale/orizzontale) viene ritagliata
-       a 70×70 pixel fissi e l'altezza della scheda non cambia mai. */
+    /* Polaroid dimensione quadrata fissa */
     ::ng-deep .profile-avatar .photo { width: 70px; }
     .profile-card-info { flex: 1; min-width: 0; }
     .profile-name {
@@ -233,19 +238,19 @@ interface DatiProfilo {
   `],
 })
 export class PaginaProfilo implements OnInit, ViewWillEnter {
-  /** Dati profilo caricati dal backend; null durante il caricamento iniziale. */
+
   profilo: DatiProfilo | null = null;
 
   constructor(
     private api: ApiService,
     public router: Router,
     private toastCtrl: ToastController,
-  ) {}
+  ) { }
 
   ngOnInit() { this.caricaProfilo(); }
   ionViewWillEnter() { this.profilo = null; this.caricaProfilo(); }
 
-  /** Recupera il profilo dal backend e aggiorna la vista. Mostra un toast in caso di errore. */
+  // Recupera il profilo dal backend e aggiorna la vista.
   private async caricaProfilo() {
     try {
       this.profilo = await firstValueFrom(this.api.getProfilo()) as any;
@@ -257,50 +262,39 @@ export class PaginaProfilo implements OnInit, ViewWillEnter {
     }
   }
 
-  /** Naviga alla galleria dell'evento archiviato (solo se in stato album_aperto o chiusa). */
+  // Naviga alla galleria dell'evento archiviato (solo se in stato album_aperto o chiusa).
   apriArchiviato(evento: { id_evento: string; nome: string; stato: string }) {
     if (['album_aperto', 'chiusa'].includes(evento.stato)) {
       this.router.navigate(['/galleria', evento.id_evento], { state: { eventoNome: evento.nome } });
     }
   }
 
-  /**
-   * Costruisce l'URL completo della foto profilo.
-   * foto_profilo_url è un percorso relativo al backend ("/uploads/profili/...") e deve
-   * essere risolto rispetto all'origine API (diversa da quella del frontend: l'app nativa
-   * Capacitor gira su un'origine locale, il backend è sempre su Render).
-   */
   urlFoto(percorso: string): string {
     return `${environment.apiUrl}${percorso}`;
   }
 
-  /** Converte il tipo badge dal DB al tipo accettato dal componente MedalBadge.
-   *  I valori validi sono 'oro', 'argento', 'bronzo'; qualsiasi altro valore ritorna 'bronzo'. */
   tipoMedaglia(tipo: string): MedalTipo {
     return (tipo === 'oro' || tipo === 'argento' || tipo === 'bronzo') ? tipo : 'bronzo';
   }
 
-  /**
-   * Posizioni casuali per la "parete dei trofei" (effetto "gettati su una lavagna").
-   * Calcolate UNA sola volta a ogni caricamento del profilo e memorizzate qui: così la
-   * disposizione è casuale (cambia a ogni apertura del profilo) ma resta STABILE tra i
-   * re-render di Angular — i metodi getter del template leggono solo da questa cache,
-   * altrimenti chiamare Math.random() nei binding farebbe "saltare" le medaglie a ogni
-   * ciclo di change detection.
-   */
-  private posizioniMedaglie: { sinistra: number; alto: number; rotazione: number }[] = [];
+  private posizioniMedaglie: { 
+    sinistra: number; 
+    alto: number; 
+    rotazione: number }[] = [];
 
-  /** Genera `quante` posizioni casuali entro i limiti della bacheca (larghezza % e altezza 160px). */
   private generaPosizioniMedaglie(quante: number): void {
     const casuale = (min: number, max: number) => Math.round(min + Math.random() * (max - min));
     this.posizioniMedaglie = Array.from({ length: quante }, () => ({
-      sinistra: casuale(4, 76),    // % — entro la larghezza della bacheca
-      alto: casuale(8, 104),       // px — entro l'altezza 160px della bacheca
-      rotazione: casuale(-18, 14), // gradi di inclinazione
+      sinistra: casuale(4, 76),
+      alto: casuale(8, 104),
+      rotazione: casuale(-18, 14),
     }));
   }
 
-  posizioneSinistra(i: number): number   { return this.posizioniMedaglie[i]?.sinistra ?? 0; }
-  posizioneAlto(i: number): number       { return this.posizioniMedaglie[i]?.alto ?? 0; }
+  posizioneSinistra(i: number): number { return this.posizioniMedaglie[i]?.sinistra ?? 0; }
+
+  posizioneAlto(i: number): number { return this.posizioniMedaglie[i]?.alto ?? 0; }
+
   rotatazioneMedaglia(i: number): number { return this.posizioniMedaglie[i]?.rotazione ?? 0; }
+
 }

@@ -30,11 +30,20 @@ import {
 const router = Router();
 router.use(authMiddleware);
 
+// Formato UUID v4
+const FORMATO_UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 // Configurazione di multer per la gestione del caricamento dei file (foto).
 const archivioFile = multer.diskStorage({
   destination(req: reqAuth, _f, cb) {
+    const idEvento = String(req.body.id_evento ?? '');
+    // Valida l'id evento sul nascere
+    if (!FORMATO_UUID.test(idEvento)) {
+      cb(new Error('ID_EVENTO_NON_VALIDO'), '');
+      return;
+    }
     // Crea la cartella per l'evento se non esiste ancora
-    const cartella = path.join(__dirname, '../../uploads', req.body.id_evento ?? 'unknown');
+    const cartella = path.join(__dirname, '../../uploads', idEvento);
     fs.mkdirSync(cartella, { recursive: true });
     // callback con il percorso della cartella dove salvare il file
     cb(null, cartella);
@@ -53,10 +62,23 @@ const caricaFile = multer({
     cb(null, ['image/jpeg', 'image/png', 'image/webp'].includes(f.mimetype));
   },
 });
+// Aiuta a gestire correttamente gli errori
+function gestisciUploadFoto(req: reqAuth, res: Response, next: () => void): void {
+  caricaFile.single('foto')(req, res, (err: unknown) => {
+    if (err) {
+      const msg = err instanceof Error && err.message === 'ID_EVENTO_NON_VALIDO'
+        ? 'id_evento non valido'
+        : 'Upload non valido';
+      res.status(400).json({ error: msg });
+      return;
+    }
+    next();
+  });
+}
 
 // Gestisce il caricamento di una foto da parte di un partecipante.
 // Controlla che l'evento sia in corso, che il partecipante non abbia esaurito gli scatti e registra la foto nel database.
-router.post('/upload', caricaFile.single('foto'), async (req: reqAuth, res: Response) => {
+router.post('/upload', gestisciUploadFoto, async (req: reqAuth, res: Response) => {
   const idUtente = req.user.id_utente;
   const { id_evento } = req.body;
 
