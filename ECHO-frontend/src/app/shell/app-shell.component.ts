@@ -3,7 +3,6 @@ import {
   OnInit,
   AfterViewInit,
   OnDestroy,
-  ChangeDetectionStrategy,
   ChangeDetectorRef,
   ElementRef,
   ViewChild,
@@ -30,8 +29,6 @@ import { ServizioNotifiche } from '../services/notification.service';
   selector: 'app-shell',
   standalone: true,
   imports: [CommonModule, IonRouterOutlet],
-  // Disabilita il controllo dei cambiamenti automatico per ottimizzare le prestazioni
-  changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="shell-wrap">
       <div class="shell-content">
