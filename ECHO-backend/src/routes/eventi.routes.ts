@@ -19,6 +19,7 @@ import {
   aggiungiMinutiUTC
 } from '../utils/time';
 import {
+  MINUTI_SVILUPPO_DEV,
   MINUTI_RITARDO_SVILUPPO,
   calcolaMinutiVotazione,
   calcolaOffsetFineEvento,
@@ -214,7 +215,9 @@ router.get('/miei', (req: reqAuth, res: Response) => {
     // Valore reale se la galleria si è già sbloccata, altrimenti la stima corrente di quando
     // succederà (24h dopo la fine delle riprese, o 3min in modalità rapida) — un solo campo,
     // sempre valorizzato, che diventa "definitivo" non appena il vero sblocco avviene.
-    album_sbloccato_at: e.album_sbloccato_at ?? aggiungiMinutiUTC(e.sviluppo_started_at ?? e.data_fine_calc, MINUTI_RITARDO_SVILUPPO),
+    album_sbloccato_at: e.dev_mode == 1 
+  ? aggiungiMinutiUTC(e.sviluppo_started_at ?? e.data_fine_calc, MINUTI_SVILUPPO_DEV)
+  : (e.album_sbloccato_at ?? aggiungiMinutiUTC(e.sviluppo_started_at ?? e.data_fine_calc, MINUTI_RITARDO_SVILUPPO)),
     // Vero solo per l'organizzatore mentre attende la sua res al prompt di estensione
     needs_estensione_response: !!(e.is_organiser && e.estensione_richiesta && e.estensione_accettata === null),
     // Vero solo per i partecipanti non-organizzatori dopo che l'organizzatore ha accettato l'estensione

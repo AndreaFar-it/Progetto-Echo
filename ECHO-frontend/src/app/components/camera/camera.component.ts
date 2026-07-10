@@ -46,8 +46,8 @@ const DEVELOPMENT_TICKER_MS = 60_000;
       <div class="lock-symbol">🎞</div>
       <h2 class="lock-title">Rullino Esaurito</h2>
       <p class="lock-body">
-        Hai usato tutti i {{ shotState?.scatti_totali }} scatti.<br>
-        Torna tra <strong>{{ CD_Sviluppo }}</strong> per scoprire la galleria collettiva.
+        Hai usato tutti gli scatti.<br>
+        Ti invieremo una notifica non appena l'album sarà pronto.
       </p>
       <div class="lock-divider"></div>
       <button class="lock-cta" (click)="router.navigate(['/eventi/miei'])">
@@ -336,14 +336,6 @@ export class ComponenteFotocamera implements OnInit, OnDestroy {
   private sviluppo_ended_at: string | null = null;
   // Sottoscrizione per un timer che si aggiorna ogni minuto per simulare il conto alla rovescia
   private developmentTicker?: Subscription;
-
-  // Calcola e formatta il tempo rimanente allo sviluppo dell'album
-  get CD_Sviluppo(): string {
-    // Se non è impostato un orario di fine, restituisce un valore di default "24 ore" (NON CONVINCE)
-    if (!this.sviluppo_ended_at) return '24 ore';
-    const minutiRimanenti = Math.max(0, Math.round((isoToMs(this.sviluppo_ended_at) - Date.now()) / MS_PER_MINUTO));
-    return this.formatDelay(minutiRimanenti);
-  }
 
   // Array che contiene i livelli di zoom preimpostati supportati dall'obiettivo attuale
   zoomLevels: number[] = [];
