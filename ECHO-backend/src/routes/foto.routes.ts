@@ -186,8 +186,8 @@ router.get('/galleria/:id_evento', (req: reqAuth, res: Response) => {
   const idUtente = req.user.id_utente;
   const { id_evento } = req.params;
 
-  const evento = get<{ stato: string; album_sbloccato_at: string | null; durata_votazione_ore: number }>(
-    'SELECT stato,album_sbloccato_at,durata_votazione_ore FROM EVENTO WHERE id_evento=?', [id_evento]);
+  const evento = get<{ dev_mode: Number; stato: string; album_sbloccato_at: string | null; durata_votazione_ore: number}>(
+    'SELECT dev_mode,stato,album_sbloccato_at,durata_votazione_ore FROM EVENTO WHERE id_evento=?', [id_evento]);
   if (!evento) return res.status(404).json({ error: 'Evento non trovato' });
 
   // La galleria è accessibile solo dopo lo sviluppo (album_aperto o chiusa)
@@ -220,7 +220,7 @@ router.get('/galleria/:id_evento', (req: reqAuth, res: Response) => {
 
   // voting_end_at calcolata in JS (i timestamp coinvolti sono già ISO assoluti)
   const fineVotazioneAt = evento.album_sbloccato_at
-    ? aggiungiMinutiUTC(evento.album_sbloccato_at, calcolaMinutiVotazione(evento.durata_votazione_ore))
+    ? aggiungiMinutiUTC(evento.album_sbloccato_at, calcolaMinutiVotazione(evento.durata_votazione_ore, evento.dev_mode === 1))
     : null;
 
   const classifica = evento.stato === 'chiusa'
