@@ -146,14 +146,14 @@ router.post('/vota', (req: reqAuth, res: Response) => {
   if (!foto.visibile || foto.stato_moderazione !== 'approvata')
     return res.status(409).json({ error: 'Foto non disponibile' });
 
-  const evento = get<{ stato: string; album_sbloccato_at: string | null; durata_votazione_ore: number }>(
-    'SELECT stato,album_sbloccato_at,durata_votazione_ore FROM EVENTO WHERE id_evento=?', [foto.id_evento]);
+  const evento = get<{ dev_mode : Number;stato: string; album_sbloccato_at: string | null; durata_votazione_ore: number }>(
+    'SELECT dev_mode, stato,album_sbloccato_at,durata_votazione_ore FROM EVENTO WHERE id_evento=?', [foto.id_evento]);
   if (!evento) return res.status(404).json({ error: 'Evento non trovato' });
   if (evento.stato !== 'album_aperto') return res.status(409).json({ error: 'Finestra di votazione non attiva' });
   if (!evento.album_sbloccato_at) return res.status(409).json({ error: 'Album non sbloccato' });
 
   // Verifica che la finestra di votazione non sia scaduta (calcolo in JS per coerenza dei formati)
-  const fineVotazioneMs = new Date(evento.album_sbloccato_at).getTime() + calcolaMinutiVotazione(evento.durata_votazione_ore) * MS_PER_MINUTO;
+  const fineVotazioneMs = new Date(evento.album_sbloccato_at).getTime() + calcolaMinutiVotazione(evento.durata_votazione_ore, evento.dev_mode === 1) * MS_PER_MINUTO;
   if (Date.now() > fineVotazioneMs) return res.status(410).json({ error: 'Finestra di votazione scaduta' });
 
   // Prevenzione auto-voto (controllo cross-table, non gestibile con CHECK di SQLite)
