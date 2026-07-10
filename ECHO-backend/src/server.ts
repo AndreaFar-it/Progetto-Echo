@@ -22,7 +22,9 @@ const CORS_ORIGIN = process.env['CORS_ORIGIN'];
 if (process.env['NODE_ENV'] === 'production' && (!CORS_ORIGIN || CORS_ORIGIN === '*')) {
   throw new Error('[CORS] CORS_ORIGIN non impostato (o "*"): obbligatorio in produzione, deve essere l\'URL del frontend.');
 }
-app.use(cors({ origin: CORS_ORIGIN ?? '*' }));
+// maxAge fa memorizzare al browser l'esito del preflight CORS per 24h: senza, OGNI chiamata
+// API paga una richiesta OPTIONS aggiuntiva prima di quella vera (2 viaggi invece di 1).
+app.use(cors({ origin: CORS_ORIGIN ?? '*', maxAge: 86400 }));
 app.use(express.json({ limit: '1mb' })); // Express legge il body json nelle richieste e lo mette in req.body, limitando la dimensione a 1 MB.
 
 
