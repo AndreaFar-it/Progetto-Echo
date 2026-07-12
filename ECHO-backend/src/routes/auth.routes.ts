@@ -45,9 +45,7 @@ router.post('/registrazione', async (req: Request, res: Response) => {
   return res.status(201).json({ token: signToken({ id_utente: idUtente, email }), id_utente: idUtente, nome, cognome });
 });
 
-// Controlla se un'email è già registrata (usato per dare feedback anticipato in fase di
-// registrazione, prima di far compilare il resto del form). La duplicazione è comunque
-// bloccata "sul serio" da /registrazione, che risponde 409 se l'email esiste già.
+// Controlla se un'email è già registrata.
 router.post('/check-email', (req: Request, res: Response) => {
   const { email } = req.body;
   if (!email) return res.status(400).json({ error: 'Email obbligatoria' });
