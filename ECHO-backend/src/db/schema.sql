@@ -11,6 +11,7 @@ CREATE TABLE IF NOT EXISTS UTENTE (
   email             TEXT    NOT NULL UNIQUE,
   password_hash     TEXT    NOT NULL,
   foto_profilo_url  TEXT,
+  -- Restituisce la data e l'ora attuali in formato 'YYYY-MM-DD HH:MM:SS'
   data_registrazione TEXT   NOT NULL DEFAULT (datetime('now')),
   scatti_totali     INTEGER NOT NULL DEFAULT 0,
   voti_ricevuti     INTEGER NOT NULL DEFAULT 0,
@@ -46,6 +47,7 @@ CREATE TABLE IF NOT EXISTS EVENTO (
 
 CREATE INDEX IF NOT EXISTS idx_evento_stato_timing ON EVENTO(stato, data_inizio, data_fine_calc);
 
+-- WITHOUT ROWID: la tabella e' indicizzata direttamente sulla primary key
 CREATE TABLE IF NOT EXISTS CODICE_EVENTO (
   id_codice      TEXT    PRIMARY KEY,
   id_evento      TEXT    NOT NULL REFERENCES EVENTO(id_evento),
@@ -55,9 +57,9 @@ CREATE TABLE IF NOT EXISTS CODICE_EVENTO (
   attivato       INTEGER NOT NULL DEFAULT 1,
   id_utente_uso  TEXT    REFERENCES UTENTE(id_utente),
   data_attivazione TEXT
-);
+) WITHOUT ROWID;
 
-CREATE INDEX IF NOT EXISTS idx_codice_codice ON CODICE_EVENTO(codice);
+-- Nessun indice esplicito su 'codice': il vincolo UNIQUE ne crea gia' uno implicito identico.
 
 CREATE TABLE IF NOT EXISTS PARTECIPA (
   id_utente      TEXT    NOT NULL REFERENCES UTENTE(id_utente),
@@ -67,10 +69,10 @@ CREATE TABLE IF NOT EXISTS PARTECIPA (
   ha_votato      INTEGER NOT NULL DEFAULT 0,
   rimane_esteso  INTEGER,
   PRIMARY KEY (id_utente, id_evento)
-);
+) WITHOUT ROWID;
 
+-- Nessun indice su id_utente: e' la colonna guida della primary key, che copre gia' quelle ricerche.
 CREATE INDEX IF NOT EXISTS idx_partecipa_evento ON PARTECIPA(id_evento);
-CREATE INDEX IF NOT EXISTS idx_partecipa_utente ON PARTECIPA(id_utente);
 
 CREATE TABLE IF NOT EXISTS FOTO (
   id_foto           TEXT    PRIMARY KEY,
@@ -82,19 +84,18 @@ CREATE TABLE IF NOT EXISTS FOTO (
                     CHECK (stato_moderazione IN ('in_attesa','approvata','rifiutata')),
   punteggio_voti    INTEGER NOT NULL DEFAULT 0,
   visibile          INTEGER NOT NULL DEFAULT 0
-);
+) WITHOUT ROWID;
 
 CREATE INDEX IF NOT EXISTS idx_foto_evento_vis ON FOTO(id_evento, visibile, stato_moderazione);
 CREATE INDEX IF NOT EXISTS idx_foto_ranking ON FOTO(id_evento, punteggio_voti DESC);
 
 CREATE TABLE IF NOT EXISTS VOTO (
-  id_voto        TEXT    PRIMARY KEY,
   id_votante     TEXT    NOT NULL REFERENCES UTENTE(id_utente),
   id_foto        TEXT    NOT NULL REFERENCES FOTO(id_foto),
   id_evento      TEXT    NOT NULL REFERENCES EVENTO(id_evento),
   timestamp_voto TEXT    NOT NULL DEFAULT (datetime('now')),
-  UNIQUE (id_votante, id_evento)
-);
+  PRIMARY KEY (id_votante, id_evento)
+) WITHOUT ROWID;
 
 CREATE INDEX IF NOT EXISTS idx_voto_evento ON VOTO(id_evento);
 
