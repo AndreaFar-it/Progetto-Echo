@@ -166,14 +166,15 @@ router.post('/vota', (req: reqAuth, res: Response) => {
 
   try {
     transaction(() => {
-      run('INSERT INTO VOTO (id_voto,id_votante,id_foto,id_evento,timestamp_voto) VALUES (?,?,?,?,?)', [uuid(), idUtente, id_foto, foto.id_evento, adessoUTC()]);
+      run('INSERT INTO VOTO (id_votante,id_foto,id_evento,timestamp_voto) VALUES (?,?,?,?)', [idUtente, id_foto, foto.id_evento, adessoUTC()]);
       run('UPDATE FOTO SET punteggio_voti=punteggio_voti+1 WHERE id_foto=?', [id_foto]);
       run('UPDATE UTENTE SET voti_ricevuti=voti_ricevuti+1 WHERE id_utente=?', [foto.id_autore]);
       run('UPDATE PARTECIPA SET ha_votato=1 WHERE id_utente=? AND id_evento=?', [idUtente, foto.id_evento]);
     });
     return res.json({ message: 'Voto registrato', voto_espresso: true });
   } catch (e: unknown) {
-    // Il vincolo UNIQUE su VOTO(id_votante, id_foto) impedisce voti duplicati a livello DB
+    // La primary key VOTO(id_votante, id_evento) impedisce voti duplicati a livello DB.
+    // SQLite segnala la violazione con il messaggio "UNIQUE constraint failed".
     if ((e as { message?: string }).message?.includes('UNIQUE'))
       return res.status(409).json({ error: 'Hai già votato per questo evento' });
     console.error('[POST /foto/vota]', e);
