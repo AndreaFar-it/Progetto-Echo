@@ -1,0 +1,61 @@
+<app-echo-header></app-echo-header>
+<ion-content>
+  <div class="page-shell">
+
+    <ion-segment class="entry-segment" [(ngModel)]="segment" mode="md">
+      <ion-segment-button value="partecipa">
+        <ion-label>Partecipa</ion-label>
+      </ion-segment-button>
+      <ion-segment-button value="crea">
+        <ion-label>Crea Evento</ion-label>
+      </ion-segment-button>
+    </ion-segment>
+
+    <!-- ── Partecipa ── -->
+    @if (segment === 'partecipa') {
+      <div class="join-view">
+        <p class="label">Inserisci il codice</p>
+        <p class="subtitle">Ti viene fornito dall'organizzatore dell'evento</p>
+        <label class="boxes" for="codice-evento">
+          @for (i of posizioni; track i) {
+            <div class="box" [class.filled]="code.length > i" [class.active]="code.length === i">
+              @if (code.length > i) {
+                <span>{{ code[i] }}</span>
+              }
+              @if (code.length <= i) {
+                <span class="underline"></span>
+              }
+            </div>
+          }
+        </label>
+        <input
+          id="codice-evento"
+          #hiddenInput
+          class="hidden-input"
+          [value]="code"
+          (input)="onCodeChange($event)"
+          type="text"
+          inputmode="numeric"
+          autocomplete="off"
+          (keyup.enter)="join()"
+          />
+        <button type="button" class="join-btn echo-btn" [disabled]="code.length !== CODE_LENGTH || joining" (click)="join()">
+          @if (!joining) {
+            <span>Partecipa</span>
+          }
+          @if (joining) {
+            <span class="spinner"></span>
+          }
+        </button>
+      </div>
+    }
+
+    <!-- ── Crea Evento ── -->
+    @if (segment === 'crea') {
+      <div class="create-view">
+        <app-create-event></app-create-event>
+      </div>
+    }
+
+  </div>
+</ion-content>

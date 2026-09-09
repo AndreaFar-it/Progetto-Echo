@@ -1,0 +1,129 @@
+<ion-content [fullscreen]="true" class="landing-content">
+
+  <!-- ── Navbar ── -->
+  <header class="nav">
+    <div class="nav-inner">
+      <div class="nav-brand">
+        <img src="assets/echo-hero-dark.svg" alt="echo — The Persistance of the Moment" class="brand-logo">
+      </div>
+
+      <nav class="nav-links">
+        <button type="button" class="nav-link" (click)="scorriAlProcesso()">Come funziona</button>
+      </nav>
+
+      @if (!auth.isLoggedIn) {
+        <button type="button" class="nav-cta" (click)="vaiAllAutenticazione('login')">Accedi/Registrati</button>
+      } @else {
+        <button type="button" class="nav-cta" (click)="entraInApp()">Entra nel darkroom</button>
+      }
+    </div>
+  </header>
+
+  <!-- ── Hero ── -->
+  <section class="hero">
+    <div class="hero-grid">
+      <div class="hero-copy-col">
+        <div class="hero-wordmark">
+          <div class="hero-logo-frame">
+            <img class="hero-logo" src="assets/echo-hero.svg" alt="ECHO">
+          </div>
+        </div>
+        <!-- Il wordmark è un'immagine: senza questo <h1> la gerarchia dei titoli
+             della pagina partirebbe da <h2>. -->
+        <h1 class="hero-tagline-eyebrow">The Persistance of the Moment</h1>
+        <div class="hero-rule"></div>
+        <p class="hero-copy">
+          Un rullino digitale condiviso per i tuoi eventi. Scattate insieme,
+          aspettate 24 ore lo sviluppo, rivivete il momento come un'unica
+          memoria collettiva.
+        </p>
+      </div>
+
+      <div class="hero-photo-col">
+        <div class="hero-photo">
+          <div class="hero-photo-glow"></div>
+          <!-- HUD stile fotocamera vintage (batteria, ISO, RAW, esposizione) -->
+          <div class="hud-row hud-top">
+            <span class="hud-chip hud-batt">
+              <svg viewBox="0 0 24 12" class="batt-icon" aria-hidden="true">
+                <rect x="1" y="1" width="19" height="10" rx="2" fill="none" stroke="currentColor" stroke-width="1.5"/>
+                <rect x="21" y="4" width="2" height="4" fill="currentColor"/>
+                <rect x="3.5" y="3.5" width="12" height="5" fill="currentColor"/>
+              </svg>
+            </span>
+            <span class="hud-chip">ISO 200</span>
+            <span class="hud-chip hud-raw">RAW</span>
+          </div>
+          <div class="hud-row hud-bottom">
+            <span class="hud-exposure">1/100&nbsp;&nbsp;f/2.8</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Processo "come funziona" ── -->
+  <section class="process" id="echo-process">
+    <p class="process-eyebrow">Il processo</p>
+    <h2 class="process-heading">Come funziona?</h2>
+
+    <div class="process-grid">
+      @for (passo of passi; track passo.title; let i = $index) {
+        <article class="process-card">
+          <img [src]="passo.illustration" [alt]="passo.title" class="card-illustration-img">
+          <h3 class="step-title">{{ passo.title }}</h3>
+          <p class="step-body">
+            <span class="step-lead" [class.step-lead--rust]="passo.accento === 'rust'">{{ passo.lead }}</span>
+            {{ passo.body }}
+          </p>
+        </article>
+      }
+    </div>
+
+    <!-- Bordo pellicola scallop che separa la sezione scura da quella chiara. -->
+    <div class="scallop-seam" aria-hidden="true">
+      <div class="scallop-piece scallop-light"></div>
+      <div class="scallop-piece scallop-dark"></div>
+    </div>
+  </section>
+
+  <!-- ── CTA Download ── -->
+  <section class="download">
+    <p class="download-eyebrow">Scarica l'app · È gratis</p>
+    <h2 class="download-heading">Inizia a collezionare momenti</h2>
+    <p class="download-tagline">The Persistance of the Moment</p>
+    <div class="download-actions">
+      <button type="button" class="cta-primary store-btn store-btn--ios" disabled>
+        Scarica per iOS
+        <span class="store-btn-sub">Presto disponibile</span>
+      </button>
+      <a class="cta-secondary store-btn" [href]="apkUrl">Scarica per Android</a>
+    </div>
+  </section>
+
+  <!-- ── Footer ── -->
+  <footer class="site-footer">
+    <div class="footer-top">
+      <div class="footer-brand">
+        <img src="assets/echo-hero-dark.svg" alt="echo — The Persistance of the Moment" class="footer-logo">
+      </div>
+
+      <div class="footer-col">
+        <p class="footer-col-title">Esplora</p>
+        <button type="button" class="footer-link" (click)="scorriAlProcesso()">Come funziona</button>
+      </div>
+
+      <div class="footer-col">
+        <p class="footer-col-title">Account</p>
+        <button type="button" class="footer-link" (click)="vaiAllAutenticazione('login')">Accedi</button>
+        <button type="button" class="footer-link" (click)="vaiAllAutenticazione('register')">Registrati</button>
+      </div>
+    </div>
+
+    <div class="footer-bottom">
+      <span>&copy; 2026 ECHO &mdash; Tutti i momenti riservati.</span>
+      <span>Digital Film Roll &middot; v1.0</span>
+    </div>
+  </footer>
+
+</ion-content>

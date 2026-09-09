@@ -2,7 +2,7 @@ import {
   Component,
   OnInit
 } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import {
   IonApp,
   IonRouterOutlet,
@@ -16,17 +16,21 @@ import { firstValueFrom, filter } from 'rxjs';
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [CommonModule, IonApp, IonRouterOutlet, ComponenteSplash],
+  imports: [IonApp, IonRouterOutlet, ComponenteSplash],
   template: `
     <ion-app>
       <ion-router-outlet></ion-router-outlet>
-      <app-splash-overlay *ngIf="showSplash" (done)="showSplash = false"></app-splash-overlay>
-      <div class="wakeup-banner" *ngIf="waking">
-        <span class="wakeup-dot"></span>
-        Avvio del server in corso…
-      </div>
+      @if (showSplash) {
+        <app-splash-overlay (done)="showSplash = false"></app-splash-overlay>
+      }
+      @if (waking) {
+        <div class="wakeup-banner" role="status">
+          <span class="wakeup-dot"></span>
+          Avvio del server in corso…
+        </div>
+      }
     </ion-app>
-  `,
+    `,
   styles: [`
     /* Stili per il banner di attesa del server: centrato, sfocato sul retro e in primo piano */
     .wakeup-banner {
@@ -34,8 +38,8 @@ import { firstValueFrom, filter } from 'rxjs';
       bottom: 16px;
       left: 50%;
       transform: translateX(-50%);
-      background: rgba(42,26,14,0.92);
-      color: #f5efe6;
+      background: rgba(var(--echo-on-light-rgb),0.92);
+      color: var(--echo-on-dark);
       padding: 10px 20px;
       border-radius: 24px;
       font-size: 13px;
@@ -50,7 +54,7 @@ import { firstValueFrom, filter } from 'rxjs';
     .wakeup-dot {
       width: 8px; height: 8px;
       border-radius: 50%;
-      background: #b85c38;
+      background: var(--echo-rust);
       animation: pulse 1.2s ease-in-out infinite;
     }
     /* Animazione di pulsazione per il pallino */

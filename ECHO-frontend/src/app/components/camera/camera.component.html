@@ -1,0 +1,102 @@
+<!-- SCHERMATA DI BLOCCO — mostrata una volta che esauriti = true; mai annullata -->
+@if (shotState?.esauriti) {
+  <div class="lock-screen">
+    <div class="lock-symbol">🎞</div>
+    <h2 class="lock-title">Rullino Esaurito</h2>
+    <p class="lock-body">
+      Hai usato tutti gli scatti.<br>
+      Ti invieremo una notifica non appena l'album sarà pronto.
+    </p>
+    <div class="lock-divider"></div>
+    <button type="button" class="lock-cta" (click)="router.navigate(['/eventi/miei'])">
+      ← Vai ai tuoi eventi
+    </button>
+  </div>
+} @else {
+  <ion-content class="camera-content" [fullscreen]="true"
+    [scrollY]="false"
+    [scrollX]="false">
+    <div class="camera-hud-top"></div>
+    @if (shotState) {
+      <div class="hud-event-name">{{ shotState.scatti_totali - shotState.scatti_usati }} scatti rimasti</div>
+    }
+    <!-- ── HUD inferiore: angoli mirino + zoom/controlli decorativi + scatto ── -->
+    <div class="camera-hud-bottom">
+      @if (errorMessage) {
+        <p class="shoot-error" role="alert">{{ errorMessage }}</p>
+      }
+      @if (!previewReady) {
+        <button
+          type="button"
+          class="preview-status"
+          [class.failed]="previewFailed"
+          [disabled]="!previewFailed"
+          (click)="retryPreview()"
+        >{{ previewFailed ? 'Fotocamera non disponibile — tocca per riprovare' : 'Avvio fotocamera…' }}</button>
+      }
+      <!-- Zoom a bottoni — livelli fissi riportati dall'obiettivo attuale (es. 0.5x/1x/2x/3x) -->
+      @if (previewReady && zoomLevels.length > 1) {
+        <div class="zoom-row">
+          @for (level of zoomLevels; track level) {
+            <button
+              class="zoom-btn"
+              type="button"
+              [class.active]="level === currentZoom"
+              (click)="setZoomLevel(level)"
+            >{{ formatZoomLabel(level) }}</button>
+          }
+        </div>
+      }
+      <!-- Riga di controlli funzionali: flash (cicla le modalità supportate) + cambio fotocamera -->
+      @if (previewReady) {
+        <div class="control-row">
+          @if (flashAvailable) {
+            <button
+              class="ctrl-btn"
+              type="button"
+              (click)="toggleFlash()"
+              [attr.aria-label]="'Flash: ' + flashMode">
+              <svg viewBox="0 0 24 24" fill="currentColor">
+                <path d="M11 21 22 8h-7l1-7L4 14h7z"/>
+                @if (flashMode === 'off') {
+                  <line x1="3" y1="3" x2="21" y2="21" stroke="currentColor" stroke-width="2"/>
+                }
+              </svg>
+              <span class="ctrl-label">{{ flashLabel }}</span>
+            </button>
+          }
+          <button
+            class="ctrl-btn"
+            type="button"
+            (click)="switchCamera()"
+            aria-label="Cambia fotocamera">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+              <path d="M20 5h-3l-2-2H9L7 5H4a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2z"/>
+              <path d="M9 13a3 3 0 0 0 5 2.2M15 12a3 3 0 0 0-5-2.2"/>
+              <polyline points="14.5 9 14 11.5 11.5 11"/>
+              <polyline points="9.5 16 10 13.5 12.5 14"/>
+            </svg>
+            <span class="ctrl-label">{{ facing === 'rear' ? 'Retro' : 'Front' }}</span>
+          </button>
+        </div>
+      }
+      <button type="button"
+        class="shutter-btn"
+        [class.firing]="isShooting"
+        [disabled]="isShooting || !previewReady"
+        (click)="onShutter()"
+        aria-label="Scatta foto"
+        >
+        <div class="shutter-ring">
+          <div class="shutter-disc"></div>
+        </div>
+      </button>
+      <div class="upload-indicator" [class.active]="isUploading">
+        <span class="upload-dot"></span>
+        <span class="upload-label">Caricamento</span>
+      </div>
+    </div>
+  </ion-content>
+}
+
+<!-- FOTOCAMERA ATTIVA — mirino (trasparente) + HUD + scatto         -->

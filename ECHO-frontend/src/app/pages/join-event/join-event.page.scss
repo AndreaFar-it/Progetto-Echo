@@ -1,0 +1,64 @@
+@use '../../../theme/mixins' as echo;
+
+ion-content { --background: var(--echo-surface-light); }
+
+.page-shell {
+  padding: 24px 16px 60px;
+  @include echo.page-shell($mobile: 460px);
+}
+
+/* ── Segment (Canva palette on active state) ── */
+.entry-segment {
+  margin: 8px 0 28px;
+  --background: transparent;
+  border: 1.5px solid var(--echo-on-light);
+  border-radius: var(--echo-radius-pill);
+  padding: 3px;
+}
+.entry-segment ion-segment-button {
+  --background: transparent;
+  --background-checked: var(--ion-color-primary);
+  --color: var(--echo-on-light);
+  --color-checked: var(--ion-color-primary-contrast);
+  --indicator-color: transparent;
+  --border-radius: var(--echo-radius-pill);
+  --indicator-box-shadow: none;
+  min-height: 38px;
+  font-family: var(--echo-font-mono);
+  font-weight: 700;
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+/* La seconda tab (Crea) usa l'accento secondario/teal quando attiva */
+.entry-segment ion-segment-button:last-of-type {
+  --background-checked: var(--ion-color-secondary);
+  --color-checked: var(--ion-color-secondary-contrast);
+}
+
+/* ── Partecipa view ── */
+.join-view { display: flex; flex-direction: column; align-items: center; text-align: center; padding-top: 8px; }
+.label {
+  font-family: var(--echo-font-mono); font-weight: 700;
+  font-size: 14px; letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--echo-on-light); margin: 0 0 8px;
+}
+.subtitle {
+  font-family: var(--echo-font-mono); font-size: 12px;
+  color: var(--echo-on-light-soft); margin: 0 0 32px; line-height: 1.5;
+}
+.boxes { display: flex; gap: 10px; margin-bottom: 36px; cursor: text; }
+.box {
+  width: 56px; height: 64px; border-radius: var(--echo-radius-md);
+  background: var(--echo-surface-dark);
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--echo-font-mono); font-size: 24px; font-weight: 700;
+  color: var(--echo-on-dark);
+}
+.box.active { box-shadow: 0 0 0 2px var(--echo-rust); }
+.underline { width: 16px; height: 2px; background: rgba(var(--echo-on-dark-rgb),0.5); }
+.hidden-input { position: absolute; opacity: 0; pointer-events: none; width: 1px; height: 1px; }
+.join-btn { width: 100%; max-width: 280px; }
+
+@include echo.spinner;
+.spinner { display: inline-block; }

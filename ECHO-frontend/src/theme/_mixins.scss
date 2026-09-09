@@ -1,0 +1,116 @@
+// Mixin e variabili Sass condivise. Non produce CSS da solo: va importato con
+// @use '../../../theme/mixins' as echo; (i ".." dipendono dalla profondità).
+
+// ─── Breakpoint e larghezze di pagina ────────────────────────────────────────
+
+$bp-tablet: 768px;
+$page-max-mobile: 600px;
+$page-max-desktop: 1180px;
+
+// Contenitore centrato: colonna stretta su mobile, più larga su desktop.
+@mixin page-shell($mobile: $page-max-mobile, $desktop: $page-max-desktop) {
+  max-width: $mobile;
+  margin-left: auto;
+  margin-right: auto;
+
+  @media (min-width: $bp-tablet) {
+    max-width: $desktop;
+  }
+}
+
+// ─── Superfici interattive ───────────────────────────────────────────────────
+
+// Bottone con ombra piena che affonda alla pressione: l'effetto firma di ECHO.
+@mixin pressable($altezza: 4px, $ombra: var(--echo-shadow)) {
+  box-shadow: 0 $altezza 0 $ombra;
+  transition: transform 150ms, box-shadow 150ms;
+
+  &:active {
+    transform: translateY(2px);
+    box-shadow: 0 ($altezza - 2px) 0 $ombra;
+  }
+}
+
+// Base dei pulsanti a pillola. Mixin e non @extend: @extend in un foglio globale
+// concatena i selettori e rende la specificità imprevedibile.
+@mixin button-base {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: none;
+  font-family: var(--echo-font-mono);
+  font-weight: 700;
+  font-size: 12px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  padding: 12px 28px;
+  border-radius: var(--echo-radius-pill);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+// ─── Spinner ─────────────────────────────────────────────────────────────────
+
+// Emette la classe E i @keyframes: Angular scopa i nomi delle animazioni per
+// componente, quindi spostarli in global.scss romperebbe il riferimento.
+// Va richiamato al livello più esterno del foglio, non dentro un selettore.
+@mixin spinner(
+  $selettore: '.spinner',
+  $colore: var(--echo-on-dark),
+  $traccia: rgba(var(--echo-on-dark-rgb), 0.3),
+  $dimensione: 16px
+) {
+  #{$selettore} {
+    width: $dimensione;
+    height: $dimensione;
+    border: 1.5px solid $traccia;
+    border-top-color: $colore;
+    border-radius: 50%;
+    animation: echo-spin 0.7s linear infinite;
+  }
+
+  @keyframes echo-spin {
+    to { transform: rotate(360deg); }
+  }
+}
+
+// ─── Campi form ─────────────────────────────────────────────────────────────
+
+// Campi condivisi da auth, settings e create-event; il parametro distingue il
+// fondo scuro. .field-hint e .field-error restano locali: variano troppo.
+@mixin field($su-scuro: false) {
+  $testo: if($su-scuro, var(--echo-on-dark), var(--echo-on-light));
+  $etichetta: if($su-scuro, var(--echo-on-dark), var(--echo-on-light-soft));
+  $placeholder: if($su-scuro, rgba(var(--echo-on-dark-rgb), 0.5), var(--echo-surface-mid));
+
+  .field-group {
+    margin-bottom: 18px;
+  }
+
+  .field-label {
+    display: block;
+    font-family: var(--echo-font-mono);
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: $etichetta;
+    margin-bottom: 8px;
+  }
+
+  .field-input {
+    width: 100%;
+    background: transparent;
+    border: 1.5px solid $testo;
+    border-radius: var(--echo-radius-sm);
+    color: $testo;
+    font-family: var(--echo-font-mono);
+    font-size: 15px;
+    padding: 12px 14px;
+    outline: none;
+    transition: border-color 150ms;
+
+    &::placeholder { color: $placeholder; }
+    &:focus { border-color: var(--echo-rust); }
+  }
+}

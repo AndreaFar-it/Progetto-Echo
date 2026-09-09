@@ -2,13 +2,13 @@ import {
   Component,
   Input
 } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 
 // Da un template per le foto che vediamo nella classifica in stile polaroid
 @Component({
   selector: 'app-polaroid-frame',
   standalone: true,
-  imports: [CommonModule],
+  imports: [],
   template: `
     <div class="polaroid" [style.transform]="'rotate(' + rotationDeg + 'deg)'">
       <div class="photo"><ng-content></ng-content></div>
@@ -17,9 +17,9 @@ import { CommonModule } from '@angular/common';
   styles: [`
     .polaroid {
       display: inline-block;
-      background: #FBF8F2;
+      background: var(--echo-surface-paper);
       padding: 8px 8px 22px;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.35);
+      box-shadow: 0 4px 10px rgba(var(--echo-scrim-rgb),0.35);
     }
     .photo {
       /* Sempre un'area di ritaglio rigorosamente quadrata, qualunque sia il vero rapporto
@@ -27,7 +27,7 @@ import { CommonModule } from '@angular/common';
       width: 100%;
       aspect-ratio: 1 / 1;
       overflow: hidden;
-      background: #ddd3c0;
+      background: var(--echo-film-edge);
     }
     ::ng-deep .photo img {
       display: block;

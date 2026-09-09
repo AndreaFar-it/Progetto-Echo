@@ -35,7 +35,8 @@ export class ServizioFotocamera {
     try {
       //Importa il plugin capgo
       const { CameraPreview } = await import('@capgo/camera-preview');
-      try { await CameraPreview.stop(); } catch { }
+      // Chiude un'eventuale anteprima rimasta aperta; l'errore qui e' atteso.
+      try { await CameraPreview.stop(); } catch { /* nessuna anteprima da chiudere */ }
       await Promise.race([
         CameraPreview.start({
           position: this.facing, //inizializza il facing della fotocamera
@@ -64,7 +65,9 @@ export class ServizioFotocamera {
     try {
       const { CameraPreview } = await import('@capgo/camera-preview');
       await CameraPreview.stop();
-    } catch { }
+    } catch {
+      // Se l'anteprima non era attiva non c'e' nulla da segnalare.
+    }
   }
 
   // Serve a tenere a mente la direzione attuale della fotocamera
@@ -77,7 +80,8 @@ export class ServizioFotocamera {
     const { CameraPreview } = await import('@capgo/camera-preview');
     await CameraPreview.flip();
     this.facing = newFacing;
-  } catch (error) {
+  } catch {
+    // Cambio non riuscito: facing resta invariato e la UI mostra quello vero.
   }
   return this.facing;
 }
@@ -98,7 +102,8 @@ export class ServizioFotocamera {
     try {
       const { CameraPreview } = await import('@capgo/camera-preview');
       await CameraPreview.setFlashMode({ flashMode: mode });
-    } catch (error) {
+    } catch {
+      // Modalita' non supportata: refreshCameraControls() riallinea la UI.
     }
   }
 
@@ -118,7 +123,8 @@ export class ServizioFotocamera {
     try {
       const { CameraPreview } = await import('@capgo/camera-preview');
       await CameraPreview.setZoom({ level });
-    } catch (error) {
+    } catch {
+      // Zoom rifiutato dall'hardware: resta il livello precedente.
     }
   }
 

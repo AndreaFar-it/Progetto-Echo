@@ -1,0 +1,123 @@
+@use '../../../theme/mixins' as echo;
+
+/* ── Scheda form scura ── */
+.form-card {
+  background: var(--echo-surface-dark);
+  border-radius: var(--echo-radius-lg);
+  padding: 24px 20px 28px;
+  box-shadow: 0 4px 10px rgba(var(--echo-on-light-rgb),0.25);
+}
+.form-card-title {
+  font-family: var(--echo-font-serif);
+  font-size: 22px; font-weight: 400; letter-spacing: 0.06em;
+  text-transform: uppercase; text-align: center;
+  color: var(--echo-on-dark); margin: 0 0 22px;
+}
+
+/* ── Sotto-sezioni ── */
+.sub-section {
+  background: var(--echo-surface-mid);
+  border-radius: var(--echo-radius-md);
+  padding: 18px 16px;
+  margin-bottom: 18px;
+}
+.sub-heading {
+  font-family: var(--echo-font-mono);
+  font-size: 12px; font-weight: 700; letter-spacing: 0.12em;
+  text-transform: uppercase; color: var(--echo-on-dark);
+  margin: 0 0 16px;
+}
+
+/* ── Campi form (definizione condivisa in theme/_mixins.scss) ── */
+@include echo.field($su-scuro: true);
+
+.field-group:last-child { margin-bottom: 0; }
+.field-hint { text-transform: none; letter-spacing: 0; opacity: 0.75; }
+.field-datetime { color-scheme: dark; }
+.field-error { display: block; font-size: 11px; color: var(--echo-danger-on-dark); margin-top: 5px; font-family: var(--echo-font-mono); }
+
+/* ── Riga durata (Ore : Minuti) ── */
+.duration-row {
+  display: flex; align-items: flex-end; gap: 8px; margin-top: 4px;
+}
+.duration-block { display: flex; flex-direction: column; align-items: center; flex: 1; gap: 4px; }
+.duration-input { text-align: center; font-size: 22px; font-weight: 700; padding: 10px 8px; }
+.duration-sep {
+  font-family: var(--echo-font-mono); font-size: 22px; font-weight: 700;
+  color: var(--echo-on-dark); padding-bottom: 14px;
+}
+.duration-unit {
+  font-family: var(--echo-font-mono); font-size: 9px; letter-spacing: 0.18em;
+  text-transform: uppercase; color: rgba(var(--echo-on-dark-rgb),0.6);
+}
+.dev-badge {
+  margin-left: 8px; font-size: 10px; letter-spacing: 0.06em;
+  color: var(--echo-rust); font-weight: 700; text-transform: none;
+}
+
+/* ── Selettore scatti ── */
+.scatti-selector { display: flex; gap: 8px; margin-top: 8px; }
+.scatti-btn {
+  flex: 1; padding: 10px; border: 1.5px solid var(--echo-on-dark);
+  background: transparent; color: var(--echo-on-dark); font-size: 15px;
+  border-radius: 4px; cursor: pointer; transition: all 150ms;
+  font-family: var(--echo-font-mono);
+  &.active {
+    border-color: var(--echo-rust); background: var(--echo-rust); color: var(--echo-on-dark);
+  }
+}
+
+.form-error {
+  font-family: var(--echo-font-mono); font-size: 12px; line-height: 1.4;
+  color: var(--echo-danger-on-dark); background: rgba(var(--echo-rust-rgb),0.18);
+  border-left: 2px solid var(--echo-rust); border-radius: 0 2px 2px 0;
+  padding: 8px 12px; margin: 0 0 14px;
+}
+
+/* ── Bottone Genera Evento ── */
+.btn-light-pill {
+  display: flex; width: 100%; align-items: center; justify-content: center; gap: 8px;
+  margin-top: 6px;
+  background: var(--echo-surface-light); color: var(--echo-on-light); border: none;
+  font-family: var(--echo-font-mono); font-weight: 700; font-size: 12px;
+  letter-spacing: 0.14em; text-transform: uppercase;
+  padding: 13px 28px; border-radius: var(--echo-radius-pill);
+  cursor: pointer; transition: transform 150ms;
+  &:active { transform: translateY(2px); }
+  &[disabled] { opacity: 0.6; cursor: not-allowed; }
+}
+
+@include echo.spinner(
+  $colore: var(--echo-on-light),
+  $traccia: rgba(var(--echo-on-light-rgb), 0.3),
+  $dimensione: 14px
+);
+
+/* ── Evento creato ── */
+.success-overlay {
+  position: fixed; inset: 0; z-index: 200;
+  background: rgba(var(--echo-on-light-rgb),0.6);
+  display: flex; align-items: center; justify-content: center; padding: 24px;
+}
+.success-modal {
+  background: var(--echo-surface-light); border-radius: var(--echo-radius-lg);
+  padding: 30px 24px; max-width: 360px; width: 100%; text-align: center;
+}
+.success-title {
+  font-family: var(--echo-font-serif);
+  font-size: 22px; font-weight: 400; color: var(--echo-on-light); margin: 0 0 12px;
+}
+.success-body {
+  font-size: 13px; color: var(--echo-on-light-soft); line-height: 1.6;
+  font-family: var(--echo-font-mono); margin: 0 0 20px;
+}
+.success-code {
+  font-family: var(--echo-font-mono); font-size: 32px; font-weight: 700;
+  letter-spacing: 0.4em; color: var(--echo-rust);
+  background: rgba(var(--echo-rust-rgb),0.08);
+  border: 1px solid rgba(var(--echo-rust-rgb),0.3); border-radius: 4px;
+  padding: 12px 16px; margin-bottom: 22px;
+  text-indent: 0.4em;
+}
+.success-actions { display: flex; gap: 10px; justify-content: center; }
+.success-actions .echo-btn { flex: 1; padding: 12px 16px; }

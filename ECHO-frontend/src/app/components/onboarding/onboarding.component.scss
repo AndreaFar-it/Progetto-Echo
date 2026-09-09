@@ -1,0 +1,112 @@
+.onboarding-wrap {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  background: var(--echo-surface-light);
+  padding: 0 24px 48px;
+  overflow: hidden;
+}
+
+/* Slide area */
+.slide-area {
+  flex: 1;
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.slide {
+  position: absolute;
+  width: 100%;
+  opacity: 0;
+  transform: translateX(40px);
+  transition: opacity 300ms ease-in-out, transform 300ms ease-in-out;
+  pointer-events: none;
+  text-align: center;
+  padding-top: 24px;
+
+  &.active {
+    opacity: 1;
+    transform: translateX(0);
+    pointer-events: auto;
+  }
+  &.prev {
+    opacity: 0;
+    transform: translateX(-40px);
+  }
+}
+
+.slide-card {
+  background: transparent;
+  border-radius: var(--echo-radius-lg);
+  padding: 12px;
+  margin: 0 auto 28px;
+  max-width: 220px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.slide-arch {
+  width: 100%;
+  max-height: 260px;
+  object-fit: contain;
+}
+
+.slide-title {
+  font-family: var(--echo-font-serif);
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  color: var(--echo-on-light);
+  margin: 0 0 12px;
+}
+
+.slide-body {
+  font-size: 14px;
+  line-height: 1.7;
+  color: var(--echo-on-light-soft);
+  margin: 0;
+  max-width: 300px;
+  margin-inline: auto;
+  font-family: var(--echo-font-mono);
+}
+
+.slide-lead {
+  color: var(--echo-teal);
+  font-weight: 700;
+}
+
+/* Progress dots */
+.progress-dots {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 28px;
+}
+
+.dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: rgba(var(--echo-on-light-rgb),0.15);
+  border: 0.5px solid rgba(var(--echo-on-light-rgb),0.25);
+  transition: background 150ms ease-in-out, width 150ms ease-in-out;
+
+  &.active {
+    background: var(--echo-rust);
+    width: 20px;
+    border-radius: 3px;
+    border-color: transparent;
+  }
+}
+
+/* Nav buttons */
+.slide-nav {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.nav-btn { flex: 1; }
+.nav-btn-primary { flex: 2; }

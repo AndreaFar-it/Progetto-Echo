@@ -1,11 +1,11 @@
 import { Component, Input } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 
 // Crea il bordo su cui applicare le foto nella galleria
 @Component({
   selector: 'app-film-border',
   standalone: true,
-  imports: [CommonModule],
+  imports: [],
   template: `
     <div class="film-border" [class.film-border--rounded]="rounded">
       <div class="rail rail--left"></div>
@@ -30,7 +30,7 @@ import { CommonModule } from '@angular/common';
 
     .rail {
       flex: 0 0 9px;
-      background: var(--echo-ink, #2A1A0E);
+      background: var(--echo-on-light);
       -webkit-mask-image: radial-gradient(circle at center, transparent 34%, black 35%);
       mask-image: radial-gradient(circle at center, transparent 34%, black 35%);
       -webkit-mask-size: 100% 14px;

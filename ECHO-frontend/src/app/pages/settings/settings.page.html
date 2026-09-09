@@ -1,0 +1,90 @@
+<ion-header><ion-toolbar>
+  <div class="tb">
+    <button type="button" class="tb__back" (click)="router.navigate(['/profilo'])">← Indietro</button>
+    <span class="tb__title">Impostazioni</span>
+    <span class="tb__spacer"></span>
+  </div>
+</ion-toolbar></ion-header>
+
+<ion-content>
+  <div class="settings-shell">
+
+    <!-- Foto profilo  -->
+    <section class="section">
+      <p class="section__label">Cambio immagine profilo</p>
+      <div class="avatar-row">
+        <div class="avatar-preview">
+          <img [src]="avatarUrl ? photoUrl(avatarUrl) : 'assets/default-avatar.svg'" alt="Foto profilo" />
+        </div>
+        <div class="avatar-actions">
+          <button type="button" class="echo-btn-outline" [disabled]="caricamentoFoto" (click)="fileInput.click()">
+            {{ caricamentoFoto ? 'Caricamento…' : 'Cambia foto' }}
+          </button>
+          <p class="field-hint">JPEG, PNG o WebP — max 15MB</p>
+        </div>
+        <input #fileInput type="file" accept="image/jpeg,image/png,image/webp" hidden
+          (change)="onPhotoSelected($event)" />
+      </div>
+    </section>
+
+    <!--  Modifica password  -->
+    <section class="section">
+      <p class="section__label">Modifica password</p>
+      <div class="field-group">
+        <label class="field-label" for="pw-attuale">Password attuale</label>
+        <input id="pw-attuale" class="field-input" type="password" autocomplete="current-password"
+          [(ngModel)]="pwForm.attuale" placeholder="········" />
+      </div>
+      <div class="field-group">
+        <label class="field-label" for="pw-nuova">Nuova password</label>
+        <input id="pw-nuova" class="field-input" type="password" autocomplete="new-password"
+          [(ngModel)]="pwForm.nuova" placeholder="········" />
+      </div>
+      <div class="field-group">
+        <label class="field-label" for="pw-conferma">Conferma nuova password</label>
+        <input id="pw-conferma" class="field-input" type="password" autocomplete="new-password"
+          [(ngModel)]="pwForm.conferma" placeholder="········" (keyup.enter)="changePassword()" />
+      </div>
+      @if (pwError) {
+        <p class="field-error">{{ pwError }}</p>
+      }
+      <button type="button" class="echo-btn-outline echo-btn-block" [disabled]="pwLoading" (click)="changePassword()">
+        {{ pwLoading ? 'Salvataggio…' : 'Aggiorna password' }}
+      </button>
+    </section>
+
+    <!--  Lingua  -->
+    <section class="section">
+      <p class="section__label">Cambio lingua</p>
+      <div class="lang-list">
+        <div class="lang-row lang-row--active">
+          <span class="lang-dot"></span>
+          <span class="lang-name">Italiano</span>
+          <span class="lang-check">✓</span>
+        </div>
+        @for (l of altreLingue; track l) {
+          <div class="lang-row lang-row--disabled">
+            <span class="lang-dot"></span>
+            <span class="lang-name">{{ l }}</span>
+            <span class="lang-soon">Presto</span>
+          </div>
+        }
+      </div>
+    </section>
+
+    <!-- Esci  -->
+    <section class="section">
+      <button type="button" class="echo-btn-outline echo-btn-block" (click)="logout()">Esci</button>
+    </section>
+
+    <!--  Elimina profilo  -->
+    <section class="section section--danger">
+      <p class="section__label">Zona pericolosa</p>
+      <button type="button" class="danger-btn" [disabled]="deleting" (click)="confirmDelete()">
+        {{ deleting ? 'Eliminazione…' : 'Elimina profilo' }}
+      </button>
+      <p class="field-hint">Elimina definitivamente il tuo account e tutti i dati associati.</p>
+    </section>
+
+  </div>
+</ion-content>

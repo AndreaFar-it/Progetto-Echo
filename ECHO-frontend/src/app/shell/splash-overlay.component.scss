@@ -1,0 +1,59 @@
+.splash-root {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  background: var(--echo-surface-deep);
+  opacity: 0;
+  transition: opacity 450ms ease;
+  pointer-events: none;
+}
+.splash-root.shown { opacity: 1; }
+
+.hero-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.hero-img {
+  width: 220px;
+  object-fit: contain;
+}
+
+.tagline {
+  font-family: var(--echo-font-mono);
+  font-size: 11px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--echo-on-dark);
+}
+
+.loading {
+  margin-top: 28px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+.reel {
+  width: 26px;
+  height: 34px;
+  /* L'SVG disegna con currentColor: gli attributi di presentazione SVG non
+     accettano var(), quindi il token passa da qui. */
+  color: var(--echo-on-dark);
+  animation: reel-spin 2.4s linear infinite;
+  transform-origin: 12px 16px;
+}
+.loading span {
+  font-family: var(--echo-font-mono);
+  font-size: 12px;
+  color: rgba(var(--echo-on-dark-rgb),0.65);
+}
+
+@keyframes reel-spin {
+  to { transform: rotate(360deg); }
+}

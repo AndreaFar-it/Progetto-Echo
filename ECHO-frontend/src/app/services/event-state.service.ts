@@ -1,5 +1,6 @@
 import {
   Injectable,
+  NgZone,
   OnDestroy,
   signal,
   Signal
@@ -62,7 +63,7 @@ export class ServizioStatoEvento implements OnDestroy {
   // Vero mentre polling e ticker sono attivi (tra una start() e la stop() successiva).
   private avviato = false;
 
-  constructor(private http: HttpClient) { }
+  constructor(private http: HttpClient, private zone: NgZone) { }
 
   // Avvia il polling degli eventi e il ticker dei countdown. Idempotente.
   start(): void {
@@ -76,18 +77,25 @@ export class ServizioStatoEvento implements OnDestroy {
     // Polling: ogni 30s esegue fetch(). Se una chiamata precedente è ancora in corso, switchMap la annulla.
     this.subs.add(interval(POLLING_MS).pipe(switchMap(() => this.fetch())).subscribe());
 
-    // Ticker che scatta ogni secondo per aggiornare i countdown.
-    this.subs.add(interval(TICK_MS).subscribe(() => {
-      // Legge lo stato attivo prima dell'aggiornamento.
-      const prev = this._state$.getValue();
+    // Ticker dei countdown, fuori dalla zona di Angular: rientra solo se lo stato cambia.
+    this.zone.runOutsideAngular(() => {
+      this.subs.add(interval(TICK_MS).subscribe(() => {
+        const prev = this._state$.getValue();
+        const nuovo = this.derive(this._events$.getValue());
 
-      // Ricalcola lo stato basandosi sull'elenco di eventi attuale e sull'orario corrente.
-      this.push(this._events$.getValue());
+        // Nulla e' cambiato: si esce senza svegliare Angular.
+        if (this.statiUguali(prev, nuovo)) return;
 
-      // Contrasto di fine tempo: se un secondo fa c'era tempo (>0) e ora è scaduto (<=0),
-      // forza immediatamente un aggiornamento dal server chiamando refresh().
-      if (prev.secondsToNext > 0 && this._state$.getValue().secondsToNext <= 0) void this.refresh();
-    }));
+        // Rientra in zona: Angular programma il ciclo di change detection.
+        this.zone.run(() => {
+          this._state$.next(nuovo);
+          this._stateSig.set(nuovo);
+        });
+
+        // Tempo scaduto: aggiorna subito invece di attendere il polling.
+        if (prev.secondsToNext > 0 && nuovo.secondsToNext <= 0) void this.refresh();
+      }));
+    });
   }
 
   // Ferma polling e ticker. Idempotente. Lo stato già calcolato resta disponibile ai lettori.

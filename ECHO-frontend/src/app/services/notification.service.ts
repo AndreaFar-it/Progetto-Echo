@@ -1,16 +1,16 @@
 import { Injectable } from '@angular/core';
-import { Platform } from '@ionic/angular/common';
+import { ServizioPiattaforma } from '../core/piattaforma.service';
 import { PushNotifications } from '@capacitor/push-notifications';
 import { ApiService } from './api.service';
 
 @Injectable({ providedIn: 'root' })
 export class ServizioNotifiche {
-  private readonly isHybrid: boolean;
+  private readonly isNativa: boolean;
 
   // Controlla se il dispositivo è mobile e nel caso lo registra al servizio PushNotification
-  constructor(private api: ApiService, platform: Platform) {
-    this.isHybrid = platform.is('hybrid');
-    if (this.isHybrid) this.register();
+  constructor(private api: ApiService, piattaforma: ServizioPiattaforma) {
+    this.isNativa = piattaforma.isNativa;
+    if (this.isNativa) this.register();
   }
 
   // Metodo per registrare i dispositivi alla ricezione di notifiche
@@ -29,7 +29,8 @@ export class ServizioNotifiche {
     PushNotifications.addListener('registrationError', errore => {
       console.warn('[ServizioNotifiche] FCM registration error', errore);
     });
-    PushNotifications.addListener('pushNotificationReceived', n => { /** Successo */ });
+    // Segnaposto: il punto di aggancio resta pronto per quando servira'.
+    PushNotifications.addListener('pushNotificationReceived', () => { /* da implementare */ });
 
     await PushNotifications.register();
   }

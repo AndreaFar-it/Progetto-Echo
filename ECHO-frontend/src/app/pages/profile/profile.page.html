@@ -1,0 +1,90 @@
+<app-echo-header>
+  <button type="button" class="toolbar-gear" (click)="router.navigate(['/impostazioni'])" aria-label="Impostazioni">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+      <circle cx="12" cy="12" r="3"></circle>
+      <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+    </svg>
+  </button>
+</app-echo-header>
+
+<ion-content>
+  @if (profilo) {
+    <div class="profile-shell">
+      <!-- ── Scheda Profilo ── -->
+      <div class="profile-card">
+        <app-polaroid-frame class="profile-avatar">
+          <img [src]="profilo.utente.foto_profilo_url ? urlFoto(profilo.utente.foto_profilo_url) : 'assets/default-avatar.svg'"
+            [alt]="profilo.utente.nome" />
+        </app-polaroid-frame>
+        <div class="profile-card-info">
+          <h1 class="profile-name">{{ profilo.utente.nome | uppercase }} {{ profilo.utente.cognome | uppercase }}</h1>
+          <p class="profile-since">
+            Data iscrizione:<br>{{ profilo.utente.data_registrazione | date:'d MMMM yyyy' }}
+          </p>
+        </div>
+      </div>
+      <!-- ── Griglia Statistiche ── -->
+      <div class="stats-grid">
+        <div class="stat-cell">
+          <div class="stat-value">{{ profilo.utente.scatti_totali }}</div>
+          <div class="stat-label">Scatti</div>
+        </div>
+        <div class="stat-cell stat-cell--middle">
+          <div class="stat-value">{{ profilo.eventi_count }}</div>
+          <div class="stat-label">Eventi</div>
+        </div>
+        <div class="stat-cell">
+          <div class="stat-value">{{ profilo.utente.voti_ricevuti }}</div>
+          <div class="stat-label">Voti ricevuti</div>
+        </div>
+      </div>
+      <!-- ── Bacheca Trofei ── -->
+      <div class="section-header">
+        <span class="section-label">Bacheca Trofei</span>
+      </div>
+      @if (medaglieDisposte.length) {
+        <div class="trophy-wall">
+          @for (m of medaglieDisposte; track m.badge.id_badge) {
+            <app-medal-badge
+              [tipo]="m.badge.tipo"
+              [rotationDeg]="m.rotazione"
+              [style.left.%]="m.sinistra"
+              [style.top.px]="m.alto"
+              class="trophy-medal"
+            ></app-medal-badge>
+          }
+        </div>
+      } @else {
+        <div class="badge-empty">
+          <p class="badge-empty-text">Partecipa a un evento e scala la classifica per ottenere il tuo primo badge.</p>
+        </div>
+      }
+      <!-- ── Archivio Rullini ── -->
+      @if (profilo.archivio.length) {
+        <div class="section-header">
+          <span class="section-label">Archivio Rullini</span>
+        </div>
+      }
+      @if (profilo.archivio.length) {
+        <div class="archive-strip">
+          @for (evento of profilo.archivio; track evento.id_evento) {
+            <app-film-canister
+              [label]="evento.nome"
+              (click)="apriArchiviato(evento)"
+              [class.tappable]="['album_aperto','chiusa'].includes(evento.stato)"
+            ></app-film-canister>
+          }
+        </div>
+      }
+    </div>
+  }
+
+  <!-- Scheletro di caricamento -->
+  @if (!profilo) {
+    <div class="profile-loading">
+      <div class="skeleton skeleton--avatar"></div>
+      <div class="skeleton skeleton--name"></div>
+      <div class="skeleton skeleton--stats"></div>
+    </div>
+  }
+</ion-content>

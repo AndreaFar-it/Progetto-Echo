@@ -1,0 +1,116 @@
+<ion-content>
+  <div class="auth-shell">
+
+    <!-- Logo block -->
+    <header class="auth-header">
+      <img class="hero-logo" src="assets/echo-hero-dark.svg" alt="ECHO — The Persistence of the Moment">
+    </header>
+
+    <!-- STEP 1 — credentials -->
+    @if (step === 'credentials') {
+      <div class="reel-label">
+        <svg class="reel-icon" viewBox="0 0 24 32">
+          <rect x="2" y="2" width="20" height="28" rx="2" fill="none" stroke="currentColor" stroke-width="1.5"/>
+          <circle cx="7" cy="9" r="2" fill="none" stroke="currentColor" stroke-width="1.2"/>
+          <circle cx="17" cy="9" r="2" fill="none" stroke="currentColor" stroke-width="1.2"/>
+          <circle cx="7" cy="23" r="2" fill="none" stroke="currentColor" stroke-width="1.2"/>
+          <circle cx="17" cy="23" r="2" fill="none" stroke="currentColor" stroke-width="1.2"/>
+        </svg>
+        <span>{{ mode === 'login' ? 'Accedi' : 'Registrati' }}</span>
+      </div>
+      <div class="auth-form">
+        <div class="field-group">
+          <label class="field-label" for="auth-email">Email</label>
+          <input id="auth-email" class="field-input" [(ngModel)]="form.email"
+            type="email" autocomplete="email" placeholder="Inserisci la tua email..." />
+        </div>
+        <div class="field-group">
+          <label class="field-label" for="auth-password">Password</label>
+          <input id="auth-password" class="field-input" [(ngModel)]="form.password"
+            type="password" autocomplete="current-password"
+            (keyup.enter)="onCredentialsSubmit()" placeholder="Inserisci la tua password..." />
+        </div>
+        @if (mode === 'login') {
+          <button type="button" class="forgot-link forgot-link--right" (click)="openForgotPassword()">
+            Password dimenticata?
+          </button>
+        }
+        <!-- Errore -->
+        @if (errorMsg) {
+          <p class="auth-error">{{ errorMsg }}</p>
+        }
+        <button type="button" class="auth-submit echo-btn" [class.loading]="caricamento"
+          (click)="onCredentialsSubmit()" [disabled]="caricamento">
+          @if (!caricamento) {
+            <span>Inizia</span>
+          }
+          @if (caricamento) {
+            <span class="spinner"></span>
+          }
+        </button>
+        <p class="mode-switch">
+          @if (mode === 'login') {
+            Non hai un account? <button type="button" class="mode-link" (click)="switchMode('register')">Registrati</button>
+          }
+          @if (mode === 'register') {
+            Hai già un account? <button type="button" class="mode-link" (click)="switchMode('login')">Accedi</button>
+          }
+        </p>
+      </div>
+    }
+
+    <!--STEP 2 — avatar + nome/cognome-->
+    @if (step === 'profile') {
+      <div class="reel-label">
+        <svg class="reel-icon" viewBox="0 0 24 32">
+          <rect x="2" y="2" width="20" height="28" rx="2" fill="none" stroke="currentColor" stroke-width="1.5"/>
+          <circle cx="7" cy="9" r="2" fill="none" stroke="currentColor" stroke-width="1.2"/>
+          <circle cx="17" cy="9" r="2" fill="none" stroke="currentColor" stroke-width="1.2"/>
+          <circle cx="7" cy="23" r="2" fill="none" stroke="currentColor" stroke-width="1.2"/>
+          <circle cx="17" cy="23" r="2" fill="none" stroke="currentColor" stroke-width="1.2"/>
+        </svg>
+        <span>Registrazione</span>
+      </div>
+      <div class="avatar-picker">
+        <label class="avatar-circle" for="avatarInput">
+          <img [src]="avatarPreview || 'assets/default-avatar.svg'" alt="" />
+        </label>
+        <input id="avatarInput" type="file" accept="image/*" hidden (change)="onAvatarSelected($event)" />
+        <label for="avatarInput" class="avatar-link">Carica la tua immagine (Opzionale)</label>
+      </div>
+      <div class="auth-form">
+        <div class="field-group">
+          <label class="field-label" for="auth-nome">Nome</label>
+          <input id="auth-nome" class="field-input" [(ngModel)]="form.nome"
+            type="text" autocomplete="given-name" placeholder="Nome..." />
+        </div>
+        <div class="field-group">
+          <label class="field-label" for="auth-cognome">Cognome</label>
+          <input id="auth-cognome" class="field-input" [(ngModel)]="form.cognome"
+            type="text" autocomplete="family-name" (keyup.enter)="submit()" placeholder="Cognome..." />
+        </div>
+        @if (errorMsg) {
+          <p class="auth-error">{{ errorMsg }}</p>
+        }
+        <button type="button" class="auth-submit echo-btn" [class.loading]="caricamento"
+          (click)="submit()" [disabled]="caricamento">
+          @if (!caricamento) {
+            <span>Inizia</span>
+          }
+          @if (caricamento) {
+            <span class="spinner"></span>
+          }
+        </button>
+        <button type="button" class="back-link" (click)="backToCredentials()" [disabled]="caricamento">Torna indietro</button>
+      </div>
+    }
+
+    <!-- Footer rule -->
+    <div class="auth-footer">
+      <span class="footer-rule"></span>
+      <span class="footer-text">ECHO &copy; 2025–2026</span>
+      <span class="footer-rule"></span>
+    </div>
+
+  </div>
+</ion-content>

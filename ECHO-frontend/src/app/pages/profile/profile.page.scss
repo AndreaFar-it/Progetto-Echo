@@ -1,0 +1,101 @@
+ion-content { --background: var(--echo-surface-light); }
+
+.toolbar-gear {
+  display: flex; align-items: center; justify-content: center;
+  width: 32px; height: 32px;
+  color: var(--echo-on-dark); background: transparent; border: none; cursor: pointer;
+  padding: 0; opacity: 0.85;
+  -webkit-tap-highlight-color: transparent;
+  svg { width: 22px; height: 22px; }
+}
+
+.profile-shell { padding: 16px 16px 110px; }
+
+/* ── Scheda profilo ── */
+.profile-card {
+  position: relative;
+  display: flex; align-items: center; gap: 16px;
+  background: var(--echo-surface-dark);
+  border-radius: var(--echo-radius-lg);
+  padding: 18px;
+  margin-bottom: 20px;
+}
+.profile-avatar { width: 70px; flex-shrink: 0; }
+/* Polaroid dimensione quadrata fissa */
+::ng-deep .profile-avatar .photo { width: 70px; }
+.profile-card-info { flex: 1; min-width: 0; }
+.profile-name {
+  font-family: var(--echo-font-mono); font-weight: 700;
+  font-size: 14px; letter-spacing: 0.02em;
+  color: var(--echo-on-dark); margin: 0 0 6px;
+}
+.profile-since {
+  font-family: var(--echo-font-mono); font-size: 10px; line-height: 1.5;
+  color: var(--echo-surface-warm); margin: 0;
+}
+
+/* ── Statistiche ── */
+.stats-grid {
+  display: grid; grid-template-columns: repeat(3, 1fr);
+  border: 1px solid var(--echo-on-light); border-radius: var(--echo-radius-md);
+  margin-bottom: 20px;
+}
+.stat-cell {
+  padding: 16px 8px; text-align: center;
+  border-right: 1px solid var(--echo-on-light);
+  &:last-child { border-right: none; }
+}
+.stat-value {
+  font-family: var(--echo-font-display);
+  font-size: 24px; color: var(--echo-on-light); line-height: 1;
+  margin-bottom: 6px;
+}
+.stat-label {
+  font-family: var(--echo-font-mono);
+  font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--echo-on-light-soft);
+}
+
+/* ── Intestazioni sezione ── */
+.section-header { padding: 4px 4px 10px; }
+.section-label {
+  font-family: var(--echo-font-mono);
+  font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--echo-on-light-soft);
+}
+
+/* ── Bacheca trofei ── */
+.trophy-wall {
+  position: relative; height: 160px;
+  background: var(--echo-surface-mid);
+  border: 1px solid var(--echo-on-light);
+  border-radius: var(--echo-radius-md);
+  margin-bottom: 20px;
+}
+.trophy-medal { position: absolute; }
+
+.badge-empty {
+  padding: 16px; margin-bottom: 20px;
+  border: 1px solid var(--echo-on-light); border-radius: var(--echo-radius-md);
+}
+.badge-empty-text {
+  font-family: var(--echo-font-mono);
+  font-size: 13px; color: var(--echo-on-light-soft); line-height: 1.6; margin: 0; text-align: center;
+}
+
+/* ── Striscia archivio rullini ── */
+.archive-strip {
+  display: flex; gap: 0; overflow-x: auto;
+  padding: 4px 4px 16px;
+  app-film-canister { margin-right: -6px; }
+  app-film-canister.tappable { cursor: pointer; }
+}
+
+/* ── Scheletro di caricamento (shimmer) ── */
+.profile-loading { padding: 36px 24px; display: flex; flex-direction: column; align-items: center; gap: 16px; }
+.skeleton { background: var(--echo-surface-mid); border-radius: 4px; animation: shimmer 1.5s ease-in-out infinite; }
+@keyframes shimmer {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 1; }
+}
+.skeleton--avatar { width: 80px; height: 80px; border-radius: 50%; }
+.skeleton--name   { width: 160px; height: 20px; }
+.skeleton--stats  { width: 100%; height: 80px; border-radius: 6px; }

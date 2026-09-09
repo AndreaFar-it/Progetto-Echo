@@ -1,0 +1,99 @@
+<ion-content>
+  <ion-refresher slot="fixed" (ionRefresh)="handleRefresh($event)">
+    <ion-refresher-content></ion-refresher-content>
+  </ion-refresher>
+  <div class="shell">
+    <button type="button" class="back-btn" (click)="router.navigate(['/eventi/miei'])">← Indietro</button>
+    <h1 class="page-title">Report</h1>
+    @if (data) {
+      <div class="status-tag-row"><app-event-status-tag [stato]="data.stato"></app-event-status-tag></div>
+    }
+
+    @if (caricamento) {
+      <div class="loading"><p>Caricamento…</p></div>
+    }
+    @if (!caricamento && accessDenied) {
+      <div class="denied"><p>Solo l'organizzatore può vedere il report.</p></div>
+    }
+
+    @if (!caricamento && !accessDenied && data) {
+      <div class="report-card" #reportCard>
+        <p class="report-intro">Questo documento certifica la prospettiva autentica e senza filtri del tuo pubblico</p>
+        <!-- ── Partecipanti — Torta ───────────────────────────── -->
+        @for (m of TortaMetrics; track m.label) {
+          <div class="metric-row">
+            <svg viewBox="0 0 36 36" class="Torta">
+              <path class="Torta-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+              <path class="Torta-fill" [attr.stroke-dasharray]="m.percent + ', 100'"
+                d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+              <text x="18" y="20" class="Torta-text">{{ m.percent }}%</text>
+            </svg>
+            <div class="metric-info">
+              <span class="metric-label">{{ m.label }}</span>
+              <span class="metric-value">{{ m.valueLabel }}</span>
+            </div>
+          </div>
+        }
+        <!-- ── Voti Espressi — pictogram ──────────────────────── -->
+        @if (pictogram) {
+          <div class="metric-row">
+            <div class="pictogram">
+              @for (filled of pictogram.icons; track $index) {
+                <svg class="person" [class.filled]="filled" viewBox="0 0 24 24">
+                  <circle cx="12" cy="7" r="4" fill="currentColor"/>
+                  <path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8" fill="currentColor"/>
+                </svg>
+              }
+            </div>
+            <div class="metric-info">
+              <span class="metric-label">Voti<br>Espressi</span>
+              <span class="metric-value">{{ pictogram.valueLabel }}</span>
+            </div>
+          </div>
+        }
+        <!-- ── Vincitori — solo una volta che l'evento è del tutto chiuso ───── -->
+        @if (isFinal && ranking.length) {
+          <p class="winners-label">Vincitori</p>
+          <div class="winners-row">
+            @for (e of ranking; track e.id_foto; let i = $index) {
+              <div class="winner">
+                <app-polaroid-frame [rotationDeg]="[-6,4,-3][i % 3]">
+                  <svg class="paperclip" viewBox="0 0 14 28"><path d="M4 4 v16 a3 3 0 0 0 6 0 V8" fill="none" stroke="currentColor" stroke-width="2"/></svg>
+                  <img [src]="photoUrl(e.url_originale)" [alt]="'Foto di ' + e.nome" loading="lazy" />
+                </app-polaroid-frame>
+                <span class="winner-name">{{ e.nome | uppercase }}</span>
+              </div>
+            }
+          </div>
+        }
+        <div class="report-actions">
+          <button type="button" class="echo-btn btn-light" (click)="codeModalOpen = true">Visualizza il codice</button>
+          <button type="button" class="echo-btn btn-light" (click)="exportPdf()" [disabled]="esportazioneInCorso">
+            {{ esportazioneInCorso ? 'Esportazione…' : 'Esporta in PDF' }}
+          </button>
+          <button type="button" class="echo-btn btn-light" (click)="router.navigate(['/eventi/miei'])">I tuoi eventi</button>
+        </div>
+      </div>
+    }
+  </div>
+
+  <!-- ── Codice evento modal ─────────────────────────────────── -->
+  @if (codeModalOpen) {
+    <div class="code-overlay"
+      role="dialog" aria-modal="true" tabindex="-1"
+      aria-labelledby="titolo-codice-report"
+      (click)="chiudiCodiceSuBackdrop($event)"
+      (keydown.escape)="codeModalOpen = false">
+      <div class="code-modal">
+        <p class="code-modal-title" id="titolo-codice-report">Codice evento</p>
+        <p class="code-modal-sub">Ecco il codice generato per l'evento:</p>
+        <div class="code-boxes">
+          @for (ch of (data?.codice ?? '').split(''); track $index) {
+            <div class="code-box">{{ ch }}</div>
+          }
+        </div>
+        <button type="button" class="echo-btn code-modal-close" (click)="codeModalOpen = false">Torna indietro</button>
+      </div>
+    </div>
+  }
+</ion-content>

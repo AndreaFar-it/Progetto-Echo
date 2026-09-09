@@ -1,0 +1,45 @@
+@use '../../../theme/mixins' as echo;
+
+ion-content{--background:var(--echo-surface-light)}
+.shell{padding:20px 16px 100px;@include echo.page-shell($mobile:520px);}
+.back-btn{font-size:12px;color:var(--echo-on-light-soft);background:transparent;border:none;cursor:pointer;font-family:var(--echo-font-mono);padding:0;margin-bottom:8px}
+.page-title{font-family:var(--echo-font-serif);font-size:24px;font-weight:400;color:var(--echo-on-light);text-align:center;margin:0 0 4px}
+.status-tag-row{display:flex;justify-content:center;margin:0 0 20px}
+
+.loading,.denied{padding:60px 24px;text-align:center;color:var(--echo-on-light-soft);font-family:var(--echo-font-mono)}
+
+.report-card{background:var(--echo-surface-dark);border-radius:var(--echo-radius-lg);padding:24px 20px;color:var(--echo-on-dark)}
+.report-intro{font-family:var(--echo-font-mono);font-size:11px;color:rgba(var(--echo-on-dark-rgb),0.7);text-align:center;line-height:1.6;margin:0 0 28px}
+
+.metric-row{display:flex;align-items:center;gap:18px;margin-bottom:32px}
+.Torta{width:80px;height:80px;flex-shrink:0}
+.Torta-bg{fill:none;stroke:rgba(var(--echo-on-dark-rgb),0.2);stroke-width:2.6}
+.Torta-fill{fill:none;stroke:var(--echo-teal);stroke-width:2.6;stroke-linecap:round;transition:stroke-dasharray 400ms ease-out}
+.Torta-text{fill:var(--echo-on-dark);font-size:7px;font-family:var(--echo-font-mono);text-anchor:middle;dominant-baseline:middle}
+.metric-info{display:flex;flex-direction:column;gap:4px}
+.metric-label{font-family:var(--echo-font-mono);font-weight:700;font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--echo-on-dark)}
+.metric-value{font-family:var(--echo-font-mono);font-size:12px;color:rgba(var(--echo-on-dark-rgb),0.7)}
+
+.pictogram{width:80px;flex-shrink:0;display:flex;flex-wrap:wrap;gap:2px}
+.person{width:10px;height:10px;color:rgba(var(--echo-on-dark-rgb),0.25)}
+.person.filled{color:var(--echo-teal)}
+
+.winners-label{font-family:var(--echo-font-mono);font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:rgba(var(--echo-on-dark-rgb),0.7);text-align:center;margin:8px 0 18px}
+.winners-row{display:flex;justify-content:center;gap:18px;margin-bottom:28px;flex-wrap:wrap}
+.winner{display:flex;flex-direction:column;align-items:center;gap:8px;position:relative}
+.winner ::ng-deep .polaroid{width:90px}
+/* La graffetta disegna con currentColor: gli attributi SVG non accettano var(). */
+.paperclip{position:absolute;top:-10px;left:8px;width:12px;height:24px;z-index:2;color:var(--echo-surface-mid)}
+.winner-name{font-family:var(--echo-font-mono);font-size:10px;letter-spacing:.06em;color:var(--echo-on-dark)}
+
+.report-actions{display:flex;flex-direction:column;gap:10px;margin-top:8px}
+.btn-light{background:var(--echo-surface-light);color:var(--echo-on-light);box-shadow:none}
+
+/* ── Codice evento modal ── */
+.code-overlay{position:fixed;inset:0;z-index:200;background:rgba(var(--echo-on-light-rgb),.6);display:flex;align-items:center;justify-content:center;padding:24px}
+.code-modal{background:var(--echo-surface-light);border-radius:var(--echo-radius-lg);padding:28px 24px;max-width:340px;width:100%;text-align:center}
+.code-modal-title{font-family:var(--echo-font-mono);font-weight:700;font-size:15px;letter-spacing:.06em;text-transform:uppercase;color:var(--echo-on-light);margin:0 0 10px}
+.code-modal-sub{font-family:var(--echo-font-mono);font-size:12px;color:var(--echo-on-light-soft);margin:0 0 22px;line-height:1.5}
+.code-boxes{display:flex;gap:8px;justify-content:center;margin-bottom:24px}
+.code-box{width:42px;height:50px;border-radius:var(--echo-radius-sm);background:var(--echo-surface-dark);color:var(--echo-on-dark);display:flex;align-items:center;justify-content:center;font-family:var(--echo-font-mono);font-weight:700;font-size:20px}
+.code-modal-close{width:100%}

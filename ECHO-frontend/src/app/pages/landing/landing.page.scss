@@ -1,0 +1,373 @@
+@use '../../../theme/mixins' as echo;
+
+ion-content.landing-content { --background: var(--echo-surface-light); --overflow: auto; overflow-x: hidden; }
+
+/* Limita l'espansione su schermi larghissimi */
+.nav-inner, .hero-grid, .process-grid, .download > *, .footer-top, .footer-bottom {
+  max-width: echo.$page-max-desktop;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+button { font: inherit; -webkit-tap-highlight-color: transparent; }
+button[inert] { cursor: default; }
+
+/* ── Navbar ── */
+.nav {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: var(--echo-surface-light);
+  border-bottom: 1px solid rgba(var(--echo-on-light-rgb),0.12);
+}
+.nav-inner {
+  padding: 14px clamp(20px, 4vw, 64px);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.nav-brand { display: flex; align-items: center; flex: 1; min-width: 0; }
+/* Logo wordmark — rapporto originale 440.88x109.5 */
+.brand-logo { height: 48px; width: auto; aspect-ratio: 440.88 / 109.5; object-fit: contain; }
+.nav-links { display: none; gap: 28px; }
+.nav-link {
+  background: none; border: none; padding: 0; cursor: pointer;
+  font-family: var(--echo-font-mono);
+  font-size: 12px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--echo-on-light);
+}
+.nav-cta {
+  background: var(--echo-surface-dark);
+  color: var(--echo-on-dark);
+  border: none;
+  border-radius: var(--echo-radius-pill);
+  padding: 10px 18px;
+  font-family: var(--echo-font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+/* ── Hero — sfondo marrone scuro */
+.hero { background: var(--echo-surface-dark); padding: 40px clamp(20px, 4vw, 64px) 64px; }
+.hero-grid { display: flex; flex-direction: column; gap: 36px; }
+
+.hero-wordmark { display: flex; align-items: center; }
+/* Il file echo-hero.svg ha ~14% di spazio vuoto integrato nel bordo sinistro prima del
+   glifo "E" (il padding dell'icona camera sposta l'artwork fuori centro). Il frame
+   ritaglia quello spazio morto allineando il "E" visibile con il "T" del tagline sottostante. */
+.hero-logo-frame { position: relative; width: 500px; max-width: 100%; aspect-ratio: 1.8579; overflow: hidden; }
+.hero-logo { position: absolute; top: 0; left: -9.93%; width: 110.38%; height: 100%; }
+
+.hero-tagline-eyebrow {
+  font-family: var(--echo-font-mono);
+  font-size: clamp(13px, 2.2vw, 20px);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--echo-on-dark);
+  margin: 18px 0 0;
+}
+.hero-rule { width: 64px; height: 2px; background: var(--echo-on-dark); opacity: 0.3; margin: 18px 0 20px; }
+
+.hero-copy {
+  font-family: var(--echo-font-mono);
+  font-size: 14px;
+  line-height: 1.8;
+  color: rgba(var(--echo-on-dark-rgb),0.75);
+  max-width: 440px;
+  margin: 0;
+}
+
+
+.hero-actions { display: flex; flex-direction: column; gap: 14px; max-width: 280px; }
+.cta-primary, .cta-secondary {
+  padding: 15px;
+  font-family: var(--echo-font-mono);
+  font-weight: 700;
+  font-size: 12px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  border-radius: var(--echo-radius-pill);
+  cursor: pointer;
+  transition: transform 150ms, box-shadow 150ms, opacity 150ms;
+}
+.cta-primary {
+  background: var(--echo-surface-dark);
+  color: var(--echo-on-dark);
+  border: none;
+  @include echo.pressable;
+}
+.cta-secondary {
+  background: transparent;
+  color: var(--echo-on-light);
+  border: 1.5px solid var(--echo-on-light);
+  &:active { background: rgba(var(--echo-on-light-rgb),0.06); }
+}
+
+/* Foto hero con HUD viewfinder vintage sovrapposto */
+.hero-photo-col { width: 100%; }
+.hero-photo {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  border-radius: var(--echo-radius-lg);
+  overflow: hidden;
+  /* Percorso relativo a questo file: così l'immagine entra nella pipeline
+     degli asset e riceve l'hash nel nome. */
+  background-image: url('../../../assets/pexels-cottonbro-3171815.jpg');
+  background-size: cover;
+  background-position: center;
+  box-shadow: 0 8px 24px rgba(var(--echo-on-light-rgb),0.25);
+}
+.hero-photo-glow {
+  position: absolute; inset: 0;
+  background: linear-gradient(180deg, rgba(var(--echo-on-light-rgb),0.15) 0%, transparent 30%, transparent 65%, rgba(var(--echo-on-light-rgb),0.45) 100%);
+}
+.hud-row {
+  position: absolute;
+  left: 14px; right: 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--echo-font-mono);
+  color: var(--echo-on-dark);
+}
+.hud-top { top: 14px; }
+.hud-bottom { bottom: 14px; justify-content: flex-end; }
+.hud-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  padding: 3px 8px;
+  border-radius: var(--echo-radius-sm);
+  background: rgba(var(--echo-on-light-rgb),0.45);
+  backdrop-filter: blur(2px);
+}
+.hud-raw { margin-left: auto; font-weight: 700; }
+.batt-icon { width: 18px; height: 9px; }
+.hud-exposure {
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  padding: 3px 8px;
+  border-radius: var(--echo-radius-sm);
+  background: rgba(var(--echo-on-light-rgb),0.45);
+}
+
+/* ── Sezione Processo (sfondo scuro) ── */
+.process {
+  position: relative;
+  background: var(--echo-surface-dark);
+  padding: 56px clamp(20px, 4vw, 64px) 72px;
+  text-align: center;
+}
+.process-eyebrow {
+  font-family: var(--echo-font-mono);
+  font-size: 11px;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--echo-teal);
+  margin: 0 0 10px;
+}
+.process-heading {
+  font-family: var(--echo-font-serif);
+  font-size: 28px;
+  color: var(--echo-on-dark);
+  margin: 0 0 48px;
+}
+.process-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 48px;
+}
+.process-card { display: flex; flex-direction: column; align-items: center; }
+
+.card-illustration {
+  width: 100%;
+  max-width: 220px;
+  height: 230px;
+  border-radius: 50% 50% 10px 10px / 38% 38% 10px 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  padding-bottom: 8px;
+}
+.step-icon { width: 76px; height: 96px; }
+/* Le tre illustrazioni SVG */
+.card-illustration-img { height: 260px; width: auto; max-width: 100%; }
+.step-dots { display: flex; gap: 8px; }
+.step-dot {
+  width: 9px; height: 9px; border-radius: 50%;
+  border: 1.5px solid var(--echo-on-dark);
+  background: transparent;
+  &.filled { background: var(--echo-on-dark); }
+}
+
+.step-title {
+  font-family: var(--echo-font-serif);
+  font-size: 17px;
+  color: var(--echo-on-dark);
+  margin: 22px 0 10px;
+}
+.step-body {
+  font-family: var(--echo-font-mono);
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--echo-on-dark);
+  opacity: 0.75;
+  max-width: 280px;
+  margin: 0;
+}
+/* Accento predefinito; la variante rust arriva dalla classe modificatrice. */
+.step-lead { font-weight: 700; opacity: 1; color: var(--echo-teal); }
+.step-lead--rust { color: var(--echo-rust); }
+
+/* Archetti chiaro scuro */
+.scallop-seam { position: absolute; left: 0; right: 0; bottom: 0; height: 0; }
+.scallop-piece {
+  position: absolute;
+  left: 0; right: 0;
+  height: 45px;
+  background-repeat: repeat-x;
+  background-position: left top;
+  background-size: 130px 45px;
+}
+.scallop-dark {
+  top: 0;
+  background-image: url('../../../assets/scallop-dark-tile.svg');
+}
+.scallop-light {
+  bottom: 0;
+  background-image: url('../../../assets/scallop-light-tile.svg');
+}
+
+/* ── CTA Download (sfondo crema) ── */
+.download {
+  text-align: center;
+  padding: 72px clamp(20px, 4vw, 64px) 64px;
+}
+.download-eyebrow {
+  font-family: var(--echo-font-mono);
+  font-size: 11px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--echo-rust);
+  max-width: 640px;
+  margin: 0 auto 14px;
+}
+.download-heading {
+  font-family: var(--echo-font-serif);
+  font-size: 26px;
+  color: var(--echo-on-light);
+  max-width: 640px;
+  margin: 0 auto 10px;
+}
+.download-tagline {
+  font-family: var(--echo-font-mono);
+  font-style: italic;
+  font-size: 13px;
+  color: var(--echo-rust);
+  max-width: 640px;
+  margin: 0 auto 36px;
+}
+.download-actions { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; }
+.store-btn { white-space: nowrap; }
+.store-btn[disabled] { opacity: 0.55; cursor: not-allowed; }
+a.store-btn { display: inline-block; text-decoration: none; line-height: 1; }
+.store-btn--ios {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  line-height: 1;
+}
+.store-btn-sub {
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  opacity: 0.7;
+  font-weight: 400;
+  text-transform: uppercase;
+}
+
+/* ── Footer (sfondo chiaro, speculare rispetto al dark) ── */
+.site-footer {
+  background: var(--echo-surface-light);
+  color: var(--echo-on-light);
+  padding: 56px clamp(20px, 4vw, 64px) 0;
+  border-top: 1px solid rgba(var(--echo-on-light-rgb),0.15);
+}
+.footer-top {
+  display: flex;
+  flex-direction: column;
+  gap: 40px;
+  padding-bottom: 40px;
+}
+.footer-brand { display: flex; flex-direction: column; align-items: center; gap: 16px; }
+/* Logo stacked — rapporto originale 212.88x153 */
+.footer-logo { width: 180px; height: auto; aspect-ratio: 212.88 / 153; object-fit: contain; }
+.footer-copy {
+  font-family: var(--echo-font-mono);
+  font-size: 11px;
+  color: var(--echo-on-light-soft);
+  margin: 0 0 16px;
+}
+.footer-col-title {
+  font-family: var(--echo-font-mono);
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--echo-teal);
+  margin: 0 0 16px;
+}
+.footer-col { display: flex; flex-direction: column; gap: 12px; }
+.footer-link {
+  background: none; border: none; padding: 0; text-align: left; cursor: pointer;
+  font-family: var(--echo-font-mono);
+  font-size: 13px;
+  color: var(--echo-on-light);
+}
+
+.footer-bottom {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 20px 0 24px;
+  border-top: 1px solid rgba(var(--echo-on-light-rgb),0.15);
+  font-family: var(--echo-font-mono);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--echo-on-light-soft);
+}
+
+/* ── Tablet / Desktop ── */
+@media (min-width: 768px) {
+  .nav-links { display: flex; }
+
+  .hero-grid { flex-direction: row; align-items: center; gap: 56px; }
+  .hero-copy-col { flex: 1; }
+  .hero-photo-col { flex: 1; }
+
+  .process-grid { flex-direction: row; align-items: flex-start; gap: 32px; }
+  .process-card { flex: 1; }
+
+  .download-heading { font-size: 32px; }
+  .download-actions { flex-direction: row; }
+
+  .footer-top { flex-direction: row; justify-content: space-between; }
+  .footer-brand { flex: 1.4; }
+  .footer-col { flex: 1; }
+  .footer-bottom { flex-direction: row; justify-content: space-between; }
+}
+
+@media (min-width: 1024px) {
+  .hero { padding-top: 56px; }
+}

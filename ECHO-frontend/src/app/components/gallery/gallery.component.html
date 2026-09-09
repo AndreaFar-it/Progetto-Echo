@@ -1,0 +1,240 @@
+<!-- ── Caricamento ──────────────────────────────────────────────────── -->
+@if (caricamento) {
+  <div class="gallery-loading">
+    <div class="film-loader" aria-hidden="true"></div>
+    <p class="loading-label">Sviluppo in corso…</p>
+  </div>
+}
+
+<!-- ── Errore ────────────────────────────────── -->
+@if (!caricamento && errorMessage) {
+  <div class="gallery-error">
+    <div class="error-symbol">⏳</div>
+    <p class="error-title">Galleria non disponibile</p>
+    <p class="error-body">{{ errorMessage }}</p>
+  </div>
+}
+
+<!-- ── Galleria ─────────────────────────────────────────────── -->
+@if (!caricamento && !errorMessage) {
+  <ion-content class="gallery-content">
+    <ion-refresher slot="fixed" (ionRefresh)="handleRefresh($event)">
+      <ion-refresher-content></ion-refresher-content>
+    </ion-refresher>
+    <!-- Apertura album -->
+    <header class="gallery-title-block">
+      <h1 class="event-title">{{ eventoNome }}</h1>
+      @if (stato === 'chiusa') {
+        <div class="status-pill" role="status">
+          Le votazioni sono chiuse! Guarda i risultati
+        </div>
+      } @else {
+        @if (votingTimeLabel) {
+          <div class="status-pill" role="status">Le votazioni chiuderanno tra: {{ votingTimeLabel }}</div>
+        }
+      }
+    </header>
+    <div class="tab-switcher" role="tablist" aria-label="Vista della galleria">
+      <button type="button" role="tab" id="tab-rullino"
+        aria-controls="pannello-rullino"
+        [attr.aria-selected]="activeTab==='rullino'"
+        class="tab-pill" [class.active]="activeTab==='rullino'"
+        (click)="activeTab='rullino'">Rullino</button>
+      <button type="button" role="tab" id="tab-classifica"
+        aria-controls="pannello-classifica"
+        [attr.aria-selected]="activeTab==='classifica'"
+        class="tab-pill" [class.active]="activeTab==='classifica'"
+        (click)="activeTab='classifica'">Classifica</button>
+    </div>
+    @if (activeTab==='rullino') {
+      <div class="tab-panel" role="tabpanel" id="pannello-rullino" aria-labelledby="tab-rullino">
+        @if (foto.length) {
+          <div class="download-row">
+            <button type="button" class="download-btn" [disabled]="downloadingZip" (click)="downloadAlbum()">
+              @if (!downloadingZip) {
+                <span>⬇ Scarica Album</span>
+              }
+              @if (downloadingZip) {
+                <span>Preparazione… {{ downloadProgress }}/{{ foto.length }}</span>
+              }
+            </button>
+          </div>
+        }
+        @if (foto.length === 0) {
+          <div class="ranking-pending">
+            <svg class="pending-clock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 48px; height: 48px; margin: 0 auto 12px; display: block; opacity: 0.5;">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
+            </svg>
+            <p class="pending-title">Rullino vuoto</p>
+            <p class="pending-body">Non sono ancora presenti foto <br> per questo evento.</p>
+          </div>
+        }
+        <!-- Banner di stato voto — significativo solo mentre la votazione è ancora aperta -->
+        @if (!ha_votato && stato !== 'chiusa') {
+          <div class="vote-banner vote-banner--pending" role="status">
+            <span class="banner-icon">◈</span>
+            <span class="banner-text">Hai 1 voto — scegli con cura</span>
+          </div>
+        }
+        @if (ha_votato && stato !== 'chiusa') {
+          <div class="vote-banner vote-banner--cast" role="status">
+            <span class="banner-icon">♥</span>
+            <span class="banner-text">Voto espresso · Risultati alla chiusura</span>
+          </div>
+        }
+        <!-- Griglia foto -->
+        <div class="photo-grid">
+          @for (photo of foto; track photo.id_foto) {
+            <button type="button" class="photo-cell"
+              (click)="openDetail(photo)"
+              [attr.aria-label]="'Apri la foto di ' + photo.nome + ' ' + photo.cognome">
+              <app-film-border>
+                <img [src]="photoUrl(photo.url_originale)" [alt]="'Foto di ' + photo.nome" class="photo-thumb" loading="lazy" />
+              </app-film-border>
+              <!-- Overlay "votato" — mostrato solo dopo che l'utente ha espresso il voto -->
+              @if (ha_votato) {
+                <div class="vote-score">
+                  <span class="score-heart">♥</span>
+                  <span class="score-num">{{ photo.punteggio_voti }}</span>
+                </div>
+              }
+              <!-- Marcatore foto propria -->
+              @if (photo.is_own_photo) {
+                <div class="own-marker">tu</div>
+              }
+            </button>
+          }
+        </div>
+      </div>
+    }
+    <!-- ── Classifica Finale — visibile a ogni partecipante una volta chiuso l'evento ── -->
+    @if (activeTab==='classifica') {
+      <div class="tab-panel" role="tabpanel" id="pannello-classifica" aria-labelledby="tab-classifica">
+        @if (stato === 'chiusa' && ranking.length) {
+          <section class="podium-section">
+            <div class="rank-list">
+              @for (e of ranking; track e.id_foto) {
+                <button type="button" class="rank-row"
+                  (click)="openPodiumPhoto(e)"
+                  [attr.aria-label]="'Apri lo scatto di ' + e.nome + ' ' + e.cognome + ', ' + prizeLabel(e.badge)">
+                  <app-film-border class="rank-photo-wrap">
+                    <img class="rank-photo" [src]="photoUrl(e.url_originale)" [alt]="'Foto di ' + e.nome" loading="lazy" />
+                  </app-film-border>
+                  <div class="rank-info">
+                    <span class="rank-name">Scatto di: {{ e.nome }} {{ e.cognome }}</span>
+                    <span class="rank-votes">Numero di voti: {{ e.punteggio_voti }}</span>
+                    <span class="rank-prize">Premio {{ eventoNome }} - {{ prizeLabel(e.badge) }}</span>
+                  </div>
+                  <app-medal-badge class="rank-medal" [tipo]="e.badge"></app-medal-badge>
+                </button>
+              }
+            </div>
+          </section>
+        } @else {
+          <div class="ranking-pending">
+            <svg class="pending-clock" viewBox="0 0 64 64">
+              <circle cx="32" cy="32" r="26" fill="none" stroke="currentColor" stroke-width="3"/>
+              <line x1="32" y1="32" x2="32" y2="16" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
+              <line x1="32" y1="32" x2="44" y2="38" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
+              <line x1="32" y1="6"  x2="32" y2="10" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
+              <line x1="32" y1="54" x2="32" y2="58" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
+              <line x1="6"  y1="32" x2="10" y2="32" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
+              <line x1="54" y1="32" x2="58" y2="32" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
+            </svg>
+            <p class="pending-title">L'attesa aumenta il desiderio!</p>
+            <p class="pending-body">Aspetta la fine delle votazioni<br>e torna per scoprire se hai vinto!</p>
+          </div>
+        }
+      </div>
+    }
+    <!-- ── Barra inferiore: indietro ed etichetta voto ── -->
+    <div class="gallery-bottom-bar">
+      <button type="button" class="bottom-back" (click)="goBack()" aria-label="Indietro">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 18px; height: 18px;">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
+        </svg>
+      </button>
+      <span class="bottom-label">{{ bottomLabel() }}</span>
+    </div>
+  </ion-content>
+}
+
+<!-- Dettagli foto(in full-screen) -->
+@if (selectedPhoto) {
+  <div class="detail-overlay"
+    role="dialog" aria-modal="true" tabindex="-1"
+    [attr.aria-label]="'Foto di ' + selectedPhoto.nome"
+    (click)="chiusuraAlTocco($event)"
+    (keydown.escape)="closeDetail()">
+    <div class="detail-panel">
+      <div class="detail-header">
+        @if (selectedPhoto) {
+          <span class="detail-author-label">Scatto di: {{ selectedPhoto.nome | uppercase }}</span>
+        }
+        <button type="button" class="detail-close" (click)="closeDetail()" aria-label="Chiudi">✕</button>
+      </div>
+      <!-- Foto intera — avvolta nella cornice a perforazioni, pulsante voto in basso a destra.
+      Cerchio bianco semplice in stile otturatore . -->
+      <div class="detail-photo-wrap">
+        <app-film-border [rounded]="false">
+          <img
+            [src]="photoUrl(selectedPhoto.url_originale)"
+            [alt]="'Foto di ' + selectedPhoto.nome"
+            class="detail-photo"
+            />
+        </app-film-border>
+        @if (!selectedPhoto.is_own_photo && !ha_votato) {
+          <button type="button"
+            class="detail-vote-fab"
+            [disabled]="isVoting"
+            (click)="castVote(selectedPhoto)"
+            aria-label="Vota questa foto"
+            >
+            @if (isVoting) {
+              <span class="vote-spinner"></span>
+            }
+          </button>
+        }
+        @if (selectedPhoto.user_has_voted_this) {
+          <div class="detail-vote-fab detail-vote-fab--done">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+              <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+              <circle cx="12" cy="13" r="4"/>
+            </svg>
+          </div>
+        }
+      </div>
+      <!-- Riga autore: avatar + nome -->
+      <div class="detail-author">
+        <div class="author-avatar">
+          <img
+            [src]="selectedPhoto.foto_profilo_url ? photoUrl(selectedPhoto.foto_profilo_url) : 'assets/default-avatar.svg'"
+            [alt]="selectedPhoto.nome"
+            />
+        </div>
+        <div class="author-info">
+          <span class="author-name">{{ selectedPhoto.nome }} {{ selectedPhoto.cognome }}</span>
+          <span class="author-ts">{{ selectedPhoto.timestamp_scatto | date:'d MMM · HH:mm' }}</span>
+        </div>
+        <!-- Punteggio mostrato solo dopo il voto -->
+        @if (ha_votato) {
+          <div class="detail-score">
+            <span class="score-heart">♥</span> {{ selectedPhoto.punteggio_voti }}
+          </div>
+        }
+      </div>
+      <!-- Stato del voto  -->
+      <div class="detail-vote">
+        @if (selectedPhoto.is_own_photo) {
+          <p class="vote-own-msg">Questa è una tua foto — non puoi votarla</p>
+        }
+        @if (!selectedPhoto.is_own_photo && !ha_votato) {
+          <p class="vote-hint">Hai 1 solo voto — non si può cambiare.</p>
+        }
+        @if (ha_votato && !selectedPhoto.user_has_voted_this) {
+          <p class="vote-hint">Voto già espresso su un'altra foto.</p>
+        }
+      </div>
+    </div>
+  </div>
+}

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="it">
 
 <head>
   <!-- Impostazioni di base e titolo della pagina -->
@@ -11,7 +11,9 @@
 
   <!-- Ottimizzazione della visualizzazione e gestione del layout su dispositivi mobili -->
   <meta name="color-scheme" content="light" />
-  <meta name="viewport" content="viewport-fit=cover, width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <!-- Niente user-scalable: bloccare lo zoom viola WCAG 1.4.4. Sul mirino il
+       pinch resta disattivato da touch-action nel componente fotocamera. -->
+  <meta name="viewport" content="viewport-fit=cover, width=device-width, initial-scale=1.0" />
   <meta name="format-detection" content="telephone=no" />
   <meta name="msapplication-tap-highlight" content="no" />
 

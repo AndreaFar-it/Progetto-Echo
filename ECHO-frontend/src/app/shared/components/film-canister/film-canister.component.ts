@@ -2,13 +2,13 @@ import {
   Component,
   Input
 } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 
 // Crea il "rullino" nella sezione archivio del rullino
 @Component({
   selector: 'app-film-canister',
   standalone: true,
-  imports: [CommonModule],
+  imports: [],
   template: `
     <div class="canister">
       <div class="cap"></div>
@@ -29,14 +29,14 @@ import { CommonModule } from '@angular/common';
       width: 38px;
       height: 14px;
       border-radius: 6px 6px 0 0;
-      background: var(--echo-ink, #2A1A0E);
+      background: var(--echo-on-light);
     }
     .body {
       width: 56px;
       height: 122px;
       border-radius: 10px;
-      background: var(--echo-rust, #B85C38);
-      border: 1px solid var(--echo-ink, #2A1A0E);
+      background: var(--echo-rust);
+      border: 1px solid var(--echo-on-light);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -50,7 +50,7 @@ import { CommonModule } from '@angular/common';
       font-size: 10px;
       font-weight: 700;
       letter-spacing: 0.04em;
-      color: var(--echo-cream, #F5EFE6);
+      color: var(--echo-on-dark);
       text-align: center;
       max-height: 100%;
       overflow: hidden;

@@ -1,0 +1,55 @@
+<div class="shell-wrap">
+  <div class="shell-content">
+    <ion-router-outlet></ion-router-outlet>
+  </div>
+  <nav class="tab-bar" #tabBar [class.tab-bar-overlay]="tabAttiva === 'camera'">
+
+    <button type="button" class="tab" [class.tab-active]="tabAttiva==='eventi'" (click)="go('/eventi/miei')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+        <rect x="2" y="2" width="20" height="20" rx="2"/>
+        <line x1="7" y1="2" x2="7" y2="22"/>
+        <line x1="17" y1="2" x2="17" y2="22"/>
+        <line x1="2" y1="12" x2="22" y2="12"/>
+      </svg>
+      <span>Rullini</span>
+    </button>
+
+    @if (isHybrid) {
+      <button type="button" class="tab"
+        [class.tab-active]="tabAttiva==='camera'"
+        [class.tab-on]="st?.showCamera"
+        [disabled]="!st?.showCamera"
+        (click)="goCamera()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+          <circle cx="12" cy="13" r="4"/>
+        </svg>
+        @if (st?.showCamera && (st?.scattiRimanenti ?? 0) > 0) {
+          <span class="badge">
+            {{ st?.scattiRimanenti }}
+          </span>
+        }
+        <span>Camera</span>
+      </button>
+    }
+
+    <button type="button" class="tab"
+      [class.tab-active]="tabAttiva==='partecipa'"
+      (click)="go('/eventi/partecipa')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+        <path d="M3 8a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v2a2 2 0 0 0 0 4v2a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-2a2 2 0 0 0 0-4z"/>
+        <line x1="13" y1="6" x2="13" y2="18" stroke-dasharray="2 2"/>
+      </svg>
+      <span>Partecipa</span>
+    </button>
+
+    <button type="button" class="tab" [class.tab-active]="tabAttiva==='profilo'" (click)="go('/profilo')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+        <circle cx="12" cy="7" r="4"/>
+      </svg>
+      <span>Profilo</span>
+    </button>
+
+  </nav>
+</div>

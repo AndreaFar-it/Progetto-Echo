@@ -1,0 +1,89 @@
+/* Struttura principale: la shell occupa tutto lo schermo, la barra si posiziona in basso */
+.shell-wrap {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
+  position: relative;
+}
+
+/* Il router outlet riempie tutto lo spazio rimanente sopra la tab bar */
+.shell-content {
+  flex: 1;
+  overflow: hidden;
+  position: relative;
+}
+
+ion-router-outlet {
+  height: 100%;
+}
+
+/* La tab bar è sempre in BASSO */
+.tab-bar {
+  display: flex;
+  flex-shrink: 0;
+  background: var(--echo-surface-dark);
+  border-top: 1px solid rgba(var(--echo-scrim-rgb),0.25);
+  padding-bottom: env(safe-area-inset-bottom, 4px);
+  z-index: 1000;
+}
+
+.tab-bar-overlay {
+  position: absolute;
+  left: 0; right: 0; bottom: 0;
+}
+
+/* Stile generale per i pulsanti della tab bar */
+.tab {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  padding: 10px 4px 6px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  position: relative;
+  font-family: var(--echo-font-mono);
+  color: rgba(var(--echo-on-dark-rgb),0.3);
+  transition: color 150ms;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.tab svg {
+  width: 22px;
+  height: 22px;
+  stroke: currentColor;
+}
+
+.tab span:last-child {
+  font-size: 9px;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+}
+
+/* Stati dei pulsanti della tab bar */
+.tab-on     { color: var(--echo-surface-warm); }
+.tab-active { color: var(--echo-on-dark); }
+.tab[disabled] { color: rgba(var(--echo-on-dark-rgb),0.15); cursor: default; }
+
+/* Indicatore rosso (badge) per il numero di scatti */
+.badge {
+  position: absolute;
+  top: 6px;
+  right: calc(50% - 16px);
+  min-width: 16px;
+  height: 16px;
+  border-radius: 8px;
+  background: var(--echo-rust);
+  color: var(--echo-on-dark);
+  font-size: 9px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 4px;
+}

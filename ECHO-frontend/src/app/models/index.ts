@@ -126,6 +126,9 @@ export interface AnalyticsData {
 
 export interface RankEntry {
   posizione: 1 | 2 | 3;
+  // Presente sia in GalleriaResponse.classifica sia in AnalyticsData.classifica:
+  // mancava qui, ed e' il motivo per cui gallery ne teneva una copia locale.
+  id_foto: string;
   nome: string;
   cognome: string;
   foto_profilo_url: string | null;

@@ -1,0 +1,134 @@
+<div class="form-card">
+  <h2 class="form-card-title">Crea il tuo evento</h2>
+
+  <!-- ── Sezione 1 — Info Evento ── -->
+  <div class="sub-section">
+    <h3 class="sub-heading">1. Info Evento</h3>
+
+    <div class="field-group">
+      <label class="field-label" for="ev-nome">Nome:</label>
+      <input id="ev-nome" class="field-input" [(ngModel)]="form.nome"
+        type="text" placeholder="Estate 2026" />
+      @if (campiToccati && !form.nome) {
+        <span class="field-error">Campo obbligatorio</span>
+      }
+    </div>
+
+    <div class="field-group">
+      <label class="field-label" for="ev-luogo">Luogo:</label>
+      <input id="ev-luogo" class="field-input" [(ngModel)]="form.luogo"
+        type="text" placeholder="Palermo, Villa Tasca" />
+      @if (campiToccati && !form.luogo) {
+        <span class="field-error">Campo obbligatorio</span>
+      }
+    </div>
+
+    <div class="field-group">
+      <label class="field-label" for="ev-data">Data &amp; Ora:</label>
+      <input id="ev-data" class="field-input field-datetime"
+        [(ngModel)]="form.data_inizio"
+        type="datetime-local" />
+      @if (campiToccati && !form.data_inizio) {
+        <span class="field-error">Campo obbligatorio</span>
+      }
+    </div>
+
+    <div class="field-group">
+      <!-- "Durata" intesta due campi, non uno: è la didascalia di un gruppo, non
+           una label. Le unità visibili ORE/MIN fanno da label ai singoli campi. -->
+      <div class="field-label" id="ev-durata-label">
+        Durata
+        <span class="field-hint">(min: 1h, max: 6h)</span>
+        @if (modalitaSviluppo) {
+          <span class="dev-badge">⚡ Dev Mode</span>
+        }
+      </div>
+      <div class="duration-row" role="group" aria-labelledby="ev-durata-label">
+        <div class="duration-block">
+          <input id="ev-durata-ore" class="field-input duration-input" [(ngModel)]="form.durata_ore"
+            type="number" min="0" max="6" step="1" placeholder="0"
+            (ngModelChange)="aggiornaDurata()" />
+          <label class="duration-unit" for="ev-durata-ore">ORE</label>
+        </div>
+        <span class="duration-sep" aria-hidden="true">:</span>
+        <div class="duration-block">
+          <input id="ev-durata-min" class="field-input duration-input" [(ngModel)]="form.durata_min"
+            type="number" min="0" max="59" step="1" placeholder="00"
+            (ngModelChange)="aggiornaDurata()" />
+          <label class="duration-unit" for="ev-durata-min">MIN</label>
+        </div>
+      </div>
+      @if (erroredurata) {
+        <span class="field-error">{{ erroredurata }}</span>
+      }
+    </div>
+  </div>
+
+  <!-- ── Sezione 2 — Parametri Evento ── -->
+  <div class="sub-section">
+    <h3 class="sub-heading">2. Parametri Evento</h3>
+
+    <div class="field-group">
+      <label class="field-label" for="ev-partecipanti">Numero Partecipanti: <span class="field-hint">(min:1, max:500)</span></label>
+      <input id="ev-partecipanti" class="field-input" [(ngModel)]="form.max_partecipanti"
+        type="number" min="1" max="500" />
+    </div>
+
+    <div class="field-group">
+      <!-- Cinque pulsanti a scelta singola: semanticamente un gruppo di radio,
+           non una label su un singolo controllo. -->
+      <div class="field-label" id="ev-scatti-label">Scatti per Partecipante: {{ form.scatti_per_utente }} <span class="field-hint">(min:1, max:5)</span></div>
+      <div class="scatti-selector" role="radiogroup" aria-labelledby="ev-scatti-label">
+        @for (n of [1,2,3,4,5]; track n) {
+          <button
+            type="button"
+            role="radio"
+            class="scatti-btn"
+            [attr.aria-checked]="n === form.scatti_per_utente"
+            [class.active]="n === form.scatti_per_utente"
+            (click)="form.scatti_per_utente = n">
+            {{ n }}
+          </button>
+        }
+      </div>
+    </div>
+
+    <div class="field-group">
+      <label class="field-label" for="ev-votazione">Tempo per Votare: {{ form.durata_votazione_ore }}h <span class="field-hint">(min:12h, max:72h)</span></label>
+      <input id="ev-votazione" class="field-input" [(ngModel)]="form.durata_votazione_ore"
+        type="number" min="12" max="72" step="12" />
+    </div>
+  </div>
+
+  @if (messaggioErrore) {
+    <p class="form-error">{{ messaggioErrore }}</p>
+  }
+
+  <button type="button" class="btn-light-pill" (click)="creaEvento()" [disabled]="inCreazione">
+    @if (!inCreazione) {
+      <span>Genera Evento</span>
+    }
+    @if (inCreazione) {
+      <span class="spinner"></span>
+    }
+  </button>
+</div>
+
+<!-- ── Evento creato ── -->
+@if (codiceCreatoEvento) {
+  <div class="success-overlay">
+    <div class="success-modal">
+      <h2 class="success-title">Evento creato!</h2>
+      <p class="success-body">
+        Ogni grande momento ha bisogno di voci per risuonare. Condividi il codice e fai iniziare l'eco del tuo evento.
+      </p>
+      <div class="success-code">{{ codiceCreatoEvento }}</div>
+      <div class="success-actions">
+        <button type="button" class="echo-btn" (click)="router.navigate(['/eventi/miei'])">Torna indietro</button>
+        <button type="button" class="echo-btn" (click)="condividiInvito()">
+          {{ copiato ? '✓ Copiato!' : 'Condividi' }}
+        </button>
+      </div>
+    </div>
+  </div>
+}

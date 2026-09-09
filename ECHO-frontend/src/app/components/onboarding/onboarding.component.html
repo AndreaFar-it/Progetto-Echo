@@ -1,0 +1,44 @@
+<div class="onboarding-wrap">
+
+  <!-- Slide area -->
+  <div class="slide-area">
+    @for (s of slides; track s.title; let i = $index) {
+      <div class="slide"
+        [class.active]="i === current"
+        [class.prev]="i < current">
+        <!-- Dark card con illustrazione arch (identica alle card web) -->
+        <div class="slide-card">
+          <img [src]="s.illustration" [alt]="s.title" class="slide-arch">
+        </div>
+        <h2 class="slide-title">{{ s.title }}</h2>
+        <!-- Lead (teal) + corpo testo (cream/ink-soft) — come sul web -->
+        <p class="slide-body">
+          <span class="slide-lead">{{ s.lead }}</span>
+          {{ s.body }}
+        </p>
+      </div>
+    }
+  </div>
+
+  <!-- Progress dots -->
+  <div class="progress-dots">
+    @for (s of slides; track s.title; let i = $index) {
+      <span class="dot"
+        [class.active]="i === current">
+      </span>
+    }
+  </div>
+
+  <!-- Navigation -->
+  <div class="slide-nav">
+    @if (current < slides.length - 1) {
+      <button type="button" class="echo-btn-ghost nav-btn" (click)="skip()">
+        Salta
+      </button>
+    }
+    <button type="button" class="echo-btn nav-btn-primary" (click)="next()">
+      {{ current < slides.length - 1 ? 'Avanti' : 'Inizia' }}
+    </button>
+  </div>
+
+</div>

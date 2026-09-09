@@ -1,0 +1,126 @@
+<app-echo-header></app-echo-header>
+<ion-content>
+  <ion-refresher slot="fixed" (ionRefresh)="handleRefresh($event)">
+    <ion-refresher-content></ion-refresher-content>
+  </ion-refresher>
+  <div class="page-shell">
+    <button type="button" class="join-card" (click)="router.navigate(['/eventi/partecipa'])">
+      <span class="join-card-label">Partecipa a un evento</span>
+      <span class="join-card-sub">Inserisci il codice fornito dall'organizzatore</span>
+    </button>
+
+    <div class="section-header">
+      <span class="section-label">I tuoi eventi</span>
+    </div>
+
+    <div class="tab-switcher" role="tablist" aria-label="Filtra i tuoi eventi">
+      <button type="button" role="tab" id="tab-partecipante"
+        aria-controls="lista-eventi"
+        [attr.aria-selected]="modalitaVista==='partecipante'"
+        class="tab-pill" [class.active]="modalitaVista==='partecipante'"
+        (click)="modalitaVista='partecipante'">Come Partecipante</button>
+      <button type="button" role="tab" id="tab-creatore"
+        aria-controls="lista-eventi"
+        [attr.aria-selected]="modalitaVista==='creatore'"
+        class="tab-pill" [class.active]="modalitaVista==='creatore'"
+        (click)="modalitaVista='creatore'">Come Creatore</button>
+    </div>
+
+    <div class="event-list" role="tabpanel" id="lista-eventi"
+      [attr.aria-labelledby]="modalitaVista === 'creatore' ? 'tab-creatore' : 'tab-partecipante'">
+      @for (event of eventiFiltrati; track event.id_evento) {
+        <!-- La card contiene altri pulsanti e non può essere un <button>: il nome
+             fa da azione e il suo ::after copre tutta la card. -->
+        <div class="event-item">
+          <div class="event-name-row">
+            <div class="event-name-group">
+              <app-event-status-tag [stato]="event.stato"></app-event-status-tag>
+              <button type="button" class="event-name event-name--action"
+                (click)="onEventTap(event)">{{ event.nome }}</button>
+            </div>
+            <div class="event-meta">{{ event.data_inizio | date:'dd/MM/yy' }} - {{ event.luogo }}</div>
+          </div>
+          <div class="event-divider"></div>
+          <div class="event-status-row">
+            <span class="event-status-text">{{ modalitaVista === 'creatore' ? creatorStatoCopy(event) : statoCopy(event) }}</span>
+            @if (event.stato === 'in_corso') {
+              <div class="event-shots">
+                <div class="shot-pips">
+                  @for (p of makePips(event.scatti_per_utente); track i; let i = $index) {
+                    <span class="shot-pip" [class.used]="i < event.scatti_usati"></span>
+                  }
+                </div>
+                <span class="shot-count">{{ event.scatti_usati }}/{{ event.scatti_per_utente }}</span>
+              </div>
+            }
+          </div>
+          <!-- Tab creatore: azioni differenziate (codice / galleria / report) -->
+          @if (modalitaVista === 'creatore') {
+            <div class="event-cta-row">
+              @if (event.stato === 'non_iniziata' || event.stato === 'in_corso') {
+                <button type="button" class="event-cta"
+                (click)="showCode(event, $event)">Mostra codice</button>
+              }
+              @if (event.stato === 'in_corso' || event.stato === 'sviluppo') {
+                <button type="button" class="event-cta event-cta--half"
+                (click)="openAnalytics(event, $event)">Statistiche live</button>
+              }
+              @if (event.stato === 'album_aperto' || event.stato === 'chiusa') {
+                <button type="button" class="event-cta event-cta--half"
+                (click)="onEventTap(event); $event.stopPropagation()">Guarda il rullino</button>
+              }
+              @if (event.stato === 'album_aperto' || event.stato === 'chiusa') {
+                <button type="button" class="event-cta event-cta--half"
+                (click)="openAnalytics(event, $event)">Guarda il report</button>
+              }
+            </div>
+          }
+          <!-- Tab partecipante: CTA singola -->
+          @if (modalitaVista === 'partecipante' && ctaLabel(event); as label) {
+            <button type="button" class="event-cta"
+            (click)="onEventTap(event); $event.stopPropagation()">{{ label }}</button>
+          }
+          @if (event.is_organiser) {
+            <div class="event-right-row">
+              <button type="button" class="delete-btn"
+                (click)="confirmDelete(event, $event)"
+                [attr.aria-label]="'Elimina l’evento ' + event.nome">✕</button>
+            </div>
+          }
+        </div>
+      }
+    </div>
+
+    <!-- ── Mostra codice modal ── -->
+    @if (eventoConCodice) {
+      <div class="code-overlay"
+        role="dialog" aria-modal="true" tabindex="-1"
+        aria-labelledby="titolo-codice-evento"
+        (click)="chiudiCodiceSuBackdrop($event)"
+        (keydown.escape)="eventoConCodice = null">
+        <div class="code-modal">
+          <p class="code-modal-title" id="titolo-codice-evento">Codice evento</p>
+          <p class="code-modal-sub">Condividi questo codice per far partecipare i tuoi ospiti a "{{ eventoConCodice.nome }}"</p>
+          <div class="code-boxes">
+            @for (ch of eventoConCodice.codice.split(''); track $index) {
+              <div class="code-box">{{ ch }}</div>
+            }
+          </div>
+          <div class="code-modal-actions">
+            <button type="button" class="echo-btn code-modal-share" (click)="shareCode(eventoConCodice)">
+              {{ codiceCopiate ? '✓ Copiato!' : 'Condividi' }}
+            </button>
+            <button type="button" class="echo-btn code-modal-close" (click)="eventoConCodice = null">Chiudi</button>
+          </div>
+        </div>
+      </div>
+    }
+    @if (!eventiFiltrati.length && !caricamento) {
+      <div class="empty-state">
+        <div class="empty-symbol">🎞</div>
+        <p class="empty-title">Nessun rullino ancora</p>
+        <p class="empty-body">Inserisci un codice o crea il tuo primo evento.</p>
+      </div>
+    }
+  </div>
+</ion-content>

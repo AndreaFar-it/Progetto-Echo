@@ -2,7 +2,7 @@ import {
   Component,
   Input
 } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 
 export type MedalTipo = 'oro' | 'argento' | 'bronzo';
 
@@ -10,7 +10,7 @@ export type MedalTipo = 'oro' | 'argento' | 'bronzo';
 @Component({
   selector: 'app-medal-badge',
   standalone: true,
-  imports: [CommonModule],
+  imports: [],
   template: `
     <div class="medal" [class]="'medal--' + tipo" [style.transform]="rotationDeg ? 'rotate(' + rotationDeg + 'deg)' : null">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
@@ -27,25 +27,25 @@ export type MedalTipo = 'oro' | 'argento' | 'bronzo';
       display: flex;
       align-items: center;
       justify-content: center;
-      box-shadow: 0 2px 4px rgba(42,26,14,0.35), inset 0 1px 0 rgba(255,255,255,0.35);
+      box-shadow: 0 2px 4px rgba(var(--echo-on-light-rgb),0.35), inset 0 1px 0 rgba(var(--echo-hud-rgb),0.35);
       flex-shrink: 0;
     }
     .medal svg { width: 55%; height: 55%; }
 
     .medal--oro {
-      background: radial-gradient(circle at 35% 30%, #f0d27a, #D4AF37 65%);
-      color: #6b4f0f;
-      border: 1px solid #b8932c;
+      background: radial-gradient(circle at 35% 30%, var(--echo-medal-gold-light), var(--echo-medal-gold) 65%);
+      color: var(--echo-medal-gold-ink);
+      border: 1px solid var(--echo-medal-gold-edge);
     }
     .medal--argento {
-      background: radial-gradient(circle at 35% 30%, #e6e6e8, #A8A9AD 65%);
-      color: #5a5a5d;
-      border: 1px solid #8d8e92;
+      background: radial-gradient(circle at 35% 30%, var(--echo-medal-silver-light), var(--echo-medal-silver) 65%);
+      color: var(--echo-medal-silver-ink);
+      border: 1px solid var(--echo-medal-silver-edge);
     }
     .medal--bronzo {
-      background: radial-gradient(circle at 35% 30%, #e3a571, #CD7F32 65%);
-      color: #6b3e14;
-      border: 1px solid #a8651f;
+      background: radial-gradient(circle at 35% 30%, var(--echo-medal-bronze-light), var(--echo-medal-bronze) 65%);
+      color: var(--echo-medal-bronze-ink);
+      border: 1px solid var(--echo-medal-bronze-edge);
     }
   `],
 })

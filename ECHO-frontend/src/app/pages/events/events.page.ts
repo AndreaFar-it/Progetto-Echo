@@ -4,7 +4,7 @@ import {
   OnDestroy
 } from '@angular/core';
 import { Router } from '@angular/router';
-import { CommonModule } from '@angular/common';
+import { DatePipe } from '@angular/common';
 import {
   IonContent,
   IonRefresher,
@@ -16,7 +16,7 @@ import {
 import { Clipboard } from '@capacitor/clipboard';
 import type { RefresherCustomEvent } from '@ionic/angular/standalone';
 import { ViewWillEnter } from '@ionic/angular';
-import { Platform } from '@ionic/angular/common';
+import { ServizioPiattaforma } from '../../core/piattaforma.service';
 import { ApiService } from '../../services/api.service';
 import { ServizioStatoEvento } from '../../services/event-state.service';
 import { EventoCard } from '../../models/index';
@@ -26,7 +26,6 @@ import {
 } from '../../shared/components';
 import {
   firstValueFrom,
-  interval,
   Subscription
 } from 'rxjs';
 import {
@@ -34,162 +33,11 @@ import {
   isoToMs
 } from '../../core/time.util';
 
-const TICKER_MS = 60_000;
-
 @Component({
   selector: 'app-events', standalone: true,
-  imports: [CommonModule, IonContent, IonRefresher, IonRefresherContent, ComponenteIntestazione, ComponenteEtichettaStato],
-  template: `
-    <app-echo-header></app-echo-header>
-    <ion-content>
-      <ion-refresher slot="fixed" (ionRefresh)="handleRefresh($event)">
-        <ion-refresher-content></ion-refresher-content>
-      </ion-refresher>
-      <div class="page-shell">
-        <button class="join-card" (click)="router.navigate(['/eventi/partecipa'])">
-          <span class="join-card-label">Partecipa a un evento</span>
-          <span class="join-card-sub">Inserisci il codice fornito dall'organizzatore</span>
-        </button>
-
-        <div class="section-header">
-          <span class="section-label">I tuoi eventi</span>
-        </div>
-
-        <div class="tab-switcher">
-          <button class="tab-pill" [class.active]="modalitaVista==='partecipante'" (click)="modalitaVista='partecipante'">Come Partecipante</button>
-          <button class="tab-pill" [class.active]="modalitaVista==='creatore'" (click)="modalitaVista='creatore'">Come Creatore</button>
-        </div>
-
-        <div class="event-list">
-          <div class="event-item" *ngFor="let event of eventiFiltrati" (click)="onEventTap(event)">
-            <div class="event-name-row">
-              <div class="event-name-group">
-                <app-event-status-tag [stato]="event.stato"></app-event-status-tag>
-                <div class="event-name">{{ event.nome }}</div>
-              </div>
-              <div class="event-meta">{{ event.data_inizio | date:'dd/MM/yy' }} - {{ event.luogo }}</div>
-            </div>
-            <div class="event-divider"></div>
-            <div class="event-status-row">
-              <span class="event-status-text">{{ modalitaVista === 'creatore' ? creatorStatoCopy(event) : statoCopy(event) }}</span>
-              <div class="event-shots" *ngIf="event.stato === 'in_corso'">
-                <div class="shot-pips">
-                  <span class="shot-pip" *ngFor="let p of makePips(event.scatti_per_utente); let i = index" [class.used]="i < event.scatti_usati"></span>
-                </div>
-                <span class="shot-count">{{ event.scatti_usati }}/{{ event.scatti_per_utente }}</span>
-              </div>
-            </div>
-
-            <!-- Tab creatore: azioni differenziate (codice / galleria / report) -->
-            <div class="event-cta-row" *ngIf="modalitaVista === 'creatore'">
-              <button class="event-cta" *ngIf="event.stato === 'non_iniziata' || event.stato === 'in_corso'"
-                      (click)="showCode(event, $event)">Mostra codice</button>
-              <button class="event-cta event-cta--half" *ngIf="event.stato === 'in_corso' || event.stato === 'sviluppo'"
-                      (click)="openAnalytics(event, $event)">Statistiche live</button>
-              <button class="event-cta event-cta--half" *ngIf="event.stato === 'album_aperto' || event.stato === 'chiusa'"
-                      (click)="onEventTap(event); $event.stopPropagation()">Guarda il rullino</button>
-              <button class="event-cta event-cta--half" *ngIf="event.stato === 'album_aperto' || event.stato === 'chiusa'"
-                      (click)="openAnalytics(event, $event)">Guarda il report</button>
-            </div>
-
-            <!-- Tab partecipante: CTA singola -->
-            <button class="event-cta" *ngIf="modalitaVista === 'partecipante' && ctaLabel(event) as label"
-                    (click)="onEventTap(event); $event.stopPropagation()">{{ label }}</button>
-
-            <div class="event-right-row" *ngIf="event.is_organiser">
-              <button class="delete-btn" (click)="confirmDelete(event, $event)">✕</button>
-            </div>
-          </div>
-        </div>
-
-        <!-- ── Mostra codice modal ── -->
-        <div class="code-overlay" *ngIf="eventoConCodice" (click)="eventoConCodice = null">
-          <div class="code-modal" (click)="$event.stopPropagation()">
-            <p class="code-modal-title">Codice evento</p>
-            <p class="code-modal-sub">Condividi questo codice per far partecipare i tuoi ospiti a "{{ eventoConCodice.nome }}"</p>
-            <div class="code-boxes">
-              <div class="code-box" *ngFor="let ch of eventoConCodice.codice.split('')">{{ ch }}</div>
-            </div>
-            <div class="code-modal-actions">
-              <button class="echo-btn code-modal-share" (click)="shareCode(eventoConCodice)">
-                {{ codiceCopiate ? '✓ Copiato!' : 'Condividi' }}
-              </button>
-              <button class="echo-btn code-modal-close" (click)="eventoConCodice = null">Chiudi</button>
-            </div>
-          </div>
-        </div>
-        <div class="empty-state" *ngIf="!eventiFiltrati.length && !caricamento">
-          <div class="empty-symbol">🎞</div>
-          <p class="empty-title">Nessun rullino ancora</p>
-          <p class="empty-body">Inserisci un codice o crea il tuo primo evento.</p>
-        </div>
-      </div>
-    </ion-content>`,
-  styles: [`
-    ion-content{--background:var(--echo-bg)}
-    .page-shell{padding:20px 16px 120px;max-width:600px;margin:0 auto}
-    /* Desktop: allarga a una colonna centrata e immersiva, in linea con landing/dashboard. */
-    @media (min-width:768px){ .page-shell{max-width:1180px} }
-    .join-card{
-      display:flex;flex-direction:column;align-items:flex-start;gap:4px;width:100%;
-      background:transparent;border:1.5px solid var(--echo-ink);border-radius:var(--echo-radius-lg);
-      padding:18px 20px;margin-bottom:24px;cursor:pointer;text-align:left;
-    }
-    .join-card-label{font-family:var(--echo-font-mono);font-weight:700;font-size:13px;letter-spacing:.06em;text-transform:uppercase;color:var(--echo-ink)}
-    .join-card-sub{font-family:var(--echo-font-mono);font-size:11px;color:var(--echo-ink-soft)}
-    .section-header{margin-bottom:10px}
-    .section-label{font-family:var(--echo-font-mono);font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--echo-ink-soft)}
-
-    .tab-switcher{display:flex;gap:8px;margin-bottom:18px}
-    .tab-pill{
-      flex:1;padding:10px;border-radius:var(--echo-radius-pill);border:1px solid var(--echo-surface-muted);
-      background:transparent;color:var(--echo-ink-soft);font-family:var(--echo-font-mono);
-      font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;
-    }
-    .tab-pill.active{background:var(--echo-cream);border-color:var(--echo-ink);color:var(--echo-ink);box-shadow:0 2px 4px rgba(42,26,14,0.15)}
-
-    .event-list{display:flex;flex-direction:column;gap:14px}
-    .event-item{position:relative;background:var(--echo-surface-card);border-radius:var(--echo-radius-lg);padding:16px 18px;cursor:pointer;box-shadow:0 2px 6px rgba(42,26,14,0.12)}
-    .event-name-row{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:10px}
-    .event-name-group{display:flex;align-items:baseline;gap:8px;min-width:0;flex:1}
-    .event-name{font-family:var(--echo-font-mono);font-weight:700;font-size:15px;letter-spacing:.02em;text-transform:uppercase;color:var(--echo-ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
-    .event-meta{flex-shrink:0;font-family:var(--echo-font-mono);font-size:11px;color:var(--echo-ink-soft)}
-    .event-divider{height:1px;background:var(--echo-ink);opacity:.2;margin-bottom:10px}
-    .event-status-row{display:flex;align-items:center;justify-content:space-between;gap:10px}
-    .event-status-text{font-family:var(--echo-font-mono);font-size:12px;color:var(--echo-ink);line-height:1.5}
-    .event-shots{display:flex;align-items:center;gap:8px;flex-shrink:0}
-    .shot-pips{display:flex;gap:4px}
-    .shot-pip{width:7px;height:7px;border-radius:50%;background:rgba(42,26,14,.2);border:1px solid rgba(42,26,14,.3)}
-    .shot-pip.used{background:var(--echo-ink);border-color:transparent}
-    .shot-count{font-family:var(--echo-font-mono);font-size:11px;color:var(--echo-ink)}
-    .event-cta{
-      display:block;margin-top:14px;width:100%;background:var(--echo-surface-dark);color:var(--echo-cream);
-      border:none;padding:10px;border-radius:var(--echo-radius-pill);font-family:var(--echo-font-mono);
-      font-weight:700;font-size:11px;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;
-      box-shadow:0 3px 0 #1E1209;
-    }
-    .event-cta-row{display:flex;gap:8px;margin-top:14px}
-    .event-cta-row .event-cta{margin-top:0}
-    .event-cta--half{flex:1}
-    .event-right-row{display:flex;align-items:center;justify-content:flex-end;gap:10px;margin-top:10px}
-    .delete-btn{background:transparent;border:1px solid rgba(42,26,14,.4);color:var(--echo-ink);border-radius:var(--echo-radius-sm);width:26px;height:26px;font-size:11px;display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0}
-    .delete-btn:active{border-color:var(--echo-rust);color:var(--echo-rust)}
-    .empty-state{text-align:center;padding:48px 24px}
-    .empty-symbol{font-size:52px;margin-bottom:16px}
-    .empty-title{font-family:var(--echo-font-display);font-size:22px;color:var(--echo-ink);margin:0 0 8px}
-    .empty-body{font-family:var(--echo-font-mono);font-size:13px;color:var(--echo-ink-soft);line-height:1.6;margin:0}
-
-    /* ── Mostra codice modal ── */
-    .code-overlay{position:fixed;inset:0;z-index:200;background:rgba(42,26,14,.6);display:flex;align-items:center;justify-content:center;padding:24px}
-    .code-modal{background:var(--echo-bg);border-radius:var(--echo-radius-lg);padding:28px 24px;max-width:340px;width:100%;text-align:center}
-    .code-modal-title{font-family:var(--echo-font-mono);font-weight:700;font-size:15px;letter-spacing:.06em;text-transform:uppercase;color:var(--echo-ink);margin:0 0 10px}
-    .code-modal-sub{font-family:var(--echo-font-mono);font-size:12px;color:var(--echo-ink-soft);margin:0 0 22px;line-height:1.5}
-    .code-boxes{display:flex;gap:8px;justify-content:center;margin-bottom:24px}
-    .code-box{width:42px;height:50px;border-radius:var(--echo-radius-sm);background:var(--echo-surface-dark);color:var(--echo-cream);display:flex;align-items:center;justify-content:center;font-family:var(--echo-font-mono);font-weight:700;font-size:20px}
-    .code-modal-actions{display:flex;gap:8px}
-    .code-modal-share{flex:1;background:var(--echo-surface-dark);color:var(--echo-cream)}
-    .code-modal-close{flex:1}
-  `],
+  imports: [DatePipe, IonContent, IonRefresher, IonRefresherContent, ComponenteIntestazione, ComponenteEtichettaStato],
+  templateUrl: './events.page.html',
+  styleUrl: './events.page.scss',
 })
 export class PaginaEventi implements OnInit, OnDestroy, ViewWillEnter {
   eventi: EventoCard[] = [];
@@ -197,9 +45,7 @@ export class PaginaEventi implements OnInit, OnDestroy, ViewWillEnter {
   modalitaVista: 'partecipante' | 'creatore' = 'partecipante';
   eventoConCodice: EventoCard | null = null;
   codiceCopiate = false;
-  contatore = 0;
 
-  private ticker?: Subscription;
   private subEventi?: Subscription;
   private promptedIds = new Set<string>();
 
@@ -213,7 +59,7 @@ export class PaginaEventi implements OnInit, OnDestroy, ViewWillEnter {
     private toastCtrl: ToastController,
     private alertCtrl: AlertController,
     private loadingCtrl: LoadingController,
-    private platform: Platform,
+    private piattaforma: ServizioPiattaforma,
     private svc: ServizioStatoEvento,
   ) { }
 
@@ -224,14 +70,9 @@ export class PaginaEventi implements OnInit, OnDestroy, ViewWillEnter {
     });
 
     this.loadEvents();
-
-    this.ticker = interval(TICKER_MS).subscribe(() => {
-      this.contatore++;
-    });
   }
 
   ngOnDestroy() {
-    this.ticker?.unsubscribe();
     this.subEventi?.unsubscribe();
   }
 
@@ -324,7 +165,7 @@ export class PaginaEventi implements OnInit, OnDestroy, ViewWillEnter {
   onEventTap(event: EventoCard) {
     switch (event.stato) {
       case 'in_corso':
-        if (!this.platform.is('hybrid')) {
+        if (!this.piattaforma.isNativa) {
           this.toast("Per scattare le foto usa l'app ECHO sul tuo telefono", 'dark');
         } else if (event.scatti_usati < event.scatti_per_utente) {
           this.router.navigate(['/camera', event.id_evento], {
@@ -452,7 +293,7 @@ export class PaginaEventi implements OnInit, OnDestroy, ViewWillEnter {
   ctaLabel(e: EventoCard): string | null {
     switch (e.stato) {
       case 'in_corso':
-        return (this.platform.is('hybrid') && e.scatti_usati < e.scatti_per_utente) ? 'Scatta una foto' : null;
+        return (this.piattaforma.isNativa && e.scatti_usati < e.scatti_per_utente) ? 'Scatta una foto' : null;
       case 'album_aperto':
       case 'chiusa':
         return 'Guarda il rullino';
@@ -495,6 +336,13 @@ export class PaginaEventi implements OnInit, OnDestroy, ViewWillEnter {
     this.codiceCopiate = false;
   }
 
+  // Chiude solo se il click cade sullo sfondo, non sul pannello.
+  chiudiCodiceSuBackdrop(event: MouseEvent): void {
+    if ((event.target as HTMLElement).classList.contains('code-overlay')) {
+      this.eventoConCodice = null;
+    }
+  }
+
   // Attiva la funzionalità nativa di condivisione del dispositivo o la copia appunti per il codice invito
   async shareCode(event: EventoCard) {
     const text = `Sei invitato a "${event.nome}"! Usa il codice ${event.codice} per partecipare su ECHO.`;
@@ -505,6 +353,8 @@ export class PaginaEventi implements OnInit, OnDestroy, ViewWillEnter {
         await nav.share({ title: 'ECHO', text });
         return;
       } catch {
+        // Condivisione annullata dall'utente o non riuscita: si ripiega sulla
+        // copia negli appunti, subito sotto.
       }
     }
 
