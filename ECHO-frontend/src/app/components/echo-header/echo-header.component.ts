@@ -19,7 +19,7 @@ import { Component } from '@angular/core';
     .echo-header {
       position: relative;
       overflow: hidden;
-      background: var(--echo-surface-dark);
+      background: var(--echo-coffee);
       padding: 18px 20px 22px;
     }
 

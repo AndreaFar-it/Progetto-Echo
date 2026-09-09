@@ -3,7 +3,7 @@ import {
   OnInit
 } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { ComponenteGalleria } from '../../components/gallery/gallery.component';
+import { ComponenteGalleria } from './gallery.component';
 
 @Component({
   selector: 'app-gallery-page', standalone: true,

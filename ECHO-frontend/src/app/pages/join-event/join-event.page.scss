@@ -1,6 +1,6 @@
 @use '../../../theme/mixins' as echo;
 
-ion-content { --background: var(--echo-surface-light); }
+ion-content { --background: var(--echo-cream); }
 
 .page-shell {
   padding: 24px 16px 60px;
@@ -11,14 +11,14 @@ ion-content { --background: var(--echo-surface-light); }
 .entry-segment {
   margin: 8px 0 28px;
   --background: transparent;
-  border: 1.5px solid var(--echo-on-light);
+  border: 1.5px solid var(--echo-espresso);
   border-radius: var(--echo-radius-pill);
   padding: 3px;
 }
 .entry-segment ion-segment-button {
   --background: transparent;
   --background-checked: var(--ion-color-primary);
-  --color: var(--echo-on-light);
+  --color: var(--echo-espresso);
   --color-checked: var(--ion-color-primary-contrast);
   --indicator-color: transparent;
   --border-radius: var(--echo-radius-pill);
@@ -41,22 +41,22 @@ ion-content { --background: var(--echo-surface-light); }
 .label {
   font-family: var(--echo-font-mono); font-weight: 700;
   font-size: 14px; letter-spacing: 0.1em; text-transform: uppercase;
-  color: var(--echo-on-light); margin: 0 0 8px;
+  color: var(--echo-espresso); margin: 0 0 8px;
 }
 .subtitle {
   font-family: var(--echo-font-mono); font-size: 12px;
-  color: var(--echo-on-light-soft); margin: 0 0 32px; line-height: 1.5;
+  color: var(--echo-cocoa); margin: 0 0 32px; line-height: 1.5;
 }
 .boxes { display: flex; gap: 10px; margin-bottom: 36px; cursor: text; }
 .box {
   width: 56px; height: 64px; border-radius: var(--echo-radius-md);
-  background: var(--echo-surface-dark);
+  background: var(--echo-coffee);
   display: flex; align-items: center; justify-content: center;
   font-family: var(--echo-font-mono); font-size: 24px; font-weight: 700;
-  color: var(--echo-on-dark);
+  color: var(--echo-cream);
 }
 .box.active { box-shadow: 0 0 0 2px var(--echo-rust); }
-.underline { width: 16px; height: 2px; background: rgba(var(--echo-on-dark-rgb),0.5); }
+.underline { width: 16px; height: 2px; background: rgba(var(--echo-cream-rgb),0.5); }
 .hidden-input { position: absolute; opacity: 0; pointer-events: none; width: 1px; height: 1px; }
 .join-btn { width: 100%; max-width: 280px; }
 

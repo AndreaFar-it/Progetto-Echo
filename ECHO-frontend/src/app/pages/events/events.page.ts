@@ -16,14 +16,14 @@ import {
 import { Clipboard } from '@capacitor/clipboard';
 import type { RefresherCustomEvent } from '@ionic/angular/standalone';
 import { ViewWillEnter } from '@ionic/angular';
-import { ServizioPiattaforma } from '../../core/piattaforma.service';
+import { ServizioPiattaforma } from '../../services/piattaforma.service';
 import { ApiService } from '../../services/api.service';
 import { ServizioStatoEvento } from '../../services/event-state.service';
 import { EventoCard } from '../../models/index';
 import {
   ComponenteIntestazione,
   ComponenteEtichettaStato
-} from '../../shared/components';
+} from '../../components';
 import {
   firstValueFrom,
   Subscription

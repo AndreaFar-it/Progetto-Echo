@@ -21,7 +21,7 @@ $page-max-desktop: 1180px;
 // ─── Superfici interattive ───────────────────────────────────────────────────
 
 // Bottone con ombra piena che affonda alla pressione: l'effetto firma di ECHO.
-@mixin pressable($altezza: 4px, $ombra: var(--echo-shadow)) {
+@mixin pressable($altezza: 4px, $ombra: var(--echo-bean)) {
   box-shadow: 0 $altezza 0 $ombra;
   transition: transform 150ms, box-shadow 150ms;
 
@@ -57,8 +57,8 @@ $page-max-desktop: 1180px;
 // Va richiamato al livello più esterno del foglio, non dentro un selettore.
 @mixin spinner(
   $selettore: '.spinner',
-  $colore: var(--echo-on-dark),
-  $traccia: rgba(var(--echo-on-dark-rgb), 0.3),
+  $colore: var(--echo-cream),
+  $traccia: rgba(var(--echo-cream-rgb), 0.3),
   $dimensione: 16px
 ) {
   #{$selettore} {
@@ -80,9 +80,9 @@ $page-max-desktop: 1180px;
 // Campi condivisi da auth, settings e create-event; il parametro distingue il
 // fondo scuro. .field-hint e .field-error restano locali: variano troppo.
 @mixin field($su-scuro: false) {
-  $testo: if($su-scuro, var(--echo-on-dark), var(--echo-on-light));
-  $etichetta: if($su-scuro, var(--echo-on-dark), var(--echo-on-light-soft));
-  $placeholder: if($su-scuro, rgba(var(--echo-on-dark-rgb), 0.5), var(--echo-surface-mid));
+  $testo: if($su-scuro, var(--echo-cream), var(--echo-espresso));
+  $etichetta: if($su-scuro, var(--echo-cream), var(--echo-cocoa));
+  $placeholder: if($su-scuro, rgba(var(--echo-cream-rgb), 0.5), var(--echo-taupe));
 
   .field-group {
     margin-bottom: 18px;

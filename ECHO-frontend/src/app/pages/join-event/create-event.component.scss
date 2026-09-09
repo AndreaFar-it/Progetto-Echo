@@ -2,21 +2,21 @@
 
 /* ── Scheda form scura ── */
 .form-card {
-  background: var(--echo-surface-dark);
+  background: var(--echo-coffee);
   border-radius: var(--echo-radius-lg);
   padding: 24px 20px 28px;
-  box-shadow: 0 4px 10px rgba(var(--echo-on-light-rgb),0.25);
+  box-shadow: 0 4px 10px rgba(var(--echo-espresso-rgb),0.25);
 }
 .form-card-title {
   font-family: var(--echo-font-serif);
   font-size: 22px; font-weight: 400; letter-spacing: 0.06em;
   text-transform: uppercase; text-align: center;
-  color: var(--echo-on-dark); margin: 0 0 22px;
+  color: var(--echo-cream); margin: 0 0 22px;
 }
 
 /* ── Sotto-sezioni ── */
 .sub-section {
-  background: var(--echo-surface-mid);
+  background: var(--echo-taupe);
   border-radius: var(--echo-radius-md);
   padding: 18px 16px;
   margin-bottom: 18px;
@@ -24,7 +24,7 @@
 .sub-heading {
   font-family: var(--echo-font-mono);
   font-size: 12px; font-weight: 700; letter-spacing: 0.12em;
-  text-transform: uppercase; color: var(--echo-on-dark);
+  text-transform: uppercase; color: var(--echo-cream);
   margin: 0 0 16px;
 }
 
@@ -34,7 +34,7 @@
 .field-group:last-child { margin-bottom: 0; }
 .field-hint { text-transform: none; letter-spacing: 0; opacity: 0.75; }
 .field-datetime { color-scheme: dark; }
-.field-error { display: block; font-size: 11px; color: var(--echo-danger-on-dark); margin-top: 5px; font-family: var(--echo-font-mono); }
+.field-error { display: block; font-size: 11px; color: var(--echo-blush); margin-top: 5px; font-family: var(--echo-font-mono); }
 
 /* ── Riga durata (Ore : Minuti) ── */
 .duration-row {
@@ -44,11 +44,11 @@
 .duration-input { text-align: center; font-size: 22px; font-weight: 700; padding: 10px 8px; }
 .duration-sep {
   font-family: var(--echo-font-mono); font-size: 22px; font-weight: 700;
-  color: var(--echo-on-dark); padding-bottom: 14px;
+  color: var(--echo-cream); padding-bottom: 14px;
 }
 .duration-unit {
   font-family: var(--echo-font-mono); font-size: 9px; letter-spacing: 0.18em;
-  text-transform: uppercase; color: rgba(var(--echo-on-dark-rgb),0.6);
+  text-transform: uppercase; color: rgba(var(--echo-cream-rgb),0.6);
 }
 .dev-badge {
   margin-left: 8px; font-size: 10px; letter-spacing: 0.06em;
@@ -58,18 +58,18 @@
 /* ── Selettore scatti ── */
 .scatti-selector { display: flex; gap: 8px; margin-top: 8px; }
 .scatti-btn {
-  flex: 1; padding: 10px; border: 1.5px solid var(--echo-on-dark);
-  background: transparent; color: var(--echo-on-dark); font-size: 15px;
+  flex: 1; padding: 10px; border: 1.5px solid var(--echo-cream);
+  background: transparent; color: var(--echo-cream); font-size: 15px;
   border-radius: 4px; cursor: pointer; transition: all 150ms;
   font-family: var(--echo-font-mono);
   &.active {
-    border-color: var(--echo-rust); background: var(--echo-rust); color: var(--echo-on-dark);
+    border-color: var(--echo-rust); background: var(--echo-rust); color: var(--echo-cream);
   }
 }
 
 .form-error {
   font-family: var(--echo-font-mono); font-size: 12px; line-height: 1.4;
-  color: var(--echo-danger-on-dark); background: rgba(var(--echo-rust-rgb),0.18);
+  color: var(--echo-blush); background: rgba(var(--echo-rust-rgb),0.18);
   border-left: 2px solid var(--echo-rust); border-radius: 0 2px 2px 0;
   padding: 8px 12px; margin: 0 0 14px;
 }
@@ -78,7 +78,7 @@
 .btn-light-pill {
   display: flex; width: 100%; align-items: center; justify-content: center; gap: 8px;
   margin-top: 6px;
-  background: var(--echo-surface-light); color: var(--echo-on-light); border: none;
+  background: var(--echo-cream); color: var(--echo-espresso); border: none;
   font-family: var(--echo-font-mono); font-weight: 700; font-size: 12px;
   letter-spacing: 0.14em; text-transform: uppercase;
   padding: 13px 28px; border-radius: var(--echo-radius-pill);
@@ -88,27 +88,27 @@
 }
 
 @include echo.spinner(
-  $colore: var(--echo-on-light),
-  $traccia: rgba(var(--echo-on-light-rgb), 0.3),
+  $colore: var(--echo-espresso),
+  $traccia: rgba(var(--echo-espresso-rgb), 0.3),
   $dimensione: 14px
 );
 
 /* ── Evento creato ── */
 .success-overlay {
   position: fixed; inset: 0; z-index: 200;
-  background: rgba(var(--echo-on-light-rgb),0.6);
+  background: rgba(var(--echo-espresso-rgb),0.6);
   display: flex; align-items: center; justify-content: center; padding: 24px;
 }
 .success-modal {
-  background: var(--echo-surface-light); border-radius: var(--echo-radius-lg);
+  background: var(--echo-cream); border-radius: var(--echo-radius-lg);
   padding: 30px 24px; max-width: 360px; width: 100%; text-align: center;
 }
 .success-title {
   font-family: var(--echo-font-serif);
-  font-size: 22px; font-weight: 400; color: var(--echo-on-light); margin: 0 0 12px;
+  font-size: 22px; font-weight: 400; color: var(--echo-espresso); margin: 0 0 12px;
 }
 .success-body {
-  font-size: 13px; color: var(--echo-on-light-soft); line-height: 1.6;
+  font-size: 13px; color: var(--echo-cocoa); line-height: 1.6;
   font-family: var(--echo-font-mono); margin: 0 0 20px;
 }
 .success-code {

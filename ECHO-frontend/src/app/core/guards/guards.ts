@@ -1,6 +1,6 @@
 import { inject } from '@angular/core';
 import { CanActivateFn, Router } from '@angular/router';
-import { ServizioPiattaforma } from '../piattaforma.service';
+import { ServizioPiattaforma } from '../../services/piattaforma.service';
 import { AuthService } from '../../services/auth.service';
 import { hasSeenTutorial } from '../tutorial.storage';
 

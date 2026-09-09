@@ -1,7 +1,10 @@
 import { Component } from '@angular/core';
 import { Router } from '@angular/router';
 
-import { IonContent } from '@ionic/angular/standalone';
+import {
+  IonContent,
+  IonIcon
+} from '@ionic/angular/standalone';
 import { AuthService } from '../../services/auth.service';
 import { environment } from '../../../environments/environment';
 
@@ -18,7 +21,7 @@ interface Passo {
 @Component({
   selector: 'app-landing',
   standalone: true,
-  imports: [IonContent],
+  imports: [IonContent, IonIcon],
   templateUrl: './landing.page.html',
   styleUrl: './landing.page.scss',
 })

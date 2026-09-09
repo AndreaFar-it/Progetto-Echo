@@ -12,7 +12,7 @@ export const routes: Routes = [
   // Tutorial di primo avvio. La radice reindirizza qui; guardOnBoarding o lo mostra (primissimo
   // avvio su un dispositivo) o — se il flag hasSeenTutorial è già impostato — rimbalza dritto a
   // /benvenuto. Al termine, il componente imposta il flag e va a /benvenuto.
-  { path: 'onboarding', loadComponent: () => import('./components/onboarding/onboarding.component').then(m => m.ComponenteOnboarding), canActivate: [guardOnBoarding] },
+  { path: 'onboarding', loadComponent: () => import('./pages/onboarding/onboarding.page').then(m => m.PaginaOnboarding), canActivate: [guardOnBoarding] },
   { path: 'auth', loadComponent: () => import('./pages/auth/auth.page').then(m => m.PaginaAutenticazione) },
   { path: 'benvenuto', loadComponent: () => import('./pages/landing/landing.page').then(m => m.PaginaBenvenuto), canActivate: [guardLanding] },
   // La radice nuda va a /onboarding, che guardOnBoarding risolve: il primissimo avvio mostra

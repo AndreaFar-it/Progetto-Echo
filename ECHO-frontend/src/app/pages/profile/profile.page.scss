@@ -1,12 +1,12 @@
-ion-content { --background: var(--echo-surface-light); }
+ion-content { --background: var(--echo-cream); }
 
 .toolbar-gear {
   display: flex; align-items: center; justify-content: center;
   width: 32px; height: 32px;
-  color: var(--echo-on-dark); background: transparent; border: none; cursor: pointer;
+  color: var(--echo-cream); background: transparent; border: none; cursor: pointer;
   padding: 0; opacity: 0.85;
   -webkit-tap-highlight-color: transparent;
-  svg { width: 22px; height: 22px; }
+  ion-icon { width: 22px; height: 22px; }
 }
 
 .profile-shell { padding: 16px 16px 110px; }
@@ -15,7 +15,7 @@ ion-content { --background: var(--echo-surface-light); }
 .profile-card {
   position: relative;
   display: flex; align-items: center; gap: 16px;
-  background: var(--echo-surface-dark);
+  background: var(--echo-coffee);
   border-radius: var(--echo-radius-lg);
   padding: 18px;
   margin-bottom: 20px;
@@ -27,46 +27,46 @@ ion-content { --background: var(--echo-surface-light); }
 .profile-name {
   font-family: var(--echo-font-mono); font-weight: 700;
   font-size: 14px; letter-spacing: 0.02em;
-  color: var(--echo-on-dark); margin: 0 0 6px;
+  color: var(--echo-cream); margin: 0 0 6px;
 }
 .profile-since {
   font-family: var(--echo-font-mono); font-size: 10px; line-height: 1.5;
-  color: var(--echo-surface-warm); margin: 0;
+  color: var(--echo-terracotta); margin: 0;
 }
 
 /* ── Statistiche ── */
 .stats-grid {
   display: grid; grid-template-columns: repeat(3, 1fr);
-  border: 1px solid var(--echo-on-light); border-radius: var(--echo-radius-md);
+  border: 1px solid var(--echo-espresso); border-radius: var(--echo-radius-md);
   margin-bottom: 20px;
 }
 .stat-cell {
   padding: 16px 8px; text-align: center;
-  border-right: 1px solid var(--echo-on-light);
+  border-right: 1px solid var(--echo-espresso);
   &:last-child { border-right: none; }
 }
 .stat-value {
   font-family: var(--echo-font-display);
-  font-size: 24px; color: var(--echo-on-light); line-height: 1;
+  font-size: 24px; color: var(--echo-espresso); line-height: 1;
   margin-bottom: 6px;
 }
 .stat-label {
   font-family: var(--echo-font-mono);
-  font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--echo-on-light-soft);
+  font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--echo-cocoa);
 }
 
 /* ── Intestazioni sezione ── */
 .section-header { padding: 4px 4px 10px; }
 .section-label {
   font-family: var(--echo-font-mono);
-  font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--echo-on-light-soft);
+  font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--echo-cocoa);
 }
 
 /* ── Bacheca trofei ── */
 .trophy-wall {
   position: relative; height: 160px;
-  background: var(--echo-surface-mid);
-  border: 1px solid var(--echo-on-light);
+  background: var(--echo-taupe);
+  border: 1px solid var(--echo-espresso);
   border-radius: var(--echo-radius-md);
   margin-bottom: 20px;
 }
@@ -74,11 +74,11 @@ ion-content { --background: var(--echo-surface-light); }
 
 .badge-empty {
   padding: 16px; margin-bottom: 20px;
-  border: 1px solid var(--echo-on-light); border-radius: var(--echo-radius-md);
+  border: 1px solid var(--echo-espresso); border-radius: var(--echo-radius-md);
 }
 .badge-empty-text {
   font-family: var(--echo-font-mono);
-  font-size: 13px; color: var(--echo-on-light-soft); line-height: 1.6; margin: 0; text-align: center;
+  font-size: 13px; color: var(--echo-cocoa); line-height: 1.6; margin: 0; text-align: center;
 }
 
 /* ── Striscia archivio rullini ── */
@@ -91,7 +91,7 @@ ion-content { --background: var(--echo-surface-light); }
 
 /* ── Scheletro di caricamento (shimmer) ── */
 .profile-loading { padding: 36px 24px; display: flex; flex-direction: column; align-items: center; gap: 16px; }
-.skeleton { background: var(--echo-surface-mid); border-radius: 4px; animation: shimmer 1.5s ease-in-out infinite; }
+.skeleton { background: var(--echo-taupe); border-radius: 4px; animation: shimmer 1.5s ease-in-out infinite; }
 @keyframes shimmer {
   0%, 100% { opacity: 0.5; }
   50% { opacity: 1; }

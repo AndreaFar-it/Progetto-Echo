@@ -2,7 +2,7 @@
   display: flex;
   flex-direction: column;
   height: 100vh;
-  background: var(--echo-surface-light);
+  background: var(--echo-cream);
   padding: 0 24px 48px;
   overflow: hidden;
 }
@@ -58,14 +58,14 @@
   font-size: 22px;
   font-weight: 700;
   letter-spacing: 0.03em;
-  color: var(--echo-on-light);
+  color: var(--echo-espresso);
   margin: 0 0 12px;
 }
 
 .slide-body {
   font-size: 14px;
   line-height: 1.7;
-  color: var(--echo-on-light-soft);
+  color: var(--echo-cocoa);
   margin: 0;
   max-width: 300px;
   margin-inline: auto;
@@ -89,8 +89,8 @@
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: rgba(var(--echo-on-light-rgb),0.15);
-  border: 0.5px solid rgba(var(--echo-on-light-rgb),0.25);
+  background: rgba(var(--echo-espresso-rgb),0.15);
+  border: 0.5px solid rgba(var(--echo-espresso-rgb),0.25);
   transition: background 150ms ease-in-out, width 150ms ease-in-out;
 
   &.active {

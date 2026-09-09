@@ -9,13 +9,7 @@
     <!-- STEP 1 — credentials -->
     @if (step === 'credentials') {
       <div class="reel-label">
-        <svg class="reel-icon" viewBox="0 0 24 32">
-          <rect x="2" y="2" width="20" height="28" rx="2" fill="none" stroke="currentColor" stroke-width="1.5"/>
-          <circle cx="7" cy="9" r="2" fill="none" stroke="currentColor" stroke-width="1.2"/>
-          <circle cx="17" cy="9" r="2" fill="none" stroke="currentColor" stroke-width="1.2"/>
-          <circle cx="7" cy="23" r="2" fill="none" stroke="currentColor" stroke-width="1.2"/>
-          <circle cx="17" cy="23" r="2" fill="none" stroke="currentColor" stroke-width="1.2"/>
-        </svg>
+        <ion-icon name="aperture-outline" class="reel-icon"></ion-icon>
         <span>{{ mode === 'login' ? 'Accedi' : 'Registrati' }}</span>
       </div>
       <div class="auth-form">
@@ -62,13 +56,7 @@
     <!--STEP 2 — avatar + nome/cognome-->
     @if (step === 'profile') {
       <div class="reel-label">
-        <svg class="reel-icon" viewBox="0 0 24 32">
-          <rect x="2" y="2" width="20" height="28" rx="2" fill="none" stroke="currentColor" stroke-width="1.5"/>
-          <circle cx="7" cy="9" r="2" fill="none" stroke="currentColor" stroke-width="1.2"/>
-          <circle cx="17" cy="9" r="2" fill="none" stroke="currentColor" stroke-width="1.2"/>
-          <circle cx="7" cy="23" r="2" fill="none" stroke="currentColor" stroke-width="1.2"/>
-          <circle cx="17" cy="23" r="2" fill="none" stroke="currentColor" stroke-width="1.2"/>
-        </svg>
+        <ion-icon name="aperture-outline" class="reel-icon"></ion-icon>
         <span>Registrazione</span>
       </div>
       <div class="avatar-picker">

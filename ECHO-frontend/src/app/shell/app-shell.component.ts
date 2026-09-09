@@ -12,8 +12,11 @@ import {
   NavigationEnd
 } from '@angular/router';
 
-import { IonRouterOutlet } from '@ionic/angular/standalone';
-import { ServizioPiattaforma } from '../core/piattaforma.service';
+import {
+  IonIcon,
+  IonRouterOutlet
+} from '@ionic/angular/standalone';
+import { ServizioPiattaforma } from '../services/piattaforma.service';
 import {
   Subscription,
   filter
@@ -27,7 +30,7 @@ import { ServizioNotifiche } from '../services/notification.service';
 @Component({
   selector: 'app-shell',
   standalone: true,
-  imports: [IonRouterOutlet],
+  imports: [IonRouterOutlet, IonIcon],
   templateUrl: './app-shell.component.html',
   styleUrl: './app-shell.component.scss',
 })

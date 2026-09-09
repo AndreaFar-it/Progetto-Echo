@@ -1,6 +1,6 @@
 @use '../../../theme/mixins' as echo;
 
-ion-content.landing-content { --background: var(--echo-surface-light); --overflow: auto; overflow-x: hidden; }
+ion-content.landing-content { --background: var(--echo-cream); --overflow: auto; overflow-x: hidden; }
 
 /* Limita l'espansione su schermi larghissimi */
 .nav-inner, .hero-grid, .process-grid, .download > *, .footer-top, .footer-bottom {
@@ -17,8 +17,8 @@ button[inert] { cursor: default; }
   position: sticky;
   top: 0;
   z-index: 10;
-  background: var(--echo-surface-light);
-  border-bottom: 1px solid rgba(var(--echo-on-light-rgb),0.12);
+  background: var(--echo-cream);
+  border-bottom: 1px solid rgba(var(--echo-espresso-rgb),0.12);
 }
 .nav-inner {
   padding: 14px clamp(20px, 4vw, 64px);
@@ -36,11 +36,11 @@ button[inert] { cursor: default; }
   font-size: 12px;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: var(--echo-on-light);
+  color: var(--echo-espresso);
 }
 .nav-cta {
-  background: var(--echo-surface-dark);
-  color: var(--echo-on-dark);
+  background: var(--echo-coffee);
+  color: var(--echo-cream);
   border: none;
   border-radius: var(--echo-radius-pill);
   padding: 10px 18px;
@@ -54,7 +54,7 @@ button[inert] { cursor: default; }
 }
 
 /* ── Hero — sfondo marrone scuro */
-.hero { background: var(--echo-surface-dark); padding: 40px clamp(20px, 4vw, 64px) 64px; }
+.hero { background: var(--echo-coffee); padding: 40px clamp(20px, 4vw, 64px) 64px; }
 .hero-grid { display: flex; flex-direction: column; gap: 36px; }
 
 .hero-wordmark { display: flex; align-items: center; }
@@ -69,16 +69,16 @@ button[inert] { cursor: default; }
   font-size: clamp(13px, 2.2vw, 20px);
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: var(--echo-on-dark);
+  color: var(--echo-cream);
   margin: 18px 0 0;
 }
-.hero-rule { width: 64px; height: 2px; background: var(--echo-on-dark); opacity: 0.3; margin: 18px 0 20px; }
+.hero-rule { width: 64px; height: 2px; background: var(--echo-cream); opacity: 0.3; margin: 18px 0 20px; }
 
 .hero-copy {
   font-family: var(--echo-font-mono);
   font-size: 14px;
   line-height: 1.8;
-  color: rgba(var(--echo-on-dark-rgb),0.75);
+  color: rgba(var(--echo-cream-rgb),0.75);
   max-width: 440px;
   margin: 0;
 }
@@ -97,16 +97,16 @@ button[inert] { cursor: default; }
   transition: transform 150ms, box-shadow 150ms, opacity 150ms;
 }
 .cta-primary {
-  background: var(--echo-surface-dark);
-  color: var(--echo-on-dark);
+  background: var(--echo-coffee);
+  color: var(--echo-cream);
   border: none;
   @include echo.pressable;
 }
 .cta-secondary {
   background: transparent;
-  color: var(--echo-on-light);
-  border: 1.5px solid var(--echo-on-light);
-  &:active { background: rgba(var(--echo-on-light-rgb),0.06); }
+  color: var(--echo-espresso);
+  border: 1.5px solid var(--echo-espresso);
+  &:active { background: rgba(var(--echo-espresso-rgb),0.06); }
 }
 
 /* Foto hero con HUD viewfinder vintage sovrapposto */
@@ -122,11 +122,11 @@ button[inert] { cursor: default; }
   background-image: url('../../../assets/pexels-cottonbro-3171815.jpg');
   background-size: cover;
   background-position: center;
-  box-shadow: 0 8px 24px rgba(var(--echo-on-light-rgb),0.25);
+  box-shadow: 0 8px 24px rgba(var(--echo-espresso-rgb),0.25);
 }
 .hero-photo-glow {
   position: absolute; inset: 0;
-  background: linear-gradient(180deg, rgba(var(--echo-on-light-rgb),0.15) 0%, transparent 30%, transparent 65%, rgba(var(--echo-on-light-rgb),0.45) 100%);
+  background: linear-gradient(180deg, rgba(var(--echo-espresso-rgb),0.15) 0%, transparent 30%, transparent 65%, rgba(var(--echo-espresso-rgb),0.45) 100%);
 }
 .hud-row {
   position: absolute;
@@ -135,7 +135,7 @@ button[inert] { cursor: default; }
   align-items: center;
   gap: 8px;
   font-family: var(--echo-font-mono);
-  color: var(--echo-on-dark);
+  color: var(--echo-cream);
 }
 .hud-top { top: 14px; }
 .hud-bottom { bottom: 14px; justify-content: flex-end; }
@@ -147,23 +147,24 @@ button[inert] { cursor: default; }
   letter-spacing: 0.06em;
   padding: 3px 8px;
   border-radius: var(--echo-radius-sm);
-  background: rgba(var(--echo-on-light-rgb),0.45);
+  background: rgba(var(--echo-espresso-rgb),0.45);
   backdrop-filter: blur(2px);
 }
 .hud-raw { margin-left: auto; font-weight: 700; }
-.batt-icon { width: 18px; height: 9px; }
+/* Le icone Ionicons hanno viewBox quadrato: il riquadro va tenuto quadrato o si deformano. */
+.batt-icon { width: 14px; height: 14px; }
 .hud-exposure {
   font-size: 11px;
   letter-spacing: 0.06em;
   padding: 3px 8px;
   border-radius: var(--echo-radius-sm);
-  background: rgba(var(--echo-on-light-rgb),0.45);
+  background: rgba(var(--echo-espresso-rgb),0.45);
 }
 
 /* ── Sezione Processo (sfondo scuro) ── */
 .process {
   position: relative;
-  background: var(--echo-surface-dark);
+  background: var(--echo-coffee);
   padding: 56px clamp(20px, 4vw, 64px) 72px;
   text-align: center;
 }
@@ -178,7 +179,7 @@ button[inert] { cursor: default; }
 .process-heading {
   font-family: var(--echo-font-serif);
   font-size: 28px;
-  color: var(--echo-on-dark);
+  color: var(--echo-cream);
   margin: 0 0 48px;
 }
 .process-grid {
@@ -206,22 +207,22 @@ button[inert] { cursor: default; }
 .step-dots { display: flex; gap: 8px; }
 .step-dot {
   width: 9px; height: 9px; border-radius: 50%;
-  border: 1.5px solid var(--echo-on-dark);
+  border: 1.5px solid var(--echo-cream);
   background: transparent;
-  &.filled { background: var(--echo-on-dark); }
+  &.filled { background: var(--echo-cream); }
 }
 
 .step-title {
   font-family: var(--echo-font-serif);
   font-size: 17px;
-  color: var(--echo-on-dark);
+  color: var(--echo-cream);
   margin: 22px 0 10px;
 }
 .step-body {
   font-family: var(--echo-font-mono);
   font-size: 13px;
   line-height: 1.7;
-  color: var(--echo-on-dark);
+  color: var(--echo-cream);
   opacity: 0.75;
   max-width: 280px;
   margin: 0;
@@ -266,7 +267,7 @@ button[inert] { cursor: default; }
 .download-heading {
   font-family: var(--echo-font-serif);
   font-size: 26px;
-  color: var(--echo-on-light);
+  color: var(--echo-espresso);
   max-width: 640px;
   margin: 0 auto 10px;
 }
@@ -299,10 +300,10 @@ a.store-btn { display: inline-block; text-decoration: none; line-height: 1; }
 
 /* ── Footer (sfondo chiaro, speculare rispetto al dark) ── */
 .site-footer {
-  background: var(--echo-surface-light);
-  color: var(--echo-on-light);
+  background: var(--echo-cream);
+  color: var(--echo-espresso);
   padding: 56px clamp(20px, 4vw, 64px) 0;
-  border-top: 1px solid rgba(var(--echo-on-light-rgb),0.15);
+  border-top: 1px solid rgba(var(--echo-espresso-rgb),0.15);
 }
 .footer-top {
   display: flex;
@@ -316,7 +317,7 @@ a.store-btn { display: inline-block; text-decoration: none; line-height: 1; }
 .footer-copy {
   font-family: var(--echo-font-mono);
   font-size: 11px;
-  color: var(--echo-on-light-soft);
+  color: var(--echo-cocoa);
   margin: 0 0 16px;
 }
 .footer-col-title {
@@ -332,7 +333,7 @@ a.store-btn { display: inline-block; text-decoration: none; line-height: 1; }
   background: none; border: none; padding: 0; text-align: left; cursor: pointer;
   font-family: var(--echo-font-mono);
   font-size: 13px;
-  color: var(--echo-on-light);
+  color: var(--echo-espresso);
 }
 
 .footer-bottom {
@@ -340,12 +341,12 @@ a.store-btn { display: inline-block; text-decoration: none; line-height: 1; }
   flex-direction: column;
   gap: 8px;
   padding: 20px 0 24px;
-  border-top: 1px solid rgba(var(--echo-on-light-rgb),0.15);
+  border-top: 1px solid rgba(var(--echo-espresso-rgb),0.15);
   font-family: var(--echo-font-mono);
   font-size: 10px;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--echo-on-light-soft);
+  color: var(--echo-cocoa);
 }
 
 /* ── Tablet / Desktop ── */

@@ -30,7 +30,7 @@ import { Component, Input } from '@angular/core';
 
     .rail {
       flex: 0 0 9px;
-      background: var(--echo-on-light);
+      background: var(--echo-espresso);
       -webkit-mask-image: radial-gradient(circle at center, transparent 34%, black 35%);
       mask-image: radial-gradient(circle at center, transparent 34%, black 35%);
       -webkit-mask-size: 100% 14px;

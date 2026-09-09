@@ -23,8 +23,8 @@ ion-router-outlet {
 .tab-bar {
   display: flex;
   flex-shrink: 0;
-  background: var(--echo-surface-dark);
-  border-top: 1px solid rgba(var(--echo-scrim-rgb),0.25);
+  background: var(--echo-coffee);
+  border-top: 1px solid rgba(var(--echo-black-rgb),0.25);
   padding-bottom: env(safe-area-inset-bottom, 4px);
   z-index: 1000;
 }
@@ -48,15 +48,15 @@ ion-router-outlet {
   cursor: pointer;
   position: relative;
   font-family: var(--echo-font-mono);
-  color: rgba(var(--echo-on-dark-rgb),0.3);
+  color: rgba(var(--echo-cream-rgb),0.3);
   transition: color 150ms;
   -webkit-tap-highlight-color: transparent;
 }
 
-.tab svg {
+.tab ion-icon {
   width: 22px;
   height: 22px;
-  stroke: currentColor;
+
 }
 
 .tab span:last-child {
@@ -66,9 +66,9 @@ ion-router-outlet {
 }
 
 /* Stati dei pulsanti della tab bar */
-.tab-on     { color: var(--echo-surface-warm); }
-.tab-active { color: var(--echo-on-dark); }
-.tab[disabled] { color: rgba(var(--echo-on-dark-rgb),0.15); cursor: default; }
+.tab-on     { color: var(--echo-terracotta); }
+.tab-active { color: var(--echo-cream); }
+.tab[disabled] { color: rgba(var(--echo-cream-rgb),0.15); cursor: default; }
 
 /* Indicatore rosso (badge) per il numero di scatti */
 .badge {
@@ -79,7 +79,7 @@ ion-router-outlet {
   height: 16px;
   border-radius: 8px;
   background: var(--echo-rust);
-  color: var(--echo-on-dark);
+  color: var(--echo-cream);
   font-size: 9px;
   font-weight: 700;
   display: flex;

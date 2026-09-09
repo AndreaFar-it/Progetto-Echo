@@ -9,6 +9,7 @@ import { Router } from '@angular/router';
 
 import {
   IonContent,
+  IonIcon,
   ToastController
 } from '@ionic/angular/standalone';
 import {
@@ -34,7 +35,7 @@ const DEVELOPMENT_TICKER_MS = 60_000;
 @Component({
   selector: 'app-camera',
   standalone: true,
-  imports: [IonContent],
+  imports: [IonContent, IonIcon],
   templateUrl: './camera.component.html',
   styleUrl: './camera.component.scss',
 })

@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { ServizioPiattaforma } from '../core/piattaforma.service';
+import { ServizioPiattaforma } from './piattaforma.service';
 import { PushNotifications } from '@capacitor/push-notifications';
 import { ApiService } from './api.service';
 

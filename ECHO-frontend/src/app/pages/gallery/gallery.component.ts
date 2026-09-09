@@ -8,12 +8,13 @@ import { UpperCasePipe, DatePipe } from '@angular/common';
 import { Router } from '@angular/router';
 import {
   IonContent,
+  IonIcon,
   IonRefresher,
   IonRefresherContent,
   ToastController
 } from '@ionic/angular/standalone';
 import type { RefresherCustomEvent } from '@ionic/angular/standalone';
-import { ServizioPiattaforma } from '../../core/piattaforma.service';
+import { ServizioPiattaforma } from '../../services/piattaforma.service';
 import { ApiService } from '../../services/api.service';
 import { environment } from '../../../environments/environment';
 import {
@@ -36,7 +37,7 @@ import {
   FilmBorderComponent,
   ComponenteMedaglia,
   MedalTipo
-} from '../../shared/components';
+} from '../../components';
 import {
   MS_PER_MINUTO,
   isoToMs
@@ -59,7 +60,7 @@ function blobToBase64(blob: Blob): Promise<string> {
 @Component({
   selector: 'app-gallery',
   standalone: true,
-  imports: [UpperCasePipe, DatePipe, IonContent, IonRefresher, IonRefresherContent, FilmBorderComponent, ComponenteMedaglia],
+  imports: [UpperCasePipe, DatePipe, IonContent, IonRefresher, IonRefresherContent, FilmBorderComponent, ComponenteMedaglia, IonIcon],
   templateUrl: './gallery.component.html',
   styleUrl: './gallery.component.scss',
 })

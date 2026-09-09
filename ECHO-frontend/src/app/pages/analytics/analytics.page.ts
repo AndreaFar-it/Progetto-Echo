@@ -12,12 +12,13 @@ import {
 import { UpperCasePipe } from '@angular/common';
 import {
   IonContent,
+  IonIcon,
   IonRefresher,
   IonRefresherContent,
   ToastController
 } from '@ionic/angular/standalone';
 import type { RefresherCustomEvent } from '@ionic/angular/standalone';
-import { ServizioPiattaforma } from '../../core/piattaforma.service';
+import { ServizioPiattaforma } from '../../services/piattaforma.service';
 import {
   interval,
   Subscription,
@@ -35,7 +36,7 @@ import {
 import {
   ComponenteCornicePolaroid,
   ComponenteEtichettaStato
-} from '../../shared/components';
+} from '../../components';
 import {
   Filesystem,
   Directory
@@ -50,7 +51,7 @@ const POLLING_MS = 20_000;
 
 @Component({
   selector: 'app-analytics', standalone: true,
-  imports: [UpperCasePipe, IonContent, IonRefresher, IonRefresherContent, ComponenteCornicePolaroid, ComponenteEtichettaStato],
+  imports: [UpperCasePipe, IonContent, IonRefresher, IonRefresherContent, ComponenteCornicePolaroid, ComponenteEtichettaStato, IonIcon],
   templateUrl: './analytics.page.html',
   styleUrl: './analytics.page.scss',
 })
@@ -154,7 +155,7 @@ export class PaginaAnalisi implements OnInit, OnDestroy {
 
       doc.setFillColor(184, 92, 56);                       // banda header color --echo-rust
       doc.rect(0, 0, pagW, 22, 'F');
-      doc.setTextColor(245, 239, 230);                     // testi header color --echo-on-dark
+      doc.setTextColor(245, 239, 230);                     // testi header color --echo-cream
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(18);
       doc.text('ECHO', 14, 12);

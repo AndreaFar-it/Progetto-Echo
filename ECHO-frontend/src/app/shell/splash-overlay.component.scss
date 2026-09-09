@@ -7,7 +7,7 @@
   align-items: center;
   justify-content: center;
   gap: 18px;
-  background: var(--echo-surface-deep);
+  background: var(--echo-espresso);
   opacity: 0;
   transition: opacity 450ms ease;
   pointer-events: none;
@@ -29,7 +29,7 @@
   font-size: 11px;
   letter-spacing: 0.22em;
   text-transform: uppercase;
-  color: var(--echo-on-dark);
+  color: var(--echo-cream);
 }
 
 .loading {
@@ -40,18 +40,15 @@
   gap: 8px;
 }
 .reel {
-  width: 26px;
-  height: 34px;
-  /* L'SVG disegna con currentColor: gli attributi di presentazione SVG non
-     accettano var(), quindi il token passa da qui. */
-  color: var(--echo-on-dark);
+  width: 30px;
+  height: 30px;
+  color: var(--echo-cream);
   animation: reel-spin 2.4s linear infinite;
-  transform-origin: 12px 16px;
 }
 .loading span {
   font-family: var(--echo-font-mono);
   font-size: 12px;
-  color: rgba(var(--echo-on-dark-rgb),0.65);
+  color: rgba(var(--echo-cream-rgb),0.65);
 }
 
 @keyframes reel-spin {

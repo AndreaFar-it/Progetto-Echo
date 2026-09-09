@@ -12,7 +12,7 @@ import {
   ViewWillEnter,
   ViewWillLeave
 } from '@ionic/angular';
-import { ComponenteFotocamera } from '../../components/camera/camera.component';
+import { ComponenteFotocamera } from './camera.component';
 import { ServizioFotocamera } from '../../services/camera.service';
 
 @Component({

@@ -9,9 +9,10 @@ import {
 
 import { FormsModule } from '@angular/forms';
 import {
+  AlertController,
   IonContent,
-  ToastController,
-  AlertController
+  IonIcon,
+  ToastController
 } from '@ionic/angular/standalone';
 import { AuthService } from '../../services/auth.service';
 import { ApiService } from '../../services/api.service';
@@ -22,7 +23,7 @@ import { messaggioErrore } from '../../core/api-error';
 @Component({
   selector: 'app-auth',
   standalone: true,
-  imports: [FormsModule, IonContent],
+  imports: [FormsModule, IonContent, IonIcon],
   templateUrl: './auth.page.html',
   styleUrl: './auth.page.scss',
 })

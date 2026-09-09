@@ -17,9 +17,9 @@ import {
   styles: [`
     .polaroid {
       display: inline-block;
-      background: var(--echo-surface-paper);
+      background: var(--echo-ivory);
       padding: 8px 8px 22px;
-      box-shadow: 0 4px 10px rgba(var(--echo-scrim-rgb),0.35);
+      box-shadow: 0 4px 10px rgba(var(--echo-black-rgb),0.35);
     }
     .photo {
       /* Sempre un'area di ritaglio rigorosamente quadrata, qualunque sia il vero rapporto
@@ -27,7 +27,7 @@ import {
       width: 100%;
       aspect-ratio: 1 / 1;
       overflow: hidden;
-      background: var(--echo-film-edge);
+      background: var(--echo-ash);
     }
     ::ng-deep .photo img {
       display: block;

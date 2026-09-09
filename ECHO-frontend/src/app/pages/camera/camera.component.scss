@@ -14,7 +14,7 @@
 .lock-screen {
   display: flex; flex-direction: column;
   align-items: center; justify-content: center;
-  min-height: 100vh; background: var(--echo-surface-light);
+  min-height: 100vh; background: var(--echo-cream);
   padding: 48px 32px; text-align: center;
   animation: fadeIn 400ms ease-out;
 }
@@ -24,19 +24,19 @@
 .lock-title {
   font-family: var(--echo-font-display);
   font-size: 30px; letter-spacing: 0.02em;
-  color: var(--echo-on-light); margin: 0 0 16px;
+  color: var(--echo-espresso); margin: 0 0 16px;
 }
 .lock-body {
   font-family: var(--echo-font-mono);
-  font-size: 14px; line-height: 1.7; color: var(--echo-on-light-soft);
+  font-size: 14px; line-height: 1.7; color: var(--echo-cocoa);
   max-width: 280px; margin: 0 0 32px;
-  strong { color: var(--echo-on-light); font-weight: 700; }
+  strong { color: var(--echo-espresso); font-weight: 700; }
 }
-.lock-divider { width: 40px; height: 1px; background: var(--echo-on-light); opacity: 0.3; margin-bottom: 32px; }
+.lock-divider { width: 40px; height: 1px; background: var(--echo-espresso); opacity: 0.3; margin-bottom: 32px; }
 .lock-cta {
   font-family: var(--echo-font-mono);
   font-size: 12px; letter-spacing: 0.18em; text-transform: uppercase; font-weight: 700;
-  color: var(--echo-on-dark); background: var(--echo-surface-dark); border: none;
+  color: var(--echo-cream); background: var(--echo-coffee); border: none;
   padding: 12px 28px; border-radius: var(--echo-radius-pill); cursor: pointer;
   @include echo.pressable;
 }
@@ -57,7 +57,7 @@ ion-content.camera-content::part(scroll) {
 .camera-hud-top {
   position: absolute; top: 0; left: 0; right: 0;
   height: 100px;
-  background: linear-gradient(to bottom, rgba(var(--echo-scrim-rgb),0.5), transparent);
+  background: linear-gradient(to bottom, rgba(var(--echo-black-rgb),0.5), transparent);
   z-index: 10;
   pointer-events: none;
 }
@@ -66,7 +66,7 @@ ion-content.camera-content::part(scroll) {
   text-align: center;
   font-family: var(--echo-font-serif);
   font-size: 13px; letter-spacing: 0.04em;
-  color: rgba(var(--echo-hud-rgb),0.75);
+  color: rgba(var(--echo-white-rgb),0.75);
   z-index: 10; pointer-events: none;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding: 0 60px;
 }
@@ -78,7 +78,7 @@ ion-content.camera-content::part(scroll) {
   /* La tab bar galleggia sopra questa pagina (vedi app-shell) — riserviamo la sua altezza
      reale per evitare che copra il pulsante di scatto. */
   padding-bottom: calc(40px + var(--echo-tab-bar-height, 74px));
-  background: linear-gradient(to top, rgba(var(--echo-scrim-rgb),0.55), transparent);
+  background: linear-gradient(to top, rgba(var(--echo-black-rgb),0.55), transparent);
   z-index: 10; gap: 10px;
   pointer-events: none;
 }
@@ -90,7 +90,7 @@ ion-content.camera-content::part(scroll) {
 
 .shoot-error {
   font-family: var(--echo-font-mono);
-  font-size: 12px; color: var(--echo-hud); letter-spacing: 0.08em;
+  font-size: 12px; color: var(--echo-white); letter-spacing: 0.08em;
   text-align: center; margin: 0; padding: 6px 16px;
   background: rgba(var(--echo-rust-rgb),0.55); border-radius: 4px;
 }
@@ -99,37 +99,37 @@ ion-content.camera-content::part(scroll) {
   /* È un <button>: azzera gli stili nativi del controllo. */
   background: none; border: none; display: block; width: 100%;
   font-family: var(--echo-font-mono);
-  font-size: 11px; letter-spacing: 0.1em; color: rgba(var(--echo-hud-rgb),0.7);
+  font-size: 11px; letter-spacing: 0.1em; color: rgba(var(--echo-white-rgb),0.7);
   text-align: center; margin: 0; padding: 6px 16px;
-  &.failed { color: var(--echo-hud); cursor: pointer; text-decoration: underline; }
+  &.failed { color: var(--echo-white); cursor: pointer; text-decoration: underline; }
 }
 
 /* Zoom a bottoni — livelli fissi riportati dall'obiettivo attuale */
 .zoom-row { display: flex; gap: 8px; padding: 4px 0; pointer-events: auto; }
 .zoom-btn {
   font-family: var(--echo-font-mono); font-size: 11px; font-weight: 700;
-  color: rgba(var(--echo-hud-rgb),0.75); background: rgba(var(--echo-scrim-rgb),0.35);
-  border: 1px solid rgba(var(--echo-hud-rgb),0.3); border-radius: var(--echo-radius-pill);
+  color: rgba(var(--echo-white-rgb),0.75); background: rgba(var(--echo-black-rgb),0.35);
+  border: 1px solid rgba(var(--echo-white-rgb),0.3); border-radius: var(--echo-radius-pill);
   padding: 4px 10px; cursor: pointer; -webkit-tap-highlight-color: transparent;
-  &.active { color: var(--echo-shadow); background: var(--echo-hud); border-color: var(--echo-hud); }
+  &.active { color: var(--echo-bean); background: var(--echo-white); border-color: var(--echo-white); }
 }
 
 /* Riga di controlli funzionali — flash + cambio fotocamera */
 .control-row { display: flex; gap: 22px; align-items: flex-start; }
 .ctrl-btn {
   display: flex; flex-direction: column; align-items: center; gap: 4px;
-  background: transparent; border: none; color: var(--echo-hud); cursor: pointer;
+  background: transparent; border: none; color: var(--echo-white); cursor: pointer;
   -webkit-tap-highlight-color: transparent; padding: 0;
   &:active { opacity: 0.6; }
 }
-.ctrl-btn svg {
+.ctrl-btn ion-icon {
   width: 22px; height: 22px;
-  background: rgba(var(--echo-scrim-rgb),0.35); border: 1px solid rgba(var(--echo-hud-rgb),0.3);
+  background: rgba(var(--echo-black-rgb),0.35); border: 1px solid rgba(var(--echo-white-rgb),0.3);
   border-radius: 50%; padding: 8px; box-sizing: content-box;
 }
 .ctrl-label {
   font-family: var(--echo-font-mono); font-size: 9px; letter-spacing: 0.08em;
-  text-transform: uppercase; color: rgba(var(--echo-hud-rgb),0.75);
+  text-transform: uppercase; color: rgba(var(--echo-white-rgb),0.75);
 }
 
 /* ── Pulsante di scatto ── */
@@ -137,16 +137,16 @@ ion-content.camera-content::part(scroll) {
   background: transparent; border: none; cursor: pointer; padding: 0;
   -webkit-tap-highlight-color: transparent;
   &[disabled] { cursor: not-allowed; opacity: 0.7; }
-  &.firing .shutter-disc { transform: scale(0.82); background: var(--echo-surface-mid); }
+  &.firing .shutter-disc { transform: scale(0.82); background: var(--echo-taupe); }
 }
 .shutter-ring {
   width: 70px; height: 70px; border-radius: 50%;
-  border: 3px solid var(--echo-hud);
+  border: 3px solid var(--echo-white);
   display: flex; align-items: center; justify-content: center;
   transition: border-color 150ms;
 }
 .shutter-disc {
-  width: 54px; height: 54px; border-radius: 50%; background: var(--echo-hud);
+  width: 54px; height: 54px; border-radius: 50%; background: var(--echo-white);
   transition: transform 120ms ease-in-out, background 120ms;
 }
 
@@ -157,8 +157,8 @@ ion-content.camera-content::part(scroll) {
   &.active { opacity: 1; }
 }
 .upload-dot {
-  width: 5px; height: 5px; border-radius: 50%; background: var(--echo-hud);
+  width: 5px; height: 5px; border-radius: 50%; background: var(--echo-white);
   animation: pulse 1s ease-in-out infinite;
 }
 @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
-.upload-label { font-family: var(--echo-font-mono); font-size: 10px; letter-spacing: 0.15em; text-transform: uppercase; color: rgba(var(--echo-hud-rgb),0.7); }
+.upload-label { font-family: var(--echo-font-mono); font-size: 10px; letter-spacing: 0.15em; text-transform: uppercase; color: rgba(var(--echo-white-rgb),0.7); }

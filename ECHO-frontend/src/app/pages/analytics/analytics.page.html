@@ -39,10 +39,7 @@
           <div class="metric-row">
             <div class="pictogram">
               @for (filled of pictogram.icons; track $index) {
-                <svg class="person" [class.filled]="filled" viewBox="0 0 24 24">
-                  <circle cx="12" cy="7" r="4" fill="currentColor"/>
-                  <path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8" fill="currentColor"/>
-                </svg>
+                <ion-icon name="person" class="person" [class.filled]="filled"></ion-icon>
               }
             </div>
             <div class="metric-info">
@@ -58,7 +55,7 @@
             @for (e of ranking; track e.id_foto; let i = $index) {
               <div class="winner">
                 <app-polaroid-frame [rotationDeg]="[-6,4,-3][i % 3]">
-                  <svg class="paperclip" viewBox="0 0 14 28"><path d="M4 4 v16 a3 3 0 0 0 6 0 V8" fill="none" stroke="currentColor" stroke-width="2"/></svg>
+                  <ion-icon name="attach-outline" class="paperclip"></ion-icon>
                   <img [src]="photoUrl(e.url_originale)" [alt]="'Foto di ' + e.nome" loading="lazy" />
                 </app-polaroid-frame>
                 <span class="winner-name">{{ e.nome | uppercase }}</span>

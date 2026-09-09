@@ -3,7 +3,7 @@ import {
   Input
 } from '@angular/core';
 
-import { EventoStato } from '../../../models/index';
+import { EventoStato } from '../../models/index';
 
 
 const LABELS: Record<EventoStato, string> = {
@@ -35,11 +35,11 @@ const LABELS: Record<EventoStato, string> = {
       white-space: nowrap;
       flex-shrink: 0;
     }
-    .status-tag--non_iniziata { background: rgba(var(--echo-surface-mid-rgb),.18); color: var(--echo-on-light-soft); border: 1px solid rgba(var(--echo-surface-mid-rgb),.4); }
-    .status-tag--in_corso { background: var(--echo-teal); color: var(--echo-on-dark); }
-    .status-tag--sviluppo { background: var(--echo-rust); color: var(--echo-on-dark); }
-    .status-tag--album_aperto { background: var(--echo-surface-dark); color: var(--echo-on-dark); }
-    .status-tag--chiusa { background: transparent; color: var(--echo-on-light-soft); border: 1px solid var(--echo-medal-gold); }
+    .status-tag--non_iniziata { background: rgba(var(--echo-taupe-rgb),.18); color: var(--echo-cocoa); border: 1px solid rgba(var(--echo-taupe-rgb),.4); }
+    .status-tag--in_corso { background: var(--echo-teal); color: var(--echo-cream); }
+    .status-tag--sviluppo { background: var(--echo-rust); color: var(--echo-cream); }
+    .status-tag--album_aperto { background: var(--echo-coffee); color: var(--echo-cream); }
+    .status-tag--chiusa { background: transparent; color: var(--echo-cocoa); border: 1px solid var(--echo-gold); }
   `],
 })
 export class ComponenteEtichettaStato {

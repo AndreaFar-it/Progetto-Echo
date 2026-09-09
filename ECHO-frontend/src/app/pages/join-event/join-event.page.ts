@@ -18,8 +18,8 @@ import {
   ToastController
 } from '@ionic/angular/standalone';
 import { ApiService } from '../../services/api.service';
-import { ComponenteIntestazione } from '../../shared/components';
-import { CreateEventComponent } from '../events/create-event.component';
+import { ComponenteIntestazione } from '../../components';
+import { CreateEventComponent } from './create-event.component';
 import { firstValueFrom } from 'rxjs';
 import { messaggioErrore } from '../../core/api-error';
 

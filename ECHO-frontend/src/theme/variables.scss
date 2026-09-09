@@ -1,72 +1,57 @@
 @use './mixins' as echo;
 
-/*
- * Ogni esadecimale compare una volta sola: i ruoli che condividono un colore
- * sono alias var() del primo, non copie del valore.
- */
 
 :root {
-  /* Superfici*/
-  --echo-surface-light:      #F5EFE6;  /* sfondo pagina, card chiare */
-  --echo-surface-paper:      #FBF8F2;  /* carta della cornice polaroid */
-  --echo-surface-sand-light: #ECE3D3;  /* gradino chiaro Ionic */
-  --echo-surface-sand:       #E3D7C0;  /* gradino Ionic */
-  --echo-surface-warm:       #C9A28A;  /* terracotta — card lista eventi */
-  --echo-surface-mid:        #8C7B6E;  /* taupe — tab inattivi, sotto-sezioni */
-  --echo-surface-dark:       #3B2314;  /* header, tab bar, CTA, card profilo */
-  --echo-surface-dark-tint:  #4F3320;  /* variante chiara, richiesta da Ionic */
-  --echo-surface-deep:       var(--echo-on-light);  /* splash a tutto schermo */
 
-  /* Primo piano  */
-  --echo-on-light:      #2A1A0E;                    /* su superfici chiare */
-  --echo-on-light-soft: #6B5744;                    /* idem, gerarchia secondaria */
-  --echo-on-dark:       var(--echo-surface-light);  /* su superfici scure */
-  --echo-on-dark-soft:  var(--echo-surface-warm);   /* idem, gerarchia secondaria */
+  --echo-white:       #FFFFFF;  
+  --echo-ivory:       #FBF8F2;  
+  --echo-cream:       #F5EFE6;  
+  --echo-blush:       #F3DCD2;  
+  --echo-sand-light:  #ECE3D3;
+  --echo-sand:        #E3D7C0;
+  --echo-ash:         #DDD3C0;  
 
-  /* Accenti */
+
+  --echo-terracotta:  #C9A28A;  
+  --echo-rust:        #B85C38;  
+  --echo-taupe:       #8C7B6E;  
+  --echo-brick:       #8A3F23;  
+
+  --echo-cocoa:       #6B5744;  
+  --echo-coffee-light:#4F3320;
+  --echo-tobacco:     #3D2B10;  
+  --echo-coffee:      #3B2314;  
+  --echo-espresso:    #2A1A0E;  
+  --echo-bean:        #1E1209;  
+  --echo-pitch:       #1A0E00;  
+
+  --echo-teal-light:  #6CB1AA;
   --echo-teal:        #5BA8A0;
-  --echo-teal-shade:  #508F89;  /* variante scura, richiesta da Ionic */
-  --echo-teal-tint:   #6CB1AA;  /* variante chiara, richiesta da Ionic */
-  --echo-rust:        #B85C38;
+  --echo-teal-dark:   #508F89;
 
-  /* Errori*/
-  --echo-danger:         #8A3F23;
-  --echo-danger-on-dark: #F3DCD2;
+  /* Medaglie */
+  --echo-gold:          #D4AF37;
+  --echo-gold-light:    #F0D27A;
+  --echo-gold-edge:     #B8932C;
+  --echo-gold-ink:      #6B4F0F;
+  --echo-silver:        #A8A9AD;
+  --echo-silver-light:  #E6E6E8;
+  --echo-silver-edge:   #8D8E92;
+  --echo-silver-ink:    #5A5A5D;
+  --echo-bronze:        #CD7F32;
+  --echo-bronze-light:  #E3A571;
+  --echo-bronze-edge:   #A8651F;
+  --echo-bronze-ink:    #6B3E14;
 
-  --echo-shadow: #1E1209;  /* ombra piena dei bottoni premibili */
-
-  /* Bianco assoluto per HUD e chip sulle foto: volutamente fuori palette */
-  --echo-hud: #FFFFFF;
-
-  /* Pellicola */
-  --echo-film-base: #1A0E00;  /* corpo del rullino nell'animazione di caricamento */
-  --echo-film-perf: #3D2B10;  /* perforazioni */
-  --echo-film-edge: #DDD3C0;  /* bordo inferiore della cornice polaroid */
-
-  /* Medaglie*/
-  --echo-medal-gold:         #D4AF37;
-  --echo-medal-gold-light:   #F0D27A;
-  --echo-medal-gold-edge:    #B8932C;
-  --echo-medal-gold-ink:     #6B4F0F;
-  --echo-medal-silver:       #A8A9AD;
-  --echo-medal-silver-light: #E6E6E8;
-  --echo-medal-silver-edge:  #8D8E92;
-  --echo-medal-silver-ink:   #5A5A5D;
-  --echo-medal-bronze:       #CD7F32;
-  --echo-medal-bronze-light: #E3A571;
-  --echo-medal-bronze-edge:  #A8651F;
-  --echo-medal-bronze-ink:   #6B3E14;
-
-  /* Terne per rgba(var(--token-rgb), alpha): var() non entra in #RRGGBBAA */
-  --echo-surface-light-rgb: 245,239,230;
-  --echo-surface-mid-rgb:   140,123,110;
-  --echo-surface-dark-rgb:  59,35,20;
-  --echo-on-light-rgb:      42,26,14;
-  --echo-on-dark-rgb:       var(--echo-surface-light-rgb);
-  --echo-teal-rgb:          91,168,160;
-  --echo-rust-rgb:          184,92,56;
-  --echo-hud-rgb:           255,255,255;
-  --echo-scrim-rgb:         0,0,0;  /* nero assoluto per gli scrim sulle foto */
+  /* Terne per rgba(var()) */
+  --echo-white-rgb:    255,255,255;
+  --echo-cream-rgb:    245,239,230;
+  --echo-rust-rgb:     184,92,56;
+  --echo-taupe-rgb:    140,123,110;
+  --echo-coffee-rgb:   59,35,20;
+  --echo-espresso-rgb: 42,26,14;
+  --echo-teal-rgb:     91,168,160;
+  --echo-black-rgb:    0,0,0;  
 
   /* Font */
   --echo-font-display: 'Abril Fatface', 'Playfair Display', Georgia, serif;      /* logo */
@@ -80,50 +65,50 @@
   --echo-radius-pill: 999px;
   --echo-transition:  150ms ease-in-out;
 
-  /* Ponte verso Ionic*/
-  --ion-background-color:     var(--echo-surface-light);
-  --ion-background-color-rgb: var(--echo-surface-light-rgb);
-  --ion-card-background:      var(--echo-surface-light);
+  /* Ponte verso Ionic */
+  --ion-background-color:     var(--echo-cream);
+  --ion-background-color-rgb: var(--echo-cream-rgb);
+  --ion-card-background:      var(--echo-cream);
   --ion-item-background:      transparent;
 
-  --ion-text-color:     var(--echo-on-light);
-  --ion-text-color-rgb: var(--echo-on-light-rgb);
+  --ion-text-color:     var(--echo-espresso);
+  --ion-text-color-rgb: var(--echo-espresso-rgb);
 
-  --ion-toolbar-background:     var(--echo-surface-dark);
-  --ion-toolbar-color:          var(--echo-on-dark);
-  --ion-tab-bar-background:     var(--echo-surface-dark);
-  --ion-tab-bar-border-color:   var(--echo-on-light);
-  --ion-tab-bar-color:          var(--echo-on-dark-soft);
-  --ion-tab-bar-color-selected: var(--echo-on-dark);
+  --ion-toolbar-background:     var(--echo-coffee);
+  --ion-toolbar-color:          var(--echo-cream);
+  --ion-tab-bar-background:     var(--echo-coffee);
+  --ion-tab-bar-border-color:   var(--echo-espresso);
+  --ion-tab-bar-color:          var(--echo-terracotta);
+  --ion-tab-bar-color-selected: var(--echo-cream);
 
-  --ion-border-color:      var(--echo-on-light);
-  --ion-item-border-color: var(--echo-on-light);
-  --ion-color-step-50:     var(--echo-surface-sand-light);
-  --ion-color-step-100:    var(--echo-surface-sand);
+  --ion-border-color:      var(--echo-espresso);
+  --ion-item-border-color: var(--echo-espresso);
+  --ion-color-step-50:     var(--echo-sand-light);
+  --ion-color-step-100:    var(--echo-sand);
 
-  --ion-color-primary:          var(--echo-surface-dark);
-  --ion-color-primary-rgb:      var(--echo-surface-dark-rgb);
-  --ion-color-primary-contrast: var(--echo-on-dark);
-  --ion-color-primary-shade:    var(--echo-on-light);
-  --ion-color-primary-tint:     var(--echo-surface-dark-tint);
+  --ion-color-primary:          var(--echo-coffee);
+  --ion-color-primary-rgb:      var(--echo-coffee-rgb);
+  --ion-color-primary-contrast: var(--echo-cream);
+  --ion-color-primary-shade:    var(--echo-espresso);
+  --ion-color-primary-tint:     var(--echo-coffee-light);
 
   --ion-color-secondary:          var(--echo-teal);
   --ion-color-secondary-rgb:      var(--echo-teal-rgb);
-  --ion-color-secondary-contrast: var(--echo-on-dark);
-  --ion-color-secondary-shade:    var(--echo-teal-shade);
-  --ion-color-secondary-tint:     var(--echo-teal-tint);
+  --ion-color-secondary-contrast: var(--echo-cream);
+  --ion-color-secondary-shade:    var(--echo-teal-dark);
+  --ion-color-secondary-tint:     var(--echo-teal-light);
 
-  --ion-color-medium: var(--echo-surface-mid);
-  --ion-color-dark:   var(--echo-on-light);
-  --ion-color-light:  var(--echo-surface-light);
+  --ion-color-medium: var(--echo-taupe);
+  --ion-color-dark:   var(--echo-espresso);
+  --ion-color-light:  var(--echo-cream);
 }
 
 /* ─── Reset ──────────────────────────────────────────────────────────────── */
 * { box-sizing: border-box; }
 
 body {
-  background: var(--echo-surface-light);
-  color: var(--echo-on-light);
+  background: var(--echo-cream);
+  color: var(--echo-espresso);
   font-family: var(--echo-font-mono);
   font-size: 14px;
   line-height: 1.6;
@@ -131,44 +116,40 @@ body {
 }
 
 /* ─── Focus da tastiera ─────────────────────────────────────────────────── */
-/* :focus-visible e non :focus, così l'anello non compare a ogni tocco.
-   :where() ha specificità zero: un componente può sovrascriverlo senza lotta. */
 :where(a, button, input, textarea, select, summary, [tabindex]):focus-visible {
   outline: 2px solid var(--echo-rust);
   outline-offset: 2px;
   border-radius: var(--echo-radius-sm);
 }
 
-/* Sulle superfici scure il ruggine non stacca abbastanza: si passa alla crema. */
 :where(.echo-btn, .event-cta, .code-box, .scatti-btn, .tab-pill):focus-visible {
-  outline-color: var(--echo-on-dark);
+  outline-color: var(--echo-cream);
 }
 
 /* ─── Pulsanti globali ──────────────────────────────────────────────────── */
-/* Azione primaria, usata in 18 punti: vive qui e non in un componente. */
 .echo-btn {
   @include echo.button-base;
-  color: var(--echo-on-dark);
-  background: var(--echo-surface-dark);
+  color: var(--echo-cream);
+  background: var(--echo-coffee);
   @include echo.pressable;
 
   &:disabled {
-    background: var(--echo-surface-mid);
-    color: var(--echo-surface-light);
+    background: var(--echo-taupe);
+    color: var(--echo-cream);
     box-shadow: none;
     cursor: not-allowed;
     opacity: 0.6;
   }
 }
 
-/* Azione secondaria: solo contorno, senza riempimento. */
+/* Pulsante fantasma */
 .echo-btn-ghost {
   @include echo.button-base;
   background: transparent;
-  color: var(--echo-on-light);
-  border: 1.5px solid var(--echo-on-light);
+  color: var(--echo-espresso);
+  border: 1.5px solid var(--echo-espresso);
 
-  &:active { background: rgba(var(--echo-on-light-rgb), 0.06); }
+  &:active { background: rgba(var(--echo-espresso-rgb), 0.06); }
 }
 
 /* Variante a larghezza intera. */
@@ -177,22 +158,22 @@ body {
 /* ─── Sovrascritture per gli elementi Ionic ──────────────────────────────── */
 ion-item {
   --background: transparent;
-  --color: var(--echo-on-light);
-  --border-color: var(--echo-on-light);
+  --color: var(--echo-espresso);
+  --border-color: var(--echo-espresso);
   --padding-start: 16px;
   --inner-padding-end: 16px;
 }
 
 ion-input, ion-textarea, ion-select {
-  --color: var(--echo-on-light);
-  --placeholder-color: var(--echo-on-light-soft);
+  --color: var(--echo-espresso);
+  --placeholder-color: var(--echo-cocoa);
   --background: transparent;
 }
 
 ion-toolbar {
-  --background: var(--echo-surface-dark);
-  --color: var(--echo-on-dark);
-  --border-color: var(--echo-on-light);
+  --background: var(--echo-coffee);
+  --color: var(--echo-cream);
+  --border-color: var(--echo-espresso);
 }
 
 ion-tab-bar {

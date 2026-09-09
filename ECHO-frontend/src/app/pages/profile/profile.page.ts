@@ -6,6 +6,7 @@ import { Router } from '@angular/router';
 import { UpperCasePipe, DatePipe } from '@angular/common';
 import {
   IonContent,
+  IonIcon,
   ToastController
 } from '@ionic/angular/standalone';
 import { ViewWillEnter } from '@ionic/angular';
@@ -18,7 +19,7 @@ import {
   ComponenteCornicePolaroid,
   ComponenteMedaglia,
   ComponenteRullino
-} from '../../shared/components';
+} from '../../components';
 import { messaggioErrore } from '../../core/api-error';
 
 interface MedagliaDisposta {
@@ -31,7 +32,7 @@ interface MedagliaDisposta {
 @Component({
   selector: 'app-profile',
   standalone: true,
-  imports: [UpperCasePipe, DatePipe, IonContent, ComponenteIntestazione, ComponenteCornicePolaroid, ComponenteMedaglia, ComponenteRullino],
+  imports: [UpperCasePipe, DatePipe, IonContent, ComponenteIntestazione, ComponenteCornicePolaroid, ComponenteMedaglia, ComponenteRullino, IonIcon],
   templateUrl: './profile.page.html',
   styleUrl: './profile.page.scss',
 })

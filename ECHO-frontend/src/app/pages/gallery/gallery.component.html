@@ -62,9 +62,7 @@
         }
         @if (foto.length === 0) {
           <div class="ranking-pending">
-            <svg class="pending-clock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 48px; height: 48px; margin: 0 auto 12px; display: block; opacity: 0.5;">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
-            </svg>
+            <ion-icon name="image-outline" class="pending-clock" style="width: 48px; height: 48px; margin: 0 auto 12px; display: block; opacity: 0.5;"></ion-icon>
             <p class="pending-title">Rullino vuoto</p>
             <p class="pending-body">Non sono ancora presenti foto <br> per questo evento.</p>
           </div>
@@ -132,15 +130,7 @@
           </section>
         } @else {
           <div class="ranking-pending">
-            <svg class="pending-clock" viewBox="0 0 64 64">
-              <circle cx="32" cy="32" r="26" fill="none" stroke="currentColor" stroke-width="3"/>
-              <line x1="32" y1="32" x2="32" y2="16" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
-              <line x1="32" y1="32" x2="44" y2="38" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
-              <line x1="32" y1="6"  x2="32" y2="10" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
-              <line x1="32" y1="54" x2="32" y2="58" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
-              <line x1="6"  y1="32" x2="10" y2="32" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
-              <line x1="54" y1="32" x2="58" y2="32" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
-            </svg>
+            <ion-icon name="time-outline" class="pending-clock"></ion-icon>
             <p class="pending-title">L'attesa aumenta il desiderio!</p>
             <p class="pending-body">Aspetta la fine delle votazioni<br>e torna per scoprire se hai vinto!</p>
           </div>
@@ -150,9 +140,7 @@
     <!-- ── Barra inferiore: indietro ed etichetta voto ── -->
     <div class="gallery-bottom-bar">
       <button type="button" class="bottom-back" (click)="goBack()" aria-label="Indietro">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 18px; height: 18px;">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
-        </svg>
+        <ion-icon name="arrow-back-outline" style="width: 18px; height: 18px;"></ion-icon>
       </button>
       <span class="bottom-label">{{ bottomLabel() }}</span>
     </div>
@@ -197,10 +185,7 @@
         }
         @if (selectedPhoto.user_has_voted_this) {
           <div class="detail-vote-fab detail-vote-fab--done">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
-              <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
-              <circle cx="12" cy="13" r="4"/>
-            </svg>
+            <ion-icon name="camera-outline"></ion-icon>
           </div>
         }
       </div>

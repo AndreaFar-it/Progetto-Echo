@@ -29,14 +29,14 @@ import {
       width: 38px;
       height: 14px;
       border-radius: 6px 6px 0 0;
-      background: var(--echo-on-light);
+      background: var(--echo-espresso);
     }
     .body {
       width: 56px;
       height: 122px;
       border-radius: 10px;
       background: var(--echo-rust);
-      border: 1px solid var(--echo-on-light);
+      border: 1px solid var(--echo-espresso);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -50,7 +50,7 @@ import {
       font-size: 10px;
       font-weight: 700;
       letter-spacing: 0.04em;
-      color: var(--echo-on-dark);
+      color: var(--echo-cream);
       text-align: center;
       max-height: 100%;
       overflow: hidden;

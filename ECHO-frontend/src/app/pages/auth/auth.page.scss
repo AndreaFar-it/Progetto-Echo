@@ -1,6 +1,6 @@
 @use '../../../theme/mixins' as echo;
 
-ion-content { --background: var(--echo-surface-light); }
+ion-content { --background: var(--echo-cream); }
 
 .auth-shell {
   min-height: 100vh;
@@ -31,14 +31,14 @@ ion-content { --background: var(--echo-surface-light); }
 }
 /* L'SVG disegna con currentColor: gli attributi di presentazione SVG non
    accettano var(), quindi il token passa da qui. */
-.reel-icon { width: 18px; height: 24px; color: var(--echo-on-light); }
+.reel-icon { width: 20px; height: 20px; color: var(--echo-espresso); }
 .reel-label span {
   font-family: var(--echo-font-mono);
   font-weight: 700;
   font-size: 13px;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: var(--echo-on-light);
+  color: var(--echo-espresso);
 }
 
 .avatar-picker {
@@ -52,7 +52,7 @@ ion-content { --background: var(--echo-surface-light); }
   height: 56px;
   border-radius: 50%;
   overflow: hidden;
-  border: 1px solid var(--echo-on-light);
+  border: 1px solid var(--echo-espresso);
   cursor: pointer;
   flex-shrink: 0;
   display: block;
@@ -62,7 +62,7 @@ ion-content { --background: var(--echo-surface-light); }
   font-family: var(--echo-font-mono);
   font-size: 12px;
   text-decoration: underline;
-  color: var(--echo-on-light);
+  color: var(--echo-espresso);
   cursor: pointer;
 }
 
@@ -74,7 +74,7 @@ ion-content { --background: var(--echo-surface-light); }
 .auth-error {
   font-family: var(--echo-font-mono);
   font-size: 12px;
-  color: var(--echo-danger);
+  color: var(--echo-brick);
   margin: -6px 0 16px;
   padding: 8px 12px;
   background: rgba(var(--echo-rust-rgb),0.10);
@@ -96,7 +96,7 @@ ion-content { --background: var(--echo-surface-light); }
   background: transparent;
   border: none;
   font-family: var(--echo-font-mono);
-  color: var(--echo-on-light-soft);
+  color: var(--echo-cocoa);
   font-size: 11px;
   letter-spacing: 0.08em;
   text-align: center;
@@ -112,10 +112,10 @@ ion-content { --background: var(--echo-surface-light); }
   text-align: center;
   font-family: var(--echo-font-mono);
   font-size: 12px;
-  color: var(--echo-on-light-soft);
+  color: var(--echo-cocoa);
   .mode-link {
     background: none; border: none; padding: 0; font: inherit;
-    color: var(--echo-on-light); text-decoration: underline; cursor: pointer;
+    color: var(--echo-espresso); text-decoration: underline; cursor: pointer;
   }
 }
 
@@ -127,7 +127,7 @@ ion-content { --background: var(--echo-surface-light); }
   background: transparent;
   border: none;
   font-family: var(--echo-font-mono);
-  color: var(--echo-on-light-soft);
+  color: var(--echo-cocoa);
   font-size: 12px;
   letter-spacing: 0.06em;
   text-align: center;
@@ -150,5 +150,5 @@ ion-content { --background: var(--echo-surface-light); }
   margin-top: 40px;
   width: 100%;
 }
-.footer-rule { flex: 1; height: 1px; background: var(--echo-on-light); opacity: 0.2; }
-.footer-text { font-family: var(--echo-font-mono); font-size: 10px; color: var(--echo-surface-mid); letter-spacing: 0.1em; white-space: nowrap; }
+.footer-rule { flex: 1; height: 1px; background: var(--echo-espresso); opacity: 0.2; }
+.footer-text { font-family: var(--echo-font-mono); font-size: 10px; color: var(--echo-taupe); letter-spacing: 0.1em; white-space: nowrap; }

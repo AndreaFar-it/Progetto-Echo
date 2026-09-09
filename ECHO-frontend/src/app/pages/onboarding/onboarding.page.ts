@@ -15,10 +15,10 @@ interface OnboardingSlide {
   selector: 'app-onboarding',
   standalone: true,
   imports: [IonContent],
-  templateUrl: './onboarding.component.html',
-  styleUrl: './onboarding.component.scss',
+  templateUrl: './onboarding.page.html',
+  styleUrl: './onboarding.page.scss',
 })
-export class ComponenteOnboarding {
+export class PaginaOnboarding {
   current = 0;
 
   constructor(private router: Router) {}

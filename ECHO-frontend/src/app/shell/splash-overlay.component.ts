@@ -4,12 +4,13 @@ import {
   OnInit,
   Output
 } from '@angular/core';
+import { IonIcon } from '@ionic/angular/standalone';
 
 
 @Component({
   selector: 'app-splash-overlay',
   standalone: true,
-  imports: [],
+  imports: [IonIcon],
   templateUrl: './splash-overlay.component.html',
   styleUrl: './splash-overlay.component.scss',
 })
