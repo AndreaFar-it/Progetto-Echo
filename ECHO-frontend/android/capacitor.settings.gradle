@@ -2,9 +2,6 @@
 include ':capacitor-android'
 project(':capacitor-android').projectDir = new File('../node_modules/@capacitor/android/capacitor')
 
-include ':capgo-camera-preview'
-project(':capgo-camera-preview').projectDir = new File('../node_modules/@capgo/camera-preview/android')
-
 include ':capacitor-clipboard'
 project(':capacitor-clipboard').projectDir = new File('../node_modules/@capacitor/clipboard/android')
 
@@ -25,3 +22,6 @@ project(':capacitor-share').projectDir = new File('../node_modules/@capacitor/sh
 
 include ':capacitor-splash-screen'
 project(':capacitor-splash-screen').projectDir = new File('../node_modules/@capacitor/splash-screen/android')
+
+include ':capgo-camera-preview'
+project(':capgo-camera-preview').projectDir = new File('../node_modules/@capgo/camera-preview/android')
