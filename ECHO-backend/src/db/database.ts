@@ -15,8 +15,11 @@ const percorsoDb = process.env['DB_PATH'] ?? path.join(__dirname, '../../echo.db
 function salvasuDisco(): void {
   if (!_istanzaDb) return;
   const datiDb = _istanzaDb.export();
-  // Utilizziamo un Buffer.from() per convertire l'ArrayBuffer in un Buffer di Node.js, necessario per fs.writeFileSync().
-  fs.writeFileSync(percorsoDb, Buffer.from(datiDb));
+  // Scrittura atomica: writeFileSync tronca il file prima di riscriverlo, quindi un'interruzione
+  // a metà lo lascerebbe corrotto e senza backup. Con tmp + rename questo non può accadere.
+  const percorsoTemporaneo = percorsoDb + '.tmp';
+  fs.writeFileSync(percorsoTemporaneo, Buffer.from(datiDb));// Buffer.from converte l'ArrayBuffer in un Buffer di Node.js.
+  fs.renameSync(percorsoTemporaneo, percorsoDb);
 }
 
 // Avvia il database SQLite in memoria, caricando il file esistente da disco se presente,

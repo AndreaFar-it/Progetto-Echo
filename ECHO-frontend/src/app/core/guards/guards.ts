@@ -9,7 +9,7 @@ export const guardOnBoarding: CanActivateFn = async () => {
   const router = inject(Router);
   const piattaforma = inject(ServizioPiattaforma);
   if (!piattaforma.isNativa || await hasSeenTutorial()) {
-    router.navigate(['/benvenuto']);
+    router.navigate(['/welcome']);
     return false;
   }
   return true;
@@ -26,7 +26,7 @@ export const guardAuth: CanActivateFn = (_route, state) => {
   const router = inject(Router);
   const piattaforma = inject(ServizioPiattaforma);
   if (isBareRoot(state.url) && !piattaforma.isNativa) {
-    router.navigate(['/benvenuto']);
+    router.navigate(['/welcome']);
     return false;
   }
   if (auth.isLoggedIn) return true;
@@ -41,7 +41,7 @@ export const guardLanding: CanActivateFn = () => {
   const auth = inject(AuthService);
   if (piattaforma.isNativa) {
     // Già loggato → vai dritto nell'app, non mostrare mai la pagina di autenticazione
-    router.navigateByUrl(auth.isLoggedIn ? '/eventi/miei' : '/auth', { replaceUrl: true });
+    router.navigateByUrl(auth.isLoggedIn ? '/events/mine' : '/auth', { replaceUrl: true });
     return false;
   }
   return true;
@@ -52,5 +52,5 @@ export const guardCamera: CanActivateFn = () => {
   const piattaforma = inject(ServizioPiattaforma);
   const router = inject(Router);
   if (piattaforma.isNativa) return true;
-  router.navigate(['/eventi/miei']); return false;
+  router.navigate(['/events/mine']); return false;
 };

@@ -3,16 +3,16 @@
   <div class="page-shell">
 
     <ion-segment class="entry-segment" [(ngModel)]="segment" mode="md">
-      <ion-segment-button value="partecipa">
+      <ion-segment-button value="join">
         <ion-label>Partecipa</ion-label>
       </ion-segment-button>
-      <ion-segment-button value="crea">
+      <ion-segment-button value="create">
         <ion-label>Crea Evento</ion-label>
       </ion-segment-button>
     </ion-segment>
 
     <!-- ── Partecipa ── -->
-    @if (segment === 'partecipa') {
+    @if (segment === 'join') {
       <div class="join-view">
         <p class="label">Inserisci il codice</p>
         <p class="subtitle">Ti viene fornito dall'organizzatore dell'evento</p>
@@ -51,7 +51,7 @@
     }
 
     <!-- ── Crea Evento ── -->
-    @if (segment === 'crea') {
+    @if (segment === 'create') {
       <div class="create-view">
         <app-create-event></app-create-event>
       </div>

@@ -23,7 +23,7 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
     catchError((errore: HttpErrorResponse) => {
       if (!isOwn) return throwError(() => errore);
       if (errore.status === 401) { auth.logout(); router.navigate(['/auth'], { queryParams: { reason: 'session_expired' }, replaceUrl: true }); }
-      if (errore.status === 403) { router.navigate(['/eventi/miei'], { queryParams: { error: 'forbidden' } }); }
+      if (errore.status === 403) { router.navigate(['/events/mine'], { queryParams: { error: 'forbidden' } }); }
       return throwError(() => errore);
     })
   );

@@ -7,8 +7,14 @@ ECHO-frontend/ECHO-project/
 
 # Artefatti binari e file sensibili — non devono mai entrare in source control
 *.db
+*.db.tmp
+.env
+.env.*
 firebase-service-account.json
 google-services.json
+
+# Contenuti generati a runtime: foto caricate dagli utenti, non appartengono al repository
+ECHO-backend/uploads/
 
 # Build artifacts
 ECHO-backend/dist/
@@ -22,3 +28,5 @@ ECHO-frontend/android/app/build/
 ECHO-frontend/android/build/
 ECHO-frontend/android/.gradle/
 scheda_trasparenza_171685.pdf
+*.docx
+automanavigazioneecho.svg

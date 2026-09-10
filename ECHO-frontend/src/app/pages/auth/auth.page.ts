@@ -19,6 +19,12 @@ import { ApiService } from '../../services/api.service';
 import { firstValueFrom } from 'rxjs';
 import { HttpErrorResponse } from '@angular/common/http';
 import { messaggioErrore } from '../../core/api-error';
+import {
+  emailValida,
+  passwordRobusta,
+  ERRORE_EMAIL,
+  ERRORE_PASSWORD
+} from '../../core/validazione';
 
 @Component({
   selector: 'app-auth',
@@ -52,21 +58,29 @@ export class PaginaAutenticazione implements OnInit {
 
   ngOnInit() {
     if (this.auth.isLoggedIn) {
-      // Recupera l'URL di ritorno dai parametri della rotta, altrimenti usa '/eventi/miei' di default
-      const dest = this.route.snapshot.queryParamMap.get('returnUrl') ?? '/eventi/miei';
-      this.router.navigateByUrl(dest.startsWith('/auth') ? '/eventi/miei' : dest, { replaceUrl: true });
+      // Recupera l'URL di ritorno dai parametri della rotta, altrimenti usa '/events/mine' di default
+      const dest = this.route.snapshot.queryParamMap.get('returnUrl') ?? '/events/mine';
+      this.router.navigateByUrl(dest.startsWith('/auth') ? '/events/mine' : dest, { replaceUrl: true });
       return;
     }
-    if (this.route.snapshot.queryParamMap.get('mode') === 'register') this.mode = 'register';
+    // La modalita' vive nell'URL: ricaricare o tornare indietro non la perde.
+    this.route.queryParamMap.subscribe(parametri => {
+      this.mode = parametri.get('mode') === 'register' ? 'register' : 'login';
+      this.step = 'credentials';
+      this.errorMsg = '';
+    });
     const returnUrl = this.route.snapshot.queryParamMap.get('returnUrl');
     // Se c'è un returnUrl valido e non è un redirect ciclico verso '/auth', lo salva nella variabile di classe
     if (returnUrl && !returnUrl.startsWith('/auth')) this.returnUrl = returnUrl;
   }
 
+  // Non tocca il campo: cambia l'URL e ci pensa la sottoscrizione qui sopra.
   switchMode(mode: 'login' | 'register') {
-    this.mode = mode;
-    this.step = 'credentials';
-    this.errorMsg = '';
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { mode },
+      queryParamsHandling: 'merge',   // conserva returnUrl
+    });
   }
 
   backToCredentials() {
@@ -87,19 +101,12 @@ export class PaginaAutenticazione implements OnInit {
     }
 
     const email = this.form.email.trim();
-    // Valida l'email utilizzando una Regex standard
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      this.errorMsg = 'Inserisci un indirizzo email valido.';
+    if (!emailValida(email)) {
+      this.errorMsg = ERRORE_EMAIL;
       return;
     }
-    if (
-      this.form.password.length < 8 ||
-      !/[A-Z]/.test(this.form.password) ||
-      !/[a-z]/.test(this.form.password) ||
-      !/[0-9]/.test(this.form.password) ||
-      !/[^A-Za-z0-9]/.test(this.form.password)
-    ) {
-      this.errorMsg = 'Password non soddisfa i criteri di sicurezza. Deve contenere almeno un carattere maiuscolo, uno minuscolo, un numero e un simbolo speciale.';
+    if (!passwordRobusta(this.form.password)) {
+      this.errorMsg = ERRORE_PASSWORD;
       return;
     }
 
@@ -124,7 +131,7 @@ export class PaginaAutenticazione implements OnInit {
     try {
       if (this.mode === 'login') {
         await firstValueFrom(this.auth.login(this.form.email, this.form.password));
-        this.router.navigateByUrl(this.returnUrl ?? '/eventi/miei');
+        this.router.navigateByUrl(this.returnUrl ?? '/events/mine');
       } else {
         await firstValueFrom(this.auth.register(
           this.form.nome,
@@ -144,7 +151,7 @@ export class PaginaAutenticazione implements OnInit {
             );
           }
         }
-        this.router.navigate(['/eventi/miei']);
+        this.router.navigate(['/events/mine']);
       }
     } catch (errore: unknown) {
       // Ripiego con lo stato HTTP: distingue rete assente (0) da rifiuto del server.
@@ -212,13 +219,7 @@ export class PaginaAutenticazione implements OnInit {
           handler: async (data: { otp?: string; password?: string }) => {
             const otp = String(data.otp ?? '').trim();
             const nuova_password = data.password ?? '';
-            const passwordValida =
-              nuova_password.length >= 8 &&
-              /[A-Z]/.test(nuova_password) &&
-              /[a-z]/.test(nuova_password) &&
-              /[0-9]/.test(nuova_password) &&
-              /[^A-Za-z0-9]/.test(nuova_password);
-            if (!otp || !passwordValida) {
+            if (!otp || !passwordRobusta(nuova_password)) {
               this.toast('Inserisci OTP e una password valida (8+ caratteri, maiuscola, minuscola, numero e simbolo).', 'danger');
               return false;
             }

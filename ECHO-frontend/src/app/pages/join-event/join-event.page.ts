@@ -42,7 +42,7 @@ export class PaginaPartecipaEvento implements AfterViewInit {
   // Tramite @ViewChild, ottiene un riferimento all'elemento HTML (es. un tag input) contrassegnato con #hiddenInput nel template
   @ViewChild('hiddenInput') hiddenInput!: ElementRef<HTMLInputElement>;
 
-  segment: 'partecipa' | 'crea' = 'partecipa';
+  segment: 'join' | 'create' = 'join';
   code = '';
   joining = false;
 
@@ -58,13 +58,13 @@ export class PaginaPartecipaEvento implements AfterViewInit {
     private toastCtrl: ToastController,
   ) {
     const tab = this.route.snapshot.data['tab'];
-    if (tab === 'crea') this.segment = 'crea';
+    if (tab === 'create') this.segment = 'create';
   }
 
   ngAfterViewInit() {
-    // Se ci troviamo nel tab 'partecipa', imposta un ritardo di 200 millisecondi 
+    // Se ci troviamo nel tab 'join', imposta un ritardo di 200 millisecondi 
     // prima di dare il focus all'input nascosto per far aprire la tastiera
-    if (this.segment === 'partecipa') setTimeout(() => this.hiddenInput?.nativeElement.focus(), 200);
+    if (this.segment === 'join') setTimeout(() => this.hiddenInput?.nativeElement.focus(), 200);
   }
 
   // Tiene solo le cifre. Riallinea anche il DOM, non solo il modello: se il valore
@@ -82,7 +82,7 @@ export class PaginaPartecipaEvento implements AfterViewInit {
     try {
       const res = await firstValueFrom(this.api.partecipaEvento(this.code));
       this.toast(res.message, 'success');
-      this.router.navigate(['/eventi/miei']);
+      this.router.navigate(['/events/mine']);
     } catch (errore: unknown) {
       const msg = messaggioErrore(errore, 'Codice non valido');
       this.toast(msg, 'danger');

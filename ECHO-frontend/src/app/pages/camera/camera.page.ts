@@ -39,7 +39,7 @@ export class PaginaFotocamera implements OnInit, ViewWillEnter, ViewWillLeave {
   ) { }
 
   ngOnInit() {
-    this.id_evento = this.route.snapshot.paramMap.get('id_evento') ?? '';
+    this.id_evento = this.route.snapshot.paramMap.get('id') ?? '';
 
     const nav = this.router.getCurrentNavigation();
     const state = (nav?.extras?.state ?? history.state) as Record<string, unknown>;

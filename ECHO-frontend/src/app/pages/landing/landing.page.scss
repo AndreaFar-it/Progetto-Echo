@@ -57,7 +57,6 @@ button[inert] { cursor: default; }
 .hero { background: var(--echo-coffee); padding: 40px clamp(20px, 4vw, 64px) 64px; }
 .hero-grid { display: flex; flex-direction: column; gap: 36px; }
 
-.hero-wordmark { display: flex; align-items: center; }
 /* Il file echo-hero.svg ha ~14% di spazio vuoto integrato nel bordo sinistro prima del
    glifo "E" (il padding dell'icona camera sposta l'artwork fuori centro). Il frame
    ritaglia quello spazio morto allineando il "E" visibile con il "T" del tagline sottostante. */

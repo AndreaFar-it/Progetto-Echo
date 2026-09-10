@@ -26,9 +26,14 @@ import {
   adessoUTC,
   aggiungiMinutiUTC
 } from '../utils/time';
+import { asyncHandler } from '../middleware/errors';
 
-const router = Router();
-router.use(authMiddleware);
+// Due router perche' le rotte hanno prefissi diversi: le foto di un evento sono una sua
+// sotto-risorsa (/api/events/:id/photos), il voto agisce sulla singola foto (/api/photos/:id/vote).
+export const rotteFotoEvento = Router();
+export const rotteFoto = Router();
+rotteFotoEvento.use(authMiddleware);
+rotteFoto.use(authMiddleware);
 
 // Formato UUID v4
 const FORMATO_UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -36,7 +41,7 @@ const FORMATO_UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{
 // Configurazione di multer per la gestione del caricamento dei file (foto).
 const archivioFile = multer.diskStorage({
   destination(req: reqAuth, _f, cb) {
-    const idEvento = String(req.body.id_evento ?? '');
+    const idEvento = String(req.params.id ?? '');
     // Valida l'id evento sul nascere
     if (!FORMATO_UUID.test(idEvento)) {
       cb(new Error('ID_EVENTO_NON_VALIDO'), '');
@@ -67,7 +72,7 @@ function gestisciUploadFoto(req: reqAuth, res: Response, next: () => void): void
   caricaFile.single('foto')(req, res, (err: unknown) => {
     if (err) {
       const msg = err instanceof Error && err.message === 'ID_EVENTO_NON_VALIDO'
-        ? 'id_evento non valido'
+        ? 'id evento non valido'
         : 'Upload non valido';
       res.status(400).json({ error: msg });
       return;
@@ -78,9 +83,9 @@ function gestisciUploadFoto(req: reqAuth, res: Response, next: () => void): void
 
 // Gestisce il caricamento di una foto da parte di un partecipante.
 // Controlla che l'evento sia in corso, che il partecipante non abbia esaurito gli scatti e registra la foto nel database.
-router.post('/upload', gestisciUploadFoto, async (req: reqAuth, res: Response) => {
+rotteFotoEvento.post('/:id/photos', gestisciUploadFoto, asyncHandler(async (req: reqAuth, res: Response) => {
   const idUtente = req.user.id_utente;
-  const { id_evento } = req.body;
+  const id_evento = req.params.id;
 
   if (!req.file || !id_evento) return res.status(400).json({ error: 'Dati mancanti' });
 
@@ -131,14 +136,14 @@ router.post('/upload', gestisciUploadFoto, async (req: reqAuth, res: Response) =
     esauriti: scattiEsauriti,
     ...(scattiEsauriti && { redirect: '/eventi/miei' }),
   });
-});
+}));
 
 // Gestisce la votazione di una foto da parte di un partecipante.
-router.post('/vota', (req: reqAuth, res: Response) => {
+rotteFoto.post('/:id/vote', (req: reqAuth, res: Response) => {
   const idUtente = req.user.id_utente;
-  const { id_foto } = req.body;
+  const id_foto = req.params.id;
 
-  if (!id_foto) return res.status(400).json({ error: 'id_foto mancante' });
+  if (!id_foto) return res.status(400).json({ error: 'id foto mancante' });
 
   const foto = get<{ id_foto: string; id_evento: string; id_autore: string; visibile: number; stato_moderazione: string }>(
     'SELECT * FROM FOTO WHERE id_foto=?', [id_foto]);
@@ -183,13 +188,20 @@ router.post('/vota', (req: reqAuth, res: Response) => {
 });
 
 // Gestisce la richiesta della galleria fotografica di un evento da parte di un partecipante.
-router.get('/galleria/:id_evento', (req: reqAuth, res: Response) => {
+rotteFotoEvento.get('/:id/photos', (req: reqAuth, res: Response) => {
   const idUtente = req.user.id_utente;
-  const { id_evento } = req.params;
+  const id_evento = req.params.id;
 
   const evento = get<{ dev_mode: Number; stato: string; album_sbloccato_at: string | null; durata_votazione_ore: number}>(
     'SELECT dev_mode,stato,album_sbloccato_at,durata_votazione_ore FROM EVENTO WHERE id_evento=?', [id_evento]);
   if (!evento) return res.status(404).json({ error: 'Evento non trovato' });
+
+  // Accessibile solo a chi ha partecipato: senza questo controllo basterebbe conoscere un
+  // id_evento per leggere foto e generalità degli autori di un evento altrui.
+  const partecipazione = get<{ ha_votato: number }>(
+    'SELECT ha_votato FROM PARTECIPA WHERE id_utente=? AND id_evento=?', [idUtente, id_evento]);
+  if (!partecipazione)
+    return res.status(403).json({ error: 'Non sei un partecipante di questo evento' }); // HTTP 403 Forbidden
 
   // La galleria è accessibile solo dopo lo sviluppo (album_aperto o chiusa)
   if (!['album_aperto', 'chiusa'].includes(evento.stato)) {
@@ -216,9 +228,6 @@ router.get('/galleria/:id_evento', (req: reqAuth, res: Response) => {
     [idUtente, idUtente, id_evento]
   );
 
-  const partecipazione = get<{ ha_votato: number }>(
-    'SELECT ha_votato FROM PARTECIPA WHERE id_utente=? AND id_evento=?', [idUtente, id_evento]);
-
   // voting_end_at calcolata in JS (i timestamp coinvolti sono già ISO assoluti)
   const fineVotazioneAt = evento.album_sbloccato_at
     ? aggiungiMinutiUTC(evento.album_sbloccato_at, calcolaMinutiVotazione(evento.durata_votazione_ore, evento.dev_mode === 1))
@@ -237,7 +246,7 @@ router.get('/galleria/:id_evento', (req: reqAuth, res: Response) => {
 
   return res.json({
     foto,
-    ha_votato: !!partecipazione?.ha_votato,
+    ha_votato: !!partecipazione.ha_votato,
     stato: evento.stato,
     album_sbloccato_at: evento.album_sbloccato_at,
     durata_votazione_ore: evento.durata_votazione_ore,
@@ -246,4 +255,4 @@ router.get('/galleria/:id_evento', (req: reqAuth, res: Response) => {
   });
 });
 
-export default router;
+// Nessun export default: questo file espone due router, montati su prefissi diversi.

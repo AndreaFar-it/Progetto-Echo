@@ -42,13 +42,19 @@ export async function avviaSviluppoFoto(id_evento: string): Promise<void> {
   const meta = get<{ dev_mode: number }>('SELECT dev_mode FROM EVENTO WHERE id_evento=?', [id_evento]);
   if (!meta) return;
   const sviluppo_ended_at = aggiungiMinutiUTC(now, calcolaMinutiSviluppo(meta.dev_mode === 1));
-  const r = run(
-    "UPDATE EVENTO SET stato='sviluppo', sviluppo_started_at=?, sviluppo_ended_at=? WHERE id_evento=? AND stato='in_corso'",
-    [now, sviluppo_ended_at, id_evento]
-  );
-  if ((r as { changes: number }).changes === 0) return;
-  run("UPDATE CODICE_EVENTO SET attivato=0 WHERE id_evento=?", [id_evento]);
-  run("UPDATE FOTO SET stato_moderazione='approvata' WHERE id_evento=? AND stato_moderazione='in_attesa'", [id_evento]);// Per ora non è presente nessuna moderazione
+  // Le tre scritture sono un unico passaggio di fase: fermandosi a metà, l'evento resterebbe
+  // in 'sviluppo' col codice invito ancora attivo. changes a 0 = transizione già fatta.
+  const passatoInSviluppo = transaction(() => {
+    const r = run(
+      "UPDATE EVENTO SET stato='sviluppo', sviluppo_started_at=?, sviluppo_ended_at=? WHERE id_evento=? AND stato='in_corso'",
+      [now, sviluppo_ended_at, id_evento]
+    );
+    if ((r as { changes: number }).changes === 0) return false;
+    run("UPDATE CODICE_EVENTO SET attivato=0 WHERE id_evento=?", [id_evento]);
+    run("UPDATE FOTO SET stato_moderazione='approvata' WHERE id_evento=? AND stato_moderazione='in_attesa'", [id_evento]);// Per ora non è presente nessuna moderazione
+    return true;
+  });
+  if (!passatoInSviluppo) return;
 
   // Solo l'organizzatore — i partecipanti vengono avvisati più tardi, quando l'album apre.
   const evento = get<{ id_organizzatore: string }>('SELECT id_organizzatore FROM EVENTO WHERE id_evento=?', [id_evento]);
@@ -99,15 +105,19 @@ export async function chiudiEventoEAssegnaBadge(id_evento: string): Promise<void
   const date = new Date(evento.data_inizio).toLocaleDateString('it-IT', { timeZone: 'Europe/Rome' });
   
   //assegnazione badge e chiusura evento
-  transaction(() => {
+  // La UPDATE va tentata PRIMA dei badge e verificata: decide chi ha diritto di chiudere.
+  const chiuso = transaction(() => {
+    const r = run("UPDATE EVENTO SET stato='chiusa' WHERE id_evento=? AND stato='album_aperto'", [id_evento]);
+    if ((r as { changes: number }).changes === 0) return false;
     ranking.forEach((winner, i) => {
       const tipo = TYPES[i];
       const label = tipo.charAt(0).toUpperCase() + tipo.slice(1);
       run('INSERT INTO BADGE (id_badge,id_utente,id_evento,tipo,posizione,etichetta,data_emissione) VALUES (?,?,?,?,?,?,?)',
         [uuid(), winner.id_autore, id_evento, tipo, i + 1, `ECHO ${label} — ${evento.nome} — ${date}`, adessoUTC()]);
     });
-    run("UPDATE EVENTO SET stato='chiusa' WHERE id_evento=? AND stato='album_aperto'", [id_evento]);
+    return true;
   });
+  if (!chiuso) return;// Ha già chiuso un'altra esecuzione: niente badge doppi, niente notifiche doppie.
 
   // Notifiche per i vincitori
   for (const [i, w] of ranking.entries()) {

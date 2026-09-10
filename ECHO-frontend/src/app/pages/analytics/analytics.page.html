@@ -3,7 +3,7 @@
     <ion-refresher-content></ion-refresher-content>
   </ion-refresher>
   <div class="shell">
-    <button type="button" class="back-btn" (click)="router.navigate(['/eventi/miei'])">← Indietro</button>
+    <button type="button" class="back-btn" (click)="router.navigate(['/events/mine'])">← Indietro</button>
     <h1 class="page-title">Report</h1>
     @if (data) {
       <div class="status-tag-row"><app-event-status-tag [stato]="data.stato"></app-event-status-tag></div>
@@ -68,7 +68,7 @@
           <button type="button" class="echo-btn btn-light" (click)="exportPdf()" [disabled]="esportazioneInCorso">
             {{ esportazioneInCorso ? 'Esportazione…' : 'Esporta in PDF' }}
           </button>
-          <button type="button" class="echo-btn btn-light" (click)="router.navigate(['/eventi/miei'])">I tuoi eventi</button>
+          <button type="button" class="echo-btn btn-light" (click)="router.navigate(['/events/mine'])">I tuoi eventi</button>
         </div>
       </div>
     }

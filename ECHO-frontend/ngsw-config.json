@@ -31,7 +31,8 @@
     {
       "name": "api-events",
       "urls": [
-        "https://echo-backend-z9k5.onrender.com/api/eventi/**"
+        "https://echo-backend-z9k5.onrender.com/api/events",
+        "https://echo-backend-z9k5.onrender.com/api/events/**"
       ],
       "cacheConfig": {
         "maxSize": 20,

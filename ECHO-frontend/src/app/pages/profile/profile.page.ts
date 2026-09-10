@@ -64,7 +64,7 @@ export class PaginaProfilo implements OnInit, ViewWillEnter {
   // Naviga alla galleria dell'evento archiviato (solo se in stato album_aperto o chiusa).
   apriArchiviato(evento: { id_evento: string; nome: string; stato: string }) {
     if (['album_aperto', 'chiusa'].includes(evento.stato)) {
-      this.router.navigate(['/galleria', evento.id_evento], { state: { eventoNome: evento.nome } });
+      this.router.navigate(['/gallery', evento.id_evento], { state: { eventoNome: evento.nome } });
     }
   }
 

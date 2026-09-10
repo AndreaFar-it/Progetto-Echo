@@ -18,7 +18,7 @@ export class PaginaGalleria implements OnInit {
 
   constructor(private route: ActivatedRoute) { }
   ngOnInit() {
-    this.id_evento = this.route.snapshot.paramMap.get('id_evento') ?? '';
+    this.id_evento = this.route.snapshot.paramMap.get('id') ?? '';
     this.eventoNome = ((history.state) as Record<string, unknown>)?.['eventoNome'] as string ?? '';
   }
 }

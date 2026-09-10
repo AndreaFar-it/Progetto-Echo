@@ -43,7 +43,7 @@ export class AuthService {
   }
 
   register(nome: string, cognome: string, email: string, password: string): Observable<AuthResponse> {
-    return this.http.post<AuthResponse>(`${environment.apiUrl}/api/auth/registrazione`, { nome, cognome, email, password })
+    return this.http.post<AuthResponse>(`${environment.apiUrl}/api/auth/register`, { nome, cognome, email, password })
       .pipe(tap(r => this.save(r)), catchError(e => throwError(() => e)));
   }
 

@@ -27,12 +27,26 @@ import {
   MINUTI_MODALITA_DEV,
   NOTIFICA_ESTENSIONE,
   NOTIFICA_ESTENSIONE_DEV,
-  calcolaMinutiSviluppo
+  calcolaMinutiSviluppo,
+  MS_PER_MINUTO
 } from '../config';
 import { inviaPushNotifica } from '../services/eventLifecycle.service';
+import rateLimit from 'express-rate-limit';// Limita il numero di richieste, contro l'enumerazione dei codici.
+import { rimuoviCartellaEvento } from '../utils/files';
 
 const router = Router();
 router.use(authMiddleware);
+
+// Il codice di invito ha 5 cifre, cioè 100.000 combinazioni: senza un tetto, provarle tutte
+// è questione di minuti. Conteggio per id_utente dal token: non falsificabile e non per IP.
+const limitePartecipa = rateLimit({
+  windowMs: 15 * MS_PER_MINUTO,
+  limit: 30,                    // 30 tentativi di codice ogni 15 minuti per utente
+  standardHeaders: 'draft-7',   // espone gli header RateLimit-* standard al client
+  legacyHeaders: false,
+  keyGenerator: (req) => (req as reqAuth).user.id_utente,
+  message: { error: 'Troppi tentativi. Riprova tra qualche minuto.' },// HTTP 429 Too Many Requests
+});
 
 // Funzione ausiliaria per generare un codice univoco a 5 cifre per l'invito all'evento.
 function generaCodiceEvento(): string {
@@ -51,10 +65,11 @@ function verificaConflittoTemporale(idUtente: string, inizio: string, fine: stri
   const inizioMs = new Date(inizio).getTime();
   const fineMs = new Date(fine).getTime();
 
-  // Solo eventi in corso generano conflitto (non quelli futuri o conclusi)
+  // Conflitto anche con gli eventi ancora da iniziare: due eventi futuri sovrapposti
+  // passerebbero entrambi il controllo, e il worker T1 li avvierebbe poi tutti e due.
   const eventiUtente = all<{ data_inizio: string; data_fine_calc: string; durata_minuti: number; rimane_esteso: number | null }>(
     `SELECT e.data_inizio, e.data_fine_calc, e.durata_minuti, p.rimane_esteso FROM PARTECIPA p
-     JOIN EVENTO e ON e.id_evento=p.id_evento WHERE p.id_utente=? AND e.stato='in_corso'`, [idUtente]
+     JOIN EVENTO e ON e.id_evento=p.id_evento WHERE p.id_utente=? AND e.stato IN ('non_iniziata','in_corso')`, [idUtente]
   );
 
   return eventiUtente.some(evento => {
@@ -67,7 +82,7 @@ function verificaConflittoTemporale(idUtente: string, inizio: string, fine: stri
 }
 
 // Crea un evento gestendo gli input degli utenti
-router.post('/crea', (req: reqAuth, res: Response) => {
+router.post('/', (req: reqAuth, res: Response) => {
   const idUtente = req.user.id_utente;
   const { nome, luogo, data_inizio, durata_minuti, max_partecipanti, scatti_per_utente, durata_votazione_ore, dev_mode } = req.body;
 
@@ -138,7 +153,7 @@ router.post('/crea', (req: reqAuth, res: Response) => {
 });
 
 // Partecipa ad un evento se possibile
-router.post('/partecipa', (req: reqAuth, res: Response) => {
+router.post('/participation', limitePartecipa, (req: reqAuth, res: Response) => {
   const idUtente = req.user.id_utente;
   const { codice } = req.body;
 
@@ -185,7 +200,7 @@ router.post('/partecipa', (req: reqAuth, res: Response) => {
 });
 
 // Prende tutti gli eventi a cui l'utente partecipa o che ha creato, con informazioni aggiuntive per il front-end.
-router.get('/miei', (req: reqAuth, res: Response) => {
+router.get('/', (req: reqAuth, res: Response) => {
   const idUtente = req.user.id_utente;
 
   const eventi = all<{
@@ -229,7 +244,7 @@ router.get('/miei', (req: reqAuth, res: Response) => {
 });
 
 // Gestisce la richiesta di estensione dell'evento da parte dell'organizzatore.
-router.post('/:id/estendi', (req: reqAuth, res: Response) => {
+router.post('/:id/extension', (req: reqAuth, res: Response) => {
   const idUtente = req.user.id_utente;
   const { id } = req.params;
   const { accetta } = req.body;
@@ -277,7 +292,7 @@ router.post('/:id/estendi', (req: reqAuth, res: Response) => {
 });
 
 // Gestisce la risposta dei partecipanti all'estensione dell'evento (rimane o lascia).
-router.post('/:id/rimani', (req: reqAuth, res: Response) => {
+router.post('/:id/attendance', (req: reqAuth, res: Response) => {
   const idUtente = req.user.id_utente;
   const { id } = req.params;
   const { rimane } = req.body;
@@ -309,10 +324,24 @@ router.delete('/:id', (req: reqAuth, res: Response) => {
   if (!evento) return res.status(404).json({ error: 'Evento non trovato' });
   if (evento.id_organizzatore !== idUtente)
     return res.status(403).json({ error: "Solo l'organizzatore può eliminare l'evento" });
+  // Un evento avviato ha partecipanti che stanno scattando o votando: eliminarlo cancellerebbe
+  // dati altrui. Resta possibile prima dell'inizio (non_iniziata) e a evento concluso (chiusa).
+  if (['in_corso', 'sviluppo', 'album_aperto'].includes(evento.stato))
+    return res.status(409).json({ error: 'Non puoi eliminare un evento già avviato' });// HTTP 409 Conflict
 
   try {
     transaction(() => {
+      // I contatori su UTENTE sono denormalizzati, quindi vanno riallineati a mano prima di
+      // cancellare le righe che li alimentano. MAX(0,…) è la scalare SQLite, non l'aggregato.
+      for (const a of all<{ id_autore: string; n: number }>(
+        'SELECT id_autore, COUNT(*) AS n FROM FOTO WHERE id_evento=? GROUP BY id_autore', [id]))
+        run('UPDATE UTENTE SET scatti_totali = MAX(0, scatti_totali - ?) WHERE id_utente=?', [a.n, a.id_autore]);
+      for (const a of all<{ id_autore: string; n: number }>(
+        'SELECT f.id_autore, COUNT(*) AS n FROM VOTO v JOIN FOTO f ON f.id_foto=v.id_foto WHERE v.id_evento=? GROUP BY f.id_autore', [id]))
+        run('UPDATE UTENTE SET voti_ricevuti = MAX(0, voti_ricevuti - ?) WHERE id_utente=?', [a.n, a.id_autore]);
+
       // I record figli vanno eliminati prima del record padre per rispettare i vincoli FK
+      // Nota: sparisce anche lo storico, badge compresi — conseguenza della FK su BADGE.
       run('DELETE FROM BADGE         WHERE id_evento=?', [id]);
       run('DELETE FROM VOTO          WHERE id_evento=?', [id]);
       run('DELETE FROM FOTO          WHERE id_evento=?', [id]);
@@ -320,6 +349,9 @@ router.delete('/:id', (req: reqAuth, res: Response) => {
       run('DELETE FROM CODICE_EVENTO WHERE id_evento=?', [id]);
       run('DELETE FROM EVENTO        WHERE id_evento=?', [id]);
     });
+    // Le foto su disco vanno rimosse DOPO il commit: il filesystem non partecipa alla
+    // transazione, quindi cancellarle prima significherebbe perderle in caso di ROLLBACK.
+    rimuoviCartellaEvento(id);
     return res.json({ message: 'Evento eliminato' });
   } catch (e) {
     console.error('[DELETE /eventi/:id]', e);

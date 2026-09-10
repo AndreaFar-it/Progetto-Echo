@@ -45,7 +45,7 @@ export class ServizioStatoEvento implements OnDestroy {
   private _events$ = new BehaviorSubject<EventoCard[]>([]);
 
   // Lista eventi in sola lettura: unica fonte di verità anche per le pagine (es. PaginaEventi),
-  // che così non devono duplicare il fetch di /api/eventi/miei per conto proprio.
+  // che così non devono duplicare il fetch di /api/events per conto proprio.
   readonly eventi$: Observable<EventoCard[]> = this._events$.asObservable();
 
   // BehaviorSubject che conserva lo stato calcolato ed elaborato, partendo da uno stato vuoto.
@@ -134,7 +134,7 @@ export class ServizioStatoEvento implements OnDestroy {
   // GESTIONE DELLA CHIAMATA API
   // Emette true se il server ha risposto, false in caso di errore (mantenendo l'ultimo elenco valido).
   private fetch(): Observable<boolean> {
-    return this.http.get<{ events: EventoCard[] }>(`${environment.apiUrl}/api/eventi/miei`).pipe(
+    return this.http.get<{ events: EventoCard[] }>(`${environment.apiUrl}/api/events`).pipe(
       tap(res => {
         // Aggiorna lo stream degli eventi grezzi e ricalcola lo stato attivo.
         this._events$.next(res.events);

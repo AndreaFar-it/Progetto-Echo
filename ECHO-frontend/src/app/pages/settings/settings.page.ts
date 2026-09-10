@@ -18,6 +18,7 @@ import { ApiService } from '../../services/api.service';
 import { environment } from '../../../environments/environment';
 import { firstValueFrom } from 'rxjs';
 import { messaggioErrore } from '../../core/api-error';
+import { passwordRobusta, ERRORE_PASSWORD } from '../../core/validazione';
 
 @Component({
   selector: 'app-settings',
@@ -96,14 +97,8 @@ export class PaginaImpostazioni implements OnInit {
       this.pwError = 'Compila tutti i campi.';
       return;
     }
-    if (
-      this.pwForm.nuova.length < 8 ||
-      !/[A-Z]/.test(this.pwForm.nuova) ||
-      !/[a-z]/.test(this.pwForm.nuova) ||
-      !/[0-9]/.test(this.pwForm.nuova) ||
-      !/[^A-Za-z0-9]/.test(this.pwForm.nuova)
-    ) {
-      this.pwError = 'Password non soddisfa i criteri di sicurezza. Deve contenere almeno un carattere maiuscolo, uno minuscolo, un numero e un simbolo speciale.';
+    if (!passwordRobusta(this.pwForm.nuova)) {
+      this.pwError = ERRORE_PASSWORD;
       return;
     }
     if (this.pwForm.nuova !== this.pwForm.conferma) {
@@ -125,7 +120,7 @@ export class PaginaImpostazioni implements OnInit {
 
   logout() {
     this.auth.logout();
-    this.router.navigate(['/benvenuto']);
+    this.router.navigate(['/welcome']);
   }
 
   async confirmDelete() {
@@ -160,7 +155,7 @@ export class PaginaImpostazioni implements OnInit {
     try {
       await firstValueFrom(this.api.eliminaAccount());
       this.auth.logout();
-      this.router.navigate(['/benvenuto']);
+      this.router.navigate(['/welcome']);
     } catch {
       this.toast('Errore durante l\'eliminazione. Riprova più tardi.', 'danger');
     } finally {

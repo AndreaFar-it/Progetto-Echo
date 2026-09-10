@@ -176,7 +176,7 @@ export class PaginaEventi implements OnInit, OnDestroy, ViewWillEnter {
         }
         break;
       case 'album_aperto': case 'chiusa':
-        this.router.navigate(['/galleria', event.id_evento], { state: { eventoNome: event.nome } });
+        this.router.navigate(['/gallery', event.id_evento], { state: { eventoNome: event.nome } });
         break;
       case 'sviluppo':
         this.toast('Il rullino è in sviluppo — torna tra poco!', 'dark');
@@ -190,7 +190,7 @@ export class PaginaEventi implements OnInit, OnDestroy, ViewWillEnter {
   // Metodo per andare alle analitcs
   openAnalytics(event: EventoCard, $event: MouseEvent) {
     $event.stopPropagation();
-    this.router.navigate(['/eventi', event.id_evento, 'analytics'], { state: { eventoNome: event.nome } });
+    this.router.navigate(['/events', event.id_evento, 'analytics'], { state: { eventoNome: event.nome } });
   }
 
   // Chiede conferma prima di procedere all'eliminazione dell'evento

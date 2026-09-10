@@ -14,6 +14,13 @@ import {
 } from '../db/database';
 import { signToken } from '../middleware/auth';
 import { adessoUTC, aggiungiMinutiUTC } from '../utils/time';
+import { asyncHandler } from '../middleware/errors';
+import {
+  normalizzaTesto,
+  normalizzaEmail,
+  passwordRobusta,
+  ERRORE_PASSWORD
+} from '../utils/validation';
 
 const router = Router();
 
@@ -22,16 +29,22 @@ const falsoHash = bcrypt.hashSync('echo-password-fittizia-anti-timing', GIRI_BCR
 
 //Richiesta di registrazione di un nuovo utente.
 //La password viene hashata con bcrypt prima di essere salvata nel database.
-router.post('/registrazione', async (req: Request, res: Response) => {
-  const { nome, cognome, email, password } = req.body;
+router.post('/register', asyncHandler(async (req: Request, res: Response) => {
+  // Normalizzazione e controllo di tipo insieme: senza, un body come {"nome": 1} arriverebbe
+  // a nome.trim(), metodo che esiste solo sulle stringhe, e lancerebbe un TypeError.
+  const nome = normalizzaTesto(req.body.nome, 60);
+  const cognome = normalizzaTesto(req.body.cognome, 60);
+  const email = normalizzaEmail(req.body.email);
+  const password: unknown = req.body.password;
 
   // Validazione campi obbligatori (HTTP 400 Bad Request se mancano campi)
-  if (!nome || !cognome || !email || !password)
+  if (!nome || !cognome || !email)
     return res.status(400).json({ error: 'Tutti i campi sono obbligatori' });
-  if (password.length < 8 || !/[A-Z]/.test(password) || !/[a-z]/.test(password) || !/[0-9]/.test(password) || !/[^A-Za-z0-9]/.test(password))
-    return res.status(400).json({ error: 'Password non soddisfa i criteri di sicurezza. Deve contenere almeno un carattere maiuscolo, uno minuscolo, un numero e un simbolo speciale.' });
+  if (!passwordRobusta(password))
+    return res.status(400).json({ error: ERRORE_PASSWORD });
 
-  // Verifica che l'email non sia già registrata
+  // Il confronto usa la STESSA forma normalizzata che viene poi inserita: in SQLite TEXT è
+  // case-sensitive, quindi "Mario@Esempio.it" non troverebbe "mario@esempio.it" già presente.
   if (get('SELECT 1 FROM UTENTE WHERE email=?', [email]))
     return res.status(409).json({ error: 'Email già registrata' });// HTTP 409 Conflict se esiste già un utente con la stessa email
 
@@ -39,14 +52,15 @@ router.post('/registrazione', async (req: Request, res: Response) => {
   const idUtente = uuid();
 
   run('INSERT INTO UTENTE (id_utente,nome,cognome,email,password_hash,data_registrazione) VALUES (?,?,?,?,?,?)',
-    [idUtente, nome.trim(), cognome.trim(), email.toLowerCase().trim(), hashPassword, adessoUTC()]);
+    [idUtente, nome, cognome, email, hashPassword, adessoUTC()]);
 
   // Restituisce un token JWT firmato con l'id_utente e l'email appena registrati, insieme ai dati dell'utente. (HTTP 201 Created)
+  // L'email nel token è quella normalizzata, coerente con quella salvata sul database.
   return res.status(201).json({ token: signToken({ id_utente: idUtente, email }), id_utente: idUtente, nome, cognome });
-});
+}));
 
 // Controlla se un'email è già registrata.
-router.post('/check-email', (req: Request, res: Response) => {
+router.post('/email-check', (req: Request, res: Response) => {
   const { email } = req.body;
   if (!email) return res.status(400).json({ error: 'Email obbligatoria' });
 
@@ -57,12 +71,17 @@ router.post('/check-email', (req: Request, res: Response) => {
 });
 
 //Richiesta di login di un utente esistente.
-router.post('/login', async (req: Request, res: Response) => {
-  const { email, password } = req.body;
+router.post('/login', asyncHandler(async (req: Request, res: Response) => {
+  // Controllo di tipo prima di qualunque uso: con un body {"email": 123} il metodo
+  // email.toLowerCase() non esisterebbe e la chiamata lancerebbe un TypeError.
+  const email: unknown = req.body.email;
+  const password: unknown = req.body.password;
 
-  if (!email || !password)
+  if (typeof email !== 'string' || typeof password !== 'string' || !email || !password)
     return res.status(400).json({ error: 'Email e password sono obbligatorie' });
 
+  // Un'email malformata ma presente non viene respinta qui: prosegue sul ramo che esegue
+  // comunque bcrypt.compare (anti-timing sotto) e riceve lo stesso 401 di una inesistente.
   const utente = get<{ id_utente: string; email: string; password_hash: string; nome: string; cognome: string }>(
     'SELECT * FROM UTENTE WHERE email=?', [email.toLowerCase().trim()]
   );
@@ -80,14 +99,13 @@ router.post('/login', async (req: Request, res: Response) => {
     nome: utente.nome,
     cognome: utente.cognome,
   });
-});
+}));
 
 
-router.post('/forgot-password', (req: Request, res: Response) => {
-  const { email } = req.body;
-  if (!email) return res.status(400).json({ error: 'Email obbligatoria' });
+router.post('/password-reset', (req: Request, res: Response) => {
+  const emailNormalizzata = normalizzaEmail(req.body.email);
+  if (!emailNormalizzata) return res.status(400).json({ error: 'Email obbligatoria' });
 
-  const emailNormalizzata = email.toLowerCase().trim();
   const utente = get<{ id_utente: string; reset_otp: string | null; reset_otp_expires_at: string | null }>(
     'SELECT id_utente, reset_otp, reset_otp_expires_at FROM UTENTE WHERE email=?', [emailNormalizzata]
   );
@@ -111,15 +129,16 @@ router.post('/forgot-password', (req: Request, res: Response) => {
 
 // Richiesta di verifica OTP e reset della password.
 // L'OTP viene invalidato immediatamente dopo la verifica per prevenire replay.
-router.post('/verify-reset-otp', async (req: Request, res: Response) => {
-  const { email, otp, nuova_password } = req.body;
+router.post('/password-reset/confirm', asyncHandler(async (req: Request, res: Response) => {
+  const { otp } = req.body;
+  const emailNormalizzata = normalizzaEmail(req.body.email);
+  const nuova_password: unknown = req.body.nuova_password;
 
-  if (!email || !otp || !nuova_password)
+  if (!emailNormalizzata || !otp || !nuova_password)
     return res.status(400).json({ error: 'Email, OTP e nuova password sono obbligatori' });
-  if (nuova_password.length < 8 || !/[A-Z]/.test(nuova_password) || !/[a-z]/.test(nuova_password) || !/[0-9]/.test(nuova_password) || !/[^A-Za-z0-9]/.test(nuova_password))
-    return res.status(400).json({ error: 'Password non soddisfa i criteri di sicurezza. Deve contenere almeno un carattere maiuscolo, uno minuscolo, un numero e un simbolo speciale.' });
+  if (!passwordRobusta(nuova_password))
+    return res.status(400).json({ error: ERRORE_PASSWORD });
 
-  const emailNormalizzata = email.toLowerCase().trim();
   const utente = get<{ id_utente: string; reset_otp: string | null; reset_otp_expires_at: string | null }>(
     'SELECT id_utente, reset_otp, reset_otp_expires_at FROM UTENTE WHERE email=?', [emailNormalizzata]
   );
@@ -139,6 +158,6 @@ router.post('/verify-reset-otp', async (req: Request, res: Response) => {
   run('UPDATE UTENTE SET password_hash=?, reset_otp=NULL, reset_otp_expires_at=NULL WHERE id_utente=?', [nuovoHash, utente.id_utente]);
 
   return res.json({ message: 'Password aggiornata con successo!' });
-});
+}));
 
 export default router;

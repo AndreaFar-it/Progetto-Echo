@@ -160,7 +160,7 @@ export class ComponenteGalleria implements OnInit, OnDestroy {
 
   // Torna a "I miei eventi".
   goBack(): void {
-    this.router.navigate(['/eventi/miei']);
+    this.router.navigate(['/events/mine']);
   }
 
   // Genera dinamicamente le scritte visibili in fondo alla schermata, in base a varianti logiche intrecciate.

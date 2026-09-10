@@ -9,9 +9,11 @@ import { avviaJobPeriodici } from './cron/jobs';
 import { MINUTI_RITARDO_SVILUPPO } from './config';
 import authRoutes from './routes/auth.routes';
 import eventiRoutes from './routes/eventi.routes';
-import fotoRoutes from './routes/foto.routes';
+import { rotteFotoEvento, rotteFoto } from './routes/foto.routes';
 import utenteRoutes from './routes/utente.routes';
 import { MS_PER_MINUTO } from './config';
+import rateLimit from 'express-rate-limit';// Limita il numero di richieste per IP, contro brute-force ed enumerazione.
+import { notFoundHandler, errorHandler } from './middleware/errors';
 
 //Setup App
 const app = express(); // Crea un'istanza dell'applicazione Express
@@ -43,12 +45,31 @@ app.get('/downloads/echo.apk', (_req, res) => {
   });
 });
 
+// Rate limiting sulle rotte di autenticazione: bcrypt rallenta un attacco a dizionario ma
+// senza un tetto sulle richieste non lo impedisce. Il conteggio è per indirizzo IP.
+const limiteAuth = rateLimit({
+  windowMs: 15 * MS_PER_MINUTO,
+  limit: 20,                    // 20 richieste per IP ogni 15 minuti
+  // Nota: dietro un proxy (Render) serve app.set('trust proxy', 1) per vedere i veri IP.
+  standardHeaders: 'draft-7',   // espone gli header RateLimit-* standard al client
+  legacyHeaders: false,
+  message: { error: 'Troppi tentativi. Riprova tra qualche minuto.' },
+});
+
 // Costruzione dei percorsi API: tutte le richieste a /api/auth, /api/eventi, /api/foto e /api/utente vengono gestite dai rispettivi router importati sopra.
-app.use('/api/auth', authRoutes);
-app.use('/api/eventi', eventiRoutes);
-app.use('/api/foto', fotoRoutes);
-app.use('/api/utente', utenteRoutes);
+app.use('/api/auth', limiteAuth, authRoutes);
+app.use('/api/events', eventiRoutes);
+// Secondo router sullo stesso prefisso: Express li prova nell'ordine di montaggio e passa
+// al successivo quando nessuna rotta combacia, cosi' le foto restano nel loro file.
+app.use('/api/events', rotteFotoEvento);
+app.use('/api/photos', rotteFoto);
+app.use('/api/me', utenteRoutes);
 app.get('/health', (_req, res) => res.json({ status: 'ok', ts: new Date().toISOString(), developmentDelayMinutes: MINUTI_RITARDO_SVILUPPO }));
+
+// Handler terminali, DOPO ogni rotta: il primo traduce le rotte inesistenti in un 404 JSON,
+// il secondo raccoglie ogni errore nel formato { error } usato da tutta l'API.
+app.use(notFoundHandler);
+app.use(errorHandler);
 
 // funzione asincrona che avvia il server, il database e i job periodici.
 async function avviaServer() {

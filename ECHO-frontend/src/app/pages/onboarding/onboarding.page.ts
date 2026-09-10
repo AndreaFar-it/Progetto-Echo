@@ -56,6 +56,6 @@ export class PaginaOnboarding {
 
   private async finish() {
     await markTutorialSeen();
-    this.router.navigate(['/benvenuto']);
+    this.router.navigate(['/welcome']);
   }
 }

@@ -4,7 +4,7 @@
   </div>
   <nav class="tab-bar" #tabBar [class.tab-bar-overlay]="tabAttiva === 'camera'">
 
-    <button type="button" class="tab" [class.tab-active]="tabAttiva==='eventi'" (click)="go('/eventi/miei')">
+    <button type="button" class="tab" [class.tab-active]="tabAttiva==='events'" (click)="go('/events/mine')">
       <ion-icon name="film-outline"></ion-icon>
       <span>Rullini</span>
     </button>
@@ -26,13 +26,13 @@
     }
 
     <button type="button" class="tab"
-      [class.tab-active]="tabAttiva==='partecipa'"
-      (click)="go('/eventi/partecipa')">
+      [class.tab-active]="tabAttiva==='join'"
+      (click)="go('/events/join')">
       <ion-icon name="ticket-outline"></ion-icon>
       <span>Partecipa</span>
     </button>
 
-    <button type="button" class="tab" [class.tab-active]="tabAttiva==='profilo'" (click)="go('/profilo')">
+    <button type="button" class="tab" [class.tab-active]="tabAttiva==='profile'" (click)="go('/profile')">
       <ion-icon name="person-outline"></ion-icon>
       <span>Profilo</span>
     </button>

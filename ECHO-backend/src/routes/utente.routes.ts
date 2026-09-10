@@ -21,12 +21,21 @@ import {
   GIRI_BCRYPT,
   LIMITE_UPLOAD_BYTE
 } from '../config';
+import { asyncHandler } from '../middleware/errors';// Protegge gli handler async dalle rejection non gestite.
+import {
+  passwordRobusta,
+  ERRORE_PASSWORD
+} from '../utils/validation';
+import {
+  rimuoviCartellaEvento,
+  rimuoviFileUpload
+} from '../utils/files';
 
 const router = Router();
 router.use(authMiddleware);
 
 // Recupera le informazioni dell'utente, il conteggio degli eventi, i badge e lo storico.
-router.get('/profilo', (req: reqAuth, res: Response) => {
+router.get('/', (req: reqAuth, res: Response) => {
   const idUtente = req.user.id_utente;
   const utente = get<{ nome: string; cognome: string; foto_profilo_url: string | null; data_registrazione: string; scatti_totali: number; voti_ricevuti: number }>(
     'SELECT nome,cognome,foto_profilo_url,data_registrazione,scatti_totali,voti_ricevuti FROM UTENTE WHERE id_utente=?', [idUtente]);
@@ -57,7 +66,7 @@ const uploadProfilePic = multer({
 });
 
 // Sostituisce l'immagine utente ed elimina il vecchio file dal server per risparmiare spazio.
-router.post('/foto-profilo', uploadProfilePic.single('foto'), (req: reqAuth, res: Response) => {
+router.put('/photo', uploadProfilePic.single('foto'), (req: reqAuth, res: Response) => {
   const idUtente = req.user.id_utente;
   if (!req.file) return res.status(400).json({ error: 'Nessun file ricevuto' });
 
@@ -66,32 +75,35 @@ router.post('/foto-profilo', uploadProfilePic.single('foto'), (req: reqAuth, res
   const prev = get<{ foto_profilo_url: string | null }>('SELECT foto_profilo_url FROM UTENTE WHERE id_utente=?', [idUtente]);
   run('UPDATE UTENTE SET foto_profilo_url=? WHERE id_utente=?', [url_originale, idUtente]);
 
-  if (prev?.foto_profilo_url?.startsWith('/uploads/profili/')) {
-    const oldPath = path.join(__dirname, '../..', prev.foto_profilo_url);
-    fs.unlink(oldPath, () => { /* Pulizia best-effort, ignora errori */ });
-  }
+  // Pulizia best-effort del file precedente: l'helper verifica il contenimento in uploads/.
+  if (prev?.foto_profilo_url) rimuoviFileUpload(prev.foto_profilo_url);
 
   return res.json({ message: 'Immagine profilo aggiornata', foto_profilo_url: url_originale });
 });
 
 // Associa un token di notifica al singolo utente. Eventuali nuovi login sovrascrivono il precedente.
-router.post('/push-token', (req: reqAuth, res: Response) => {
+router.put('/push-token', (req: reqAuth, res: Response) => {
   const idUtente = req.user.id_utente;
-  const { token } = req.body;
-  if (!token) return res.status(400).json({ error: 'Token mancante' });
+  const token: unknown = req.body.token;
+  // Controllo di tipo: un token non stringa arriverebbe al bind di sql.js, che lo rifiuterebbe
+  // con un errore interno invece di un onesto 400.
+  if (typeof token !== 'string' || !token) return res.status(400).json({ error: 'Token mancante' });
   run('UPDATE UTENTE SET push_token=? WHERE id_utente=?', [token, idUtente]);
   return res.json({ message: 'Token registrato' });
 });
 
 // CAMBIO PASSWORD
 // Valida la password corrente e aggiorna l'hash di sicurezza sul database.
-router.post('/password', async (req: reqAuth, res: Response) => {
+router.patch('/password', asyncHandler(async (req: reqAuth, res: Response) => {
   const idUtente = req.user.id_utente;
-  const { password_attuale, nuova_password } = req.body;
-  if (!password_attuale || !nuova_password)
+  // Verifica di tipo: bcrypt.compare su un numero solleva "Illegal arguments", non false.
+  const password_attuale: unknown = req.body.password_attuale;
+  const nuova_password: unknown = req.body.nuova_password;
+  if (typeof password_attuale !== 'string' || !password_attuale || !nuova_password)
     return res.status(400).json({ error: 'Password attuale e nuova password sono obbligatorie' });
-  if (nuova_password.length < 8 || !/[A-Z]/.test(nuova_password) || !/[a-z]/.test(nuova_password) || !/[0-9]/.test(nuova_password) || !/[^A-Za-z0-9]/.test(nuova_password))
-    return res.status(400).json({ error: 'Password non soddisfa i criteri di sicurezza. Deve contenere almeno un carattere maiuscolo, uno minuscolo, un numero e un simbolo speciale.' });
+  // I criteri di robustezza vivono in utils/validation.ts, in un unico punto.
+  if (!passwordRobusta(nuova_password))
+    return res.status(400).json({ error: ERRORE_PASSWORD });
 
   const user = get<{ password_hash: string }>('SELECT password_hash FROM UTENTE WHERE id_utente=?', [idUtente]);
   if (!user) return res.status(404).json({ error: 'Utente non trovato' });
@@ -103,20 +115,36 @@ router.post('/password', async (req: reqAuth, res: Response) => {
   const newHash = await bcrypt.hash(nuova_password, GIRI_BCRYPT);
   run('UPDATE UTENTE SET password_hash=? WHERE id_utente=?', [newHash, idUtente]);
   return res.json({ message: 'Password aggiornata con successo' });
-});
+}));
 
 // Rimuove l'utente e pulisce a cascata tutte le sue dipendenze (voti, foto, eventi organizzati) per rispettare i vincoli FK del database.
-router.delete('/account', (req: reqAuth, res: Response) => {
+router.delete('/', (req: reqAuth, res: Response) => {
   const idUtente = req.user.id_utente;
   const user = get<{ id_utente: string; foto_profilo_url: string | null }>(
     'SELECT id_utente, foto_profilo_url FROM UTENTE WHERE id_utente=?', [idUtente]);
   if (!user) return res.status(404).json({ error: 'Utente non trovato' });
 
+  // Lette una volta sola qui perché servono sia in transazione sia dopo il commit, per la
+  // pulizia dei file. Sicuro: sql.js è sincrono, nulla si inserisce prima della transazione.
+  const eventiOrganizzati = all<{ id_evento: string }>('SELECT id_evento FROM EVENTO WHERE id_organizzatore=?', [idUtente]);
+  const mieFoto = all<{ id_foto: string; url_originale: string }>(
+    'SELECT id_foto, url_originale FROM FOTO WHERE id_autore=?', [idUtente]);
+  const mieiVoti = all<{ id_foto: string; id_autore: string }>(
+    'SELECT v.id_foto, f.id_autore FROM VOTO v JOIN FOTO f ON f.id_foto=v.id_foto WHERE v.id_votante=?', [idUtente]);
+
   try {
     transaction(() => {
       // 1. Elimina completamente tutti gli eventi organizzati da questo utente e i relativi dati collegati.
-      const organized = all<{ id_evento: string }>('SELECT id_evento FROM EVENTO WHERE id_organizzatore=?', [idUtente]);
-      for (const ev of organized) {
+      for (const ev of eventiOrganizzati) {
+        // I contatori su UTENTE sono denormalizzati, quindi vanno riallineati a mano prima di
+        // cancellare le righe che li alimentano. MAX(0,…) è la scalare SQLite, non l'aggregato.
+        for (const a of all<{ id_autore: string; n: number }>(
+          'SELECT id_autore, COUNT(*) AS n FROM FOTO WHERE id_evento=? GROUP BY id_autore', [ev.id_evento]))
+          run('UPDATE UTENTE SET scatti_totali = MAX(0, scatti_totali - ?) WHERE id_utente=?', [a.n, a.id_autore]);
+        for (const a of all<{ id_autore: string; n: number }>(
+          'SELECT f.id_autore, COUNT(*) AS n FROM VOTO v JOIN FOTO f ON f.id_foto=v.id_foto WHERE v.id_evento=? GROUP BY f.id_autore', [ev.id_evento]))
+          run('UPDATE UTENTE SET voti_ricevuti = MAX(0, voti_ricevuti - ?) WHERE id_utente=?', [a.n, a.id_autore]);
+
         run('DELETE FROM BADGE         WHERE id_evento=?', [ev.id_evento]);
         run('DELETE FROM VOTO          WHERE id_evento=?', [ev.id_evento]);
         run('DELETE FROM FOTO          WHERE id_evento=?', [ev.id_evento]);
@@ -125,14 +153,20 @@ router.delete('/account', (req: reqAuth, res: Response) => {
         run('DELETE FROM EVENTO        WHERE id_evento=?', [ev.id_evento]);
       }
 
-      // 2. Rimuove i voti inseriti dall'utente negli eventi altrui, aggiornando i punteggi delle foto coinvolte.
-      const myVotes = all<{ id_foto: string }>('SELECT id_foto FROM VOTO WHERE id_votante=?', [idUtente]);
-      for (const v of myVotes) run('UPDATE FOTO SET punteggio_voti = punteggio_voti - 1 WHERE id_foto=?', [v.id_foto]);
+      // 2. Rimuove i voti dell'utente negli eventi altrui, scalando sia FOTO.punteggio_voti
+      //    sia UTENTE.voti_ricevuti dell'autore: quel voto non esiste più per nessuno.
+      for (const v of mieiVoti) {
+        run('UPDATE FOTO SET punteggio_voti = MAX(0, punteggio_voti - 1) WHERE id_foto=?', [v.id_foto]);
+        run('UPDATE UTENTE SET voti_ricevuti = MAX(0, voti_ricevuti - 1) WHERE id_utente=?', [v.id_autore]);
+      }
       run('DELETE FROM VOTO WHERE id_votante=?', [idUtente]);
 
-      // 3. Cancella le foto caricate dall'utente negli eventi altrui e i voti che tali foto avevano ricevuto.
-      const myPhotos = all<{ id_foto: string }>('SELECT id_foto FROM FOTO WHERE id_autore=?', [idUtente]);
-      for (const f of myPhotos) run('DELETE FROM VOTO WHERE id_foto=?', [f.id_foto]);
+      // 3. Cancella le foto dell'utente e i voti che avevano ricevuto. Chi le aveva votate
+      //    torna a ha_votato=0, altrimenti resterebbe bloccato con un voto ormai cancellato.
+      for (const f of mieFoto) {
+        run('UPDATE PARTECIPA SET ha_votato=0 WHERE (id_utente, id_evento) IN (SELECT id_votante, id_evento FROM VOTO WHERE id_foto=?)', [f.id_foto]);
+        run('DELETE FROM VOTO WHERE id_foto=?', [f.id_foto]);
+      }
       run('DELETE FROM FOTO WHERE id_autore=?', [idUtente]);
 
       // 4. Rimuove i badge personali e i record di partecipazione.
@@ -146,9 +180,11 @@ router.delete('/account', (req: reqAuth, res: Response) => {
       run('DELETE FROM UTENTE WHERE id_utente=?', [idUtente]);
     });
 
-    if (user.foto_profilo_url?.startsWith('/uploads/profili/')) {
-      fs.unlink(path.join(__dirname, '../..', user.foto_profilo_url), () => { /* Pulizia best-effort */ });
-    }
+    // I file vanno rimossi DOPO il commit: il filesystem non partecipa alla transazione,
+    // quindi cancellarli prima significherebbe perderli in caso di ROLLBACK.
+    for (const ev of eventiOrganizzati) rimuoviCartellaEvento(ev.id_evento);
+    for (const f of mieFoto) rimuoviFileUpload(f.url_originale);
+    if (user.foto_profilo_url) rimuoviFileUpload(user.foto_profilo_url);
 
     return res.json({ message: 'Account eliminato definitivamente' });
   } catch (e) {

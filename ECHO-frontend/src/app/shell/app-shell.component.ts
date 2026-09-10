@@ -39,7 +39,7 @@ export class ComponenteShellApp implements OnInit, AfterViewInit, OnDestroy {
   st: StatoEventoAttivo | null = null;
 
   // Tiene traccia della tab attualmente selezionata per evidenziarla
-  tabAttiva: 'eventi' | 'camera' | 'partecipa' | 'profilo' = 'eventi';
+  tabAttiva: 'events' | 'camera' | 'join' | 'profile' = 'events';
 
   /** La fotocamera si basa sul layer nativo CameraPreview — nascosta del tutto su web/desktop. */
   readonly isHybrid: boolean;
@@ -119,8 +119,8 @@ export class ComponenteShellApp implements OnInit, AfterViewInit, OnDestroy {
   // Determina quale tab evidenziare in base all'URL corrente
   private syncTab(url: string) {
     if (url.startsWith('/camera')) this.tabAttiva = 'camera';
-    else if (url.startsWith('/eventi/partecipa')) this.tabAttiva = 'partecipa';
-    else if (url.startsWith('/profilo') || url.startsWith('/impostazioni')) this.tabAttiva = 'profilo';
-    else this.tabAttiva = 'eventi';
+    else if (url.startsWith('/events/join')) this.tabAttiva = 'join';
+    else if (url.startsWith('/profile') || url.startsWith('/settings')) this.tabAttiva = 'profile';
+    else this.tabAttiva = 'events';
   }
 }
