@@ -13,6 +13,7 @@ import {
 } from '@angular/common/http';
 import { provideIonicAngular } from '@ionic/angular/standalone';
 import { provideServiceWorker } from '@angular/service-worker';
+import { Capacitor } from '@capacitor/core';
 import { routes } from './app.routes';
 import { authInterceptor } from './core/interceptors/auth.interceptor';
 import { timeoutRetryInterceptor } from './core/interceptors/timeout-retry.interceptor';
@@ -25,9 +26,9 @@ export const appConfig: ApplicationConfig = {
     provideHttpClient(withInterceptors([timeoutRetryInterceptor, authInterceptor])),
     // Inizializza Ionic forzando il design iOS, disabilitando l'effetto "ripple" e mantenendo le animazioni
     provideIonicAngular({ mode: 'ios', rippleEffect: false, animated: true }),
-    // Configura il Service Worker per la PWA (attivo solo in produzione, si registra dopo 30 secondi di stabilità)
+    // Configura il Service Worker per la PWA (solo sito web in produzione: nell'APK gli asset sono già locali)
     provideServiceWorker('ngsw-worker.js', {
-      enabled: !isDevMode(),
+      enabled: !isDevMode() && !Capacitor.isNativePlatform(),
       registrationStrategy: 'registerWhenStable:30000',
     }),
   ],
