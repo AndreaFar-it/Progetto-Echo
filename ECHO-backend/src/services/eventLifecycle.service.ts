@@ -51,7 +51,7 @@ export async function avviaSviluppoFoto(id_evento: string): Promise<void> {
     );
     if ((r as { changes: number }).changes === 0) return false;
     run("UPDATE CODICE_EVENTO SET attivato=0 WHERE id_evento=?", [id_evento]);
-    run("UPDATE FOTO SET stato_moderazione='approvata' WHERE id_evento=? AND stato_moderazione='in_attesa'", [id_evento]);// Per ora non è presente nessuna moderazione
+    run("UPDATE FOTO SET stato_moderazione='approvata' WHERE id_evento=? AND stato_moderazione='in_attesa'", [id_evento]);
     return true;
   });
   if (!passatoInSviluppo) return;
@@ -104,8 +104,8 @@ export async function chiudiEventoEAssegnaBadge(id_evento: string): Promise<void
   const TYPES = ['oro', 'argento', 'bronzo'] as const;
   const date = new Date(evento.data_inizio).toLocaleDateString('it-IT', { timeZone: 'Europe/Rome' });
   
-  //assegnazione badge e chiusura evento
-  // La UPDATE va tentata PRIMA dei badge e verificata: decide chi ha diritto di chiudere.
+  // Per evitare che due esecuzioni concorrenti del cron chiudano lo stesso evento e generino badge doppi,
+  // racchiudiamo tutto in una transazione.
   const chiuso = transaction(() => {
     const r = run("UPDATE EVENTO SET stato='chiusa' WHERE id_evento=? AND stato='album_aperto'", [id_evento]);
     if ((r as { changes: number }).changes === 0) return false;

@@ -2,6 +2,7 @@ services:
   - type: web
     name: echo-backend
     runtime: node
+    region: frankfurt
     rootDir: ECHO-backend
     buildCommand: npm install --include=dev && npm run build
     startCommand: npm start
@@ -23,6 +24,7 @@ services:
   - type: web
     name: echo-frontend
     runtime: node
+    region: frankfurt
     rootDir: ECHO-frontend
     buildCommand: npm install --include=dev && npm run build
     startCommand: npm start
