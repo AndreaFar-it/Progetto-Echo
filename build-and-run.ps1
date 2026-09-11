@@ -162,7 +162,7 @@ function Invoke-Dev {
 
   Write-Host "`n[ECHO] Servizi avviati." -ForegroundColor Green
   Write-Host '  Browser  : http://localhost:8100'
-  Write-Host '  Backend  : https://echo-backend-z9k5.onrender.com (online, durate reali)'
+  Write-Host '  Backend  : https://echo-backend-x90b.onrender.com (online, durate reali)'
 }
 
 # ------------------------------------------------------------------------------------
