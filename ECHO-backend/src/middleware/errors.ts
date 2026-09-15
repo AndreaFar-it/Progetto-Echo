@@ -1,5 +1,3 @@
-// Tipi di dati forniti dal framework Express.js per le richieste HTTP, le risposte,
-// la funzione next() del middleware e la firma di un handler di rotta.
 import {
   Request,
   Response,

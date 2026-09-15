@@ -8,8 +8,8 @@ let _istanzaDb: Database | null = null;
 // Flag che indica se siamo all'interno di una transazione. Serve per evitare di salvare su disco dopo ogni scrittura durante una transazione.
 let _inTransazione = false;
 
-// Percorso assoluto del file database su disco. Configurabile tramite variabile d'ambiente DB_PATH.
-const percorsoDb = process.env['DB_PATH'] ?? path.join(__dirname, '../../echo.db'); // Impostata in render.yaml per puntare a un percorso persistente su Render.
+// Percorso assoluto del file database su disco
+const percorsoDb: string = process.env['DB_PATH']!;
 
 // Salva su disco il database in memoria (_istanzaDb) nel file percorsoDb. Viene chiamata dopo ogni scrittura diretta per garantire la persistenza dei dati.
 function salvasuDisco(): void {
@@ -42,8 +42,8 @@ export async function avviaDatabase(): Promise<void> {
   const percorsoSchema = path.join(__dirname, 'schema.sql');
   if (fs.existsSync(percorsoSchema)) {
     // Legge il contenuto del file schema.sql e lo esegue per creare le tabelle e gli indici
-    const ddl = fs.readFileSync(percorsoSchema, 'utf-8');
-    _istanzaDb.run(ddl);
+    const schemaSQL = fs.readFileSync(percorsoSchema, 'utf-8');
+    _istanzaDb.run(schemaSQL);
   } else {
     throw new Error(`[DB] schema.sql non trovato in ${percorsoSchema}`);
   }
@@ -76,7 +76,7 @@ export function run(sql: string, params: unknown[] = []): { changes: number } {
   const db = ottieniDb();
   db.run(sql, params as any[]);
   const changes = (db.exec('SELECT changes()')[0]?.values[0]?.[0] as number) ?? 0;
-  if (!_inTransazione) salvasuDisco();
+  if (!_inTransazione) salvasuDisco(); // Salva su disco solo se non siamo all'interno di una transazione.
   return { changes };
 }
 

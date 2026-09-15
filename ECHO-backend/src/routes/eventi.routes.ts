@@ -19,8 +19,6 @@ import {
   aggiungiMinutiUTC
 } from '../utils/time';
 import {
-  MINUTI_SVILUPPO_DEV,
-  MINUTI_RITARDO_SVILUPPO,
   calcolaMinutiVotazione,
   calcolaOffsetFineEvento,
   MINUTI_ESTENSIONE,
@@ -204,15 +202,16 @@ router.get('/', (req: reqAuth, res: Response) => {
   const idUtente = req.user.id_utente;
 
   const eventi = all<{
-    data_fine_calc: string; 
+    data_fine_calc: string;
     sviluppo_started_at: string | null;
-    album_sbloccato_at: string | null; 
+    album_sbloccato_at: string | null;
     durata_votazione_ore: number;
-    is_organiser: number; 
-    estensione_richiesta: number; 
+    is_organiser: number;
+    estensione_richiesta: number;
     estensione_accettata: number | null;
     rimane_esteso: number | null;
-    [key: string]: unknown;
+    [key: string]: unknown; // index Signature (ci permette di prendere voci non tipizzate come "codice" o "scatti_usati"
+    // che però non ci vanno a servire nei calcoli qui sotto)
   }>(
     `SELECT DISTINCT 
       e.*, 
@@ -227,11 +226,11 @@ router.get('/', (req: reqAuth, res: Response) => {
     ORDER BY e.data_inizio DESC`,
     [idUtente, idUtente]
   ).map(e => ({
-    ...e,
+    ...e, // Spread Operator, prende tutte le proprietà dell'oggetto e le copia nel nuovo oggetto e poi aggiungiamo il resto noi sotto
     // Valore reale se la galleria si è già sbloccata, altrimenti la stima corrente di quando
     // succederà (24h dopo la fine delle riprese, o 3min in modalità rapida) — un solo campo,
     // sempre valorizzato, che diventa "definitivo" non ap  pena il vero sblocco avviene.
-    album_sbloccato_at: aggiungiMinutiUTC(e.sviluppo_started_at ?? e.data_fine_calc ,calcolaMinutiSviluppo(e.dev_mode === 1)),
+    album_sbloccato_at: aggiungiMinutiUTC(e.sviluppo_started_at ?? e.data_fine_calc, calcolaMinutiSviluppo(e.dev_mode === 1)),
     // Vero solo per l'organizzatore mentre attende la sua res al prompt di estensione
     needs_estensione_response: !!(e.is_organiser && e.estensione_richiesta && e.estensione_accettata === null),
     // Vero solo per i partecipanti non-organizzatori dopo che l'organizzatore ha accettato l'estensione
@@ -251,7 +250,15 @@ router.post('/:id/extension', (req: reqAuth, res: Response) => {
 
   if (typeof accetta !== 'boolean') return res.status(400).json({ error: 'Campo "accetta" mancante' });
 
-  const evento = get<{ id_organizzatore: string; stato: string; nome: string; data_fine_calc: string; estensione_richiesta: number; estensione_accettata: number | null; dev_mode: number }>(
+  const evento = get<{
+    id_organizzatore: string;
+    stato: string;
+    nome: string;
+    data_fine_calc: string;
+    estensione_richiesta: number;
+    estensione_accettata: number | null;
+    dev_mode: number
+  }>(
     'SELECT id_organizzatore,stato,nome,data_fine_calc,estensione_richiesta,estensione_accettata,dev_mode FROM EVENTO WHERE id_evento=?', [id]);
 
   if (!evento) return res.status(404).json({ error: 'Evento non trovato' });
@@ -261,8 +268,8 @@ router.post('/:id/extension', (req: reqAuth, res: Response) => {
   if (evento.estensione_accettata !== null) return res.status(409).json({ error: 'Hai già risposto' });
 
   let nuovaDataFine = evento.data_fine_calc;
-
- // in dev mode l'estensione è di 3 minuti, altrimenti di 2 ore (120 minuti)
+  
+  // in dev mode l'estensione è di 3 minuti, altrimenti di 2 ore (120 minuti)
   const minutiEst = evento.dev_mode === 1 ? MINUTI_MODALITA_DEV : MINUTI_ESTENSIONE;
 
   transaction(() => {
@@ -308,7 +315,7 @@ router.post('/:id/attendance', (req: reqAuth, res: Response) => {
     [rimane ? 1 : 0, idUtente, id]
   );
   if ((risultatoAggiornamento as { changes: number }).changes === 0)
-    return res.status(404).json({ error: 'Non sei iscritto a questo evento' });
+    return res.status(404).json({ error: 'Non sei iscritto a questo evento o l\'estensione non è stata accettata' });
 
   return res.json({ message: rimane ? "Bene! Continua a scattare!" : 'Va bene, sei libero per altri impegni' });
 });

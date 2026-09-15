@@ -1,4 +1,5 @@
 node_modules/
+.claude/
 
 # Cartelle duplicate/accidentali rimosse dal tracking (refactor giugno 2026)
 ECHO-project/

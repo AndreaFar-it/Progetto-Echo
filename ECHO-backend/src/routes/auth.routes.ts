@@ -123,14 +123,13 @@ router.post('/password-reset', (req: Request, res: Response) => {
   }
 
   // Risposta generica: non rivela se l'email esiste (anti-enumerazione).
-  // Nota: il 429 sopra rompe questa garanzia per utenti con OTP attivo — trade-off accettato per il rate limiting.
   return res.json({ message: 'Se l\'email è registrata, riceverai il codice OTP.' });
 });
 
 // Richiesta di verifica OTP e reset della password.
 // L'OTP viene invalidato immediatamente dopo la verifica per prevenire replay.
 router.post('/password-reset/confirm', asyncHandler(async (req: Request, res: Response) => {
-  const { otp } = req.body;
+  const otp = req.body.otp;
   const emailNormalizzata = normalizzaEmail(req.body.email);
   const nuova_password: unknown = req.body.nuova_password;
 

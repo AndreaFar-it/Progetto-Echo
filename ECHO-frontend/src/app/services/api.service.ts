@@ -16,12 +16,12 @@ export class ApiService {
 
   constructor(private http: HttpClient) { }
 
-  // Recupera tutti gli eventi dell'utente (come organizzatore o partecipante)./
+  // Recupera tutti gli eventi dell'utente (come organizzatore o partecipante).
   getMieiEventi(): Observable<{ events: EventoCard[] }> {
     return this.http.get<{ events: EventoCard[] }>(`${this.urlBase}/api/events`);
   }
 
-  // Definisce un metodo per creare un evento
+  // Definisce un metodo per creare un evento  
   creaEvento(parametri: {
     nome: string;
     luogo: string;

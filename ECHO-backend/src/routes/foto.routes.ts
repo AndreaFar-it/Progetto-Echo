@@ -86,7 +86,7 @@ function gestisciUploadFoto(req: reqAuth, res: Response, next: () => void): void
 rotteFotoEvento.post('/:id/photos', gestisciUploadFoto, asyncHandler(async (req: reqAuth, res: Response) => {
   const idUtente = req.user.id_utente;
   const id_evento = req.params.id;
-
+  // req.file.path contiene il percorso assoluto del file salvato sul server, ma non va mai esposto al client.
   if (!req.file || !id_evento) return res.status(400).json({ error: 'Dati mancanti' });
 
   const evento = get<{ stato: string; scatti_per_utente: number }>(
@@ -94,7 +94,7 @@ rotteFotoEvento.post('/:id/photos', gestisciUploadFoto, asyncHandler(async (req:
   if (!evento) {
     fs.unlinkSync(req.file.path); // Rimuove il file già salvato se l'evento non esiste
     return res.status(404).json({ error: 'Evento non trovato' });
-  }
+  } 
   if (evento.stato !== 'in_corso') {
     fs.unlinkSync(req.file.path);
     return res.status(409).json({ error: 'Acquisizione non attiva' });
@@ -155,7 +155,7 @@ rotteFoto.post('/:id/vote', (req: reqAuth, res: Response) => {
     'SELECT dev_mode, stato,album_sbloccato_at,durata_votazione_ore FROM EVENTO WHERE id_evento=?', [foto.id_evento]);
   if (!evento) return res.status(404).json({ error: 'Evento non trovato' });
   if (evento.stato !== 'album_aperto') return res.status(409).json({ error: 'Finestra di votazione non attiva' });
-  if (!evento.album_sbloccato_at) return res.status(409).json({ error: 'Album non sbloccato' });
+  if (!evento.album_sbloccato_at) return res.status(409).json({ error: 'Album non sbloccato' }); 
 
   // Verifica che la finestra di votazione non sia scaduta (calcolo in JS per coerenza dei formati)
   const fineVotazioneMs = new Date(evento.album_sbloccato_at).getTime() + calcolaMinutiVotazione(evento.durata_votazione_ore, evento.dev_mode === 1) * MS_PER_MINUTO;

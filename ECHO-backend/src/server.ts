@@ -17,7 +17,7 @@ import { notFoundHandler, errorHandler } from './middleware/errors';
 
 //Setup App
 const app = express(); // Crea un'istanza dell'applicazione Express
-const PORT = process.env['PORT'] ?? 3000; // Imposta la porta del server, prendendola dalla variabile d'ambiente PORT se definita, altrimenti usa 3000 come default.
+const PORT = process.env['PORT'] ?? 4000; // Imposta la porta del server, prendendola dalla variabile d'ambiente PORT se definita, altrimenti usa 4000 come default
 
 app.use(helmet()); // Attiva le protezioni di base.
 const CORS_ORIGIN = process.env['CORS_ORIGIN'];
@@ -31,6 +31,7 @@ app.use(express.json({ limit: '1mb' })); // Express legge il body json nelle ric
 
 
 //Middleware
+//il cross-origin-resource-policy serve a permettere al browser di caricare le immagini da un dominio diverso da quello del backend
 //catena di montaggio per le immagini 
 app.use('/uploads', (_req, res, next) => {
   res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
@@ -50,7 +51,6 @@ app.get('/downloads/echo.apk', (_req, res) => {
 const limiteAuth = rateLimit({
   windowMs: 15 * MS_PER_MINUTO,
   limit: 20,                    // 20 richieste per IP ogni 15 minuti
-  // Nota: dietro un proxy (Render) serve app.set('trust proxy', 1) per vedere i veri IP.
   standardHeaders: 'draft-7',   // espone gli header RateLimit-* standard al client
   legacyHeaders: false,
   message: { error: 'Troppi tentativi. Riprova tra qualche minuto.' },
@@ -95,8 +95,9 @@ async function avviaServer() {
 
   //AutoPing del server ogni 14 minuti per evitare che il server si spenga da solo (Render spegne i server inattivi dopo 15 minuti).
   if (process.env['NODE_ENV'] === 'production') {
-    const urlPubblico = process.env['RENDER_EXTERNAL_URL'];
+    const urlPubblico = process.env['RENDER_EXTERNAL_URL'];// https://echo-backend-x90b.onrender.com
     if (urlPubblico) {
+      console.log(`[Server] Keep-alive ping verso ${urlPubblico} ogni 14 minuti`);
       setInterval(() => {
         import('https').then(({ default: https }) =>
           https.get(`${urlPubblico}/health`, res => res.resume()).on('error', () => { })
