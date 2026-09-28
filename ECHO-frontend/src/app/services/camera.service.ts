@@ -14,11 +14,14 @@ export type FlashMode = 'off' | 'on' | 'auto';
 
 @Injectable({ providedIn: 'root' })
 export class ServizioFotocamera {
-  private _shot$ = new BehaviorSubject<ShotResult>({ scatti_usati: 0, scatti_totali: 0, esauriti: false });
-  readonly shot$ = this._shot$.asObservable();
+  private _shot = new BehaviorSubject<ShotResult>({ scatti_usati: 0, scatti_totali: 0, esauriti: false });
+  readonly shot = this._shot.asObservable();
 
   //inizializzazione facing della fotocamera
   private facing: CameraFacing = 'rear';
+
+  // Impedisce due upload concorrenti
+  private uploadInCorso = false;
 
   constructor(
     private api: ApiService,
@@ -28,14 +31,14 @@ export class ServizioFotocamera {
 
   // Chiamato dalla pagina per inizializzare lo stato della fotocamera
   initState(usati: number, totali: number): void {
-    this._shot$.next({ scatti_usati: usati, scatti_totali: totali, esauriti: usati >= totali });
+    this._shot.next({ scatti_usati: usati, scatti_totali: totali, esauriti: usati >= totali });
   }
 
   async startPreview(): Promise<boolean> {
     try {
       //Importa il plugin capgo
       const { CameraPreview } = await import('@capgo/camera-preview');
-      // Chiude un'eventuale anteprima rimasta aperta; l'errore qui e' atteso.
+      // Chiude un'eventuale anteprima rimasta aperta;
       try { await CameraPreview.stop(); } catch { /* nessuna anteprima da chiudere */ }
       await Promise.race([
         CameraPreview.start({
@@ -130,7 +133,9 @@ export class ServizioFotocamera {
 
   // Metodo per Catturare e Caricare la foto
   async captureAndUpload(id_evento: string): Promise<ShotResult> {
-    const cur = this._shot$.getValue();
+    if (this.uploadInCorso) throw new Error('UPLOAD_GIA_IN_CORSO');
+
+    const cur = this._shot.getValue();
     // Controllo scatti disponibili
     if (cur.esauriti || cur.scatti_usati >= cur.scatti_totali) {
       throw new Error('SCATTI_ESAURITI');
@@ -141,17 +146,19 @@ export class ServizioFotocamera {
     try {
       const { CameraPreview } = await import('@capgo/camera-preview');
       // Catturiamo il fotogramma (qualità 85 è standard)
+      // quality 85 rappresenza la % di compressione (standard per foto smartphone)
       const { value } = await CameraPreview.capture({ quality: 85 });
 
       // Controllo se esiste ciò che abbiamo preso
       if (!value) throw new Error('CAPTURE_EMPTY');
 
-      // Prende l'immagine da locale e la converte in blob; l'orientamento è gestito
-      // dal plugin nativo (disableExifHeaderStripping incorpora i metadati EXIF corretti).
+      // Prende l'immagine da locale e la converte in blob;
       blob = await fetch(`data:image/jpeg;base64,${value}`).then(r => r.blob());
     } catch (captureErr: unknown) {
       throw new Error('CAPTURE_FAILED');
     }
+
+    this.uploadInCorso = true;
 
     // Considerando che c'è delay tra una richiesta di scatto HTTP ed un altra, l'utente potrebbe scattare più foto
     // Perciò aggiorniamo immediatamente il valore di scatti usati.
@@ -161,14 +168,15 @@ export class ServizioFotocamera {
       scatti_totali: cur.scatti_totali,
       esauriti: newUsed >= cur.scatti_totali,
     };
-    this._shot$.next(optimistic);
+    this._shot.next(optimistic);
     this.eventState.decrementShot();   // aggiorna anche il badge della tab
 
     // Qui effettivamente andiamo a controllare che il server abbia le nostre stesse info locali
     // Se combaciano allora refresha lo stato, altrimenti ha un fall back nei numeri precedenti
     this.api.uploadFoto(id_evento, blob).subscribe({
       next: (ack: ConfermaCaricamento) => {
-        this._shot$.next({
+        this.uploadInCorso = false;
+        this._shot.next({
           scatti_usati: ack.scatti_usati,
           scatti_totali: ack.scatti_totali,
           esauriti: ack.esauriti,
@@ -176,6 +184,7 @@ export class ServizioFotocamera {
         if (ack.esauriti) void this.eventState.refresh();
       },
       error: (errore: unknown) => {
+        this.uploadInCorso = false;
         const statoHttp = errore instanceof HttpErrorResponse ? errore.status : 0;
         const problemaDiRete = statoHttp === 0 || !navigator.onLine;
 
@@ -185,7 +194,7 @@ export class ServizioFotocamera {
           this.codaUpload.accoda(id_evento, blob).catch(() => {
             // IndexedDB non disponibile: ripiega sul vecchio comportamento (annulla lo scatto)
             console.error('[ServizioFotocamera] Coda offline non disponibile, ripristino lo stato');
-            this._shot$.next(cur);
+            this._shot.next(cur);
             void this.eventState.refresh();
           });
           return;
@@ -194,7 +203,7 @@ export class ServizioFotocamera {
         // Il server ha risposto ma ha rifiutato (evento chiuso, scatti esauriti…):
         // annulla il pallino ottimistico — lo scatto non è mai stato realmente registrato.
         console.error('[ServizioFotocamera] Upload rifiutato dal server, ripristino lo stato:', errore);
-        this._shot$.next(cur);
+        this._shot.next(cur);
         void this.eventState.refresh();
       },
     });

@@ -33,7 +33,7 @@
         @if (errorMsg) {
           <p class="auth-error">{{ errorMsg }}</p>
         }
-        <button type="button" class="auth-submit echo-btn" [class.loading]="caricamento"
+        <button type="button" class="auth-submit echo-btn"
           (click)="onCredentialsSubmit()" [disabled]="caricamento">
           @if (!caricamento) {
             <span>Inizia</span>
@@ -80,7 +80,7 @@
         @if (errorMsg) {
           <p class="auth-error">{{ errorMsg }}</p>
         }
-        <button type="button" class="auth-submit echo-btn" [class.loading]="caricamento"
+        <button type="button" class="auth-submit echo-btn"
           (click)="submit()" [disabled]="caricamento">
           @if (!caricamento) {
             <span>Inizia</span>

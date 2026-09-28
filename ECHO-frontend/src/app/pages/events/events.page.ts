@@ -47,7 +47,7 @@ export class PaginaEventi implements OnInit, OnDestroy, ViewWillEnter {
   codiceCopiate = false;
 
   private subEventi?: Subscription;
-  private promptedIds = new Set<string>();
+  private eventiNotificati = new Set<string>();
 
   get eventiFiltrati(): EventoCard[] {
     return this.eventi.filter(e => this.modalitaVista === 'creatore' ? e.is_organiser : !e.is_organiser);
@@ -60,11 +60,11 @@ export class PaginaEventi implements OnInit, OnDestroy, ViewWillEnter {
     private alertCtrl: AlertController,
     private loadingCtrl: LoadingController,
     private piattaforma: ServizioPiattaforma,
-    private svc: ServizioStatoEvento,
+    private servizioSE: ServizioStatoEvento,
   ) { }
 
   ngOnInit() {
-    this.subEventi = this.svc.eventi$.subscribe(events => {
+    this.subEventi = this.servizioSE.events.subscribe(events => {
       this.eventi = events;
       this.checkExtensionPrompts();
     });
@@ -87,7 +87,7 @@ export class PaginaEventi implements OnInit, OnDestroy, ViewWillEnter {
 
   // Forza un fetch tramite il servizio condiviso: la lista arriva poi via subEventi.
   async loadEvents() {
-    const ok = await this.svc.refresh();
+    const ok = await this.servizioSE.refresh();
     if (!ok) {
       await this.toast('Impossibile caricare gli eventi', 'danger');
     }
@@ -96,21 +96,21 @@ export class PaginaEventi implements OnInit, OnDestroy, ViewWillEnter {
 
   // Controlla se bisogna inviare un alert per l'estensione dell'evento
   private checkExtensionPrompts() {
-    const toEstendi = this.eventi.find(e => e.needs_estensione_response && !this.promptedIds.has(e.id_evento));
-    if (toEstendi) {
-      this.promptEstensione(toEstendi);
+    const daEstendere = this.eventi.find(e => e.needs_estensione_response && !this.eventiNotificati.has(e.id_evento));
+    if (daEstendere) {
+      this.ToastEstensione(daEstendere);
       return;
     }
 
-    const toPermanenza = this.eventi.find(e => e.needs_permanenza_response && !this.promptedIds.has(e.id_evento));
-    if (toPermanenza) {
-      this.promptPermanenza(toPermanenza);
+    const Permanenza = this.eventi.find(e => e.needs_permanenza_response && !this.eventiNotificati.has(e.id_evento));
+    if (Permanenza) {
+      this.ToastPermanenza(Permanenza);
     }
   }
 
   // Mostra un alert per chiedere all'organizzatore se vuole estendere l'evento
-  private async promptEstensione(event: EventoCard) {
-    this.promptedIds.add(event.id_evento);
+  private async ToastEstensione(event: EventoCard) {
+    this.eventiNotificati.add(event.id_evento);
     const durata = this.extDurataLabel(event);
     const alert = await this.alertCtrl.create({
       header: 'Estendi evento',
@@ -136,8 +136,8 @@ export class PaginaEventi implements OnInit, OnDestroy, ViewWillEnter {
   }
 
   // Mostra un alert ai partecipanti per notificare che l'evento è stato esteso e chiedere se rimangono
-  private async promptPermanenza(event: EventoCard) {
-    this.promptedIds.add(event.id_evento);
+  private async ToastPermanenza(event: EventoCard) {
+    this.eventiNotificati.add(event.id_evento);
     const alert = await this.alertCtrl.create({
       header: 'Evento esteso',
       message: `"${event.nome}" è stato esteso di ${this.extDurataLabel(event)}. Desideri rimanere all'evento?`,
@@ -195,7 +195,7 @@ export class PaginaEventi implements OnInit, OnDestroy, ViewWillEnter {
 
   // Chiede conferma prima di procedere all'eliminazione dell'evento
   async confirmDelete(event: EventoCard, $event: MouseEvent) {
-    // Evita che il click sul bottone elimini apra accidentalmente i dettagli dell'evento
+    // Evita che il click sul bottone elimina apra accidentalmente i dettagli dell'evento
     $event.stopPropagation();
     const alert = await this.alertCtrl.create({
       header: 'Elimina evento',
@@ -225,7 +225,7 @@ export class PaginaEventi implements OnInit, OnDestroy, ViewWillEnter {
   }
 
   // Funzione di utilità per creare un array di lunghezza 'n'
-  makePips(n: number): number[] {
+  arrayScatti(n: number): number[] {
     return Array.from({ length: n });
   }
 

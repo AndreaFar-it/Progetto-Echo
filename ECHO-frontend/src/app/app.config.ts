@@ -21,7 +21,7 @@ import { timeoutRetryInterceptor } from './core/interceptors/timeout-retry.inter
 export const appConfig: ApplicationConfig = {
   providers: [
     // Configura il routing attivando il passaggio di parametri ai componenti e le transizioni visive
-    provideRouter(routes, withComponentInputBinding(), withViewTransitions()),
+    provideRouter(routes, withViewTransitions()),
     // Configura il client HTTP aggiungendo gli interceptor per timeout/retry e autenticazione
     provideHttpClient(withInterceptors([timeoutRetryInterceptor, authInterceptor])),
     // Inizializza Ionic forzando il design iOS, disabilitando l'effetto "ripple" e mantenendo le animazioni

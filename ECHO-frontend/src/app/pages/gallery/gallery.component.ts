@@ -20,7 +20,8 @@ import { environment } from '../../../environments/environment';
 import {
   firstValueFrom,
   Subscription,
-  interval
+  interval,
+  switchMap
 } from 'rxjs';
 import JSZip from 'jszip';
 import { saveAs } from 'file-saver';
@@ -31,6 +32,7 @@ import {
 import { Share } from '@capacitor/share';
 import {
   FotoGalleria,
+  GalleriaResponse,
   RankEntry
 } from '../../models/index';
 import {
@@ -96,7 +98,14 @@ export class ComponenteGalleria implements OnInit, OnDestroy {
   // ciclo di vita invocato subito dopo l'inizializzazione del componente.
   ngOnInit() {
     this.loadGallery();
-    this.votingTicker = interval(VOTING_TICKER_MS).subscribe(() => this.loadGallery());
+    // switchMap: se una richiesta di refresh e' ancora in corso quando scatta il tick
+    // successivo, la annulla invece di lasciare che le risposte arrivino fuori ordine.
+    this.votingTicker = interval(VOTING_TICKER_MS)
+      .pipe(switchMap(() => this.api.getGalleria(this.id_evento)))
+      .subscribe({
+        next: res => this.applyGalleryResponse(res),
+        error: errore => { this.errorMessage = messaggioErrore(errore, 'Galleria non disponibile.'); },
+      });
   }
 
   ngOnDestroy() {
@@ -124,24 +133,29 @@ export class ComponenteGalleria implements OnInit, OnDestroy {
   private async loadGallery() {
     try {
       const res = await firstValueFrom(this.api.getGalleria(this.id_evento));
-
-      this.foto = res?.foto ?? [];
-      this.ha_votato = res?.ha_votato ?? false;
-      this.stato = res?.stato ?? '';
-
-      this.voteEndAt = res.voting_end_at ? isoToMs(res.voting_end_at) : null;
-      const BADGES: ('oro' | 'argento' | 'bronzo')[] = ['oro', 'argento', 'bronzo'];
-      this.ranking = (res.classifica ?? []).slice(0, 3).map((c, i) => ({
-        posizione: (i + 1) as 1 | 2 | 3,
-        nome: c.nome, cognome: c.cognome, foto_profilo_url: c.foto_profilo_url,
-        id_foto: c.id_foto, url_originale: c.url_originale, punteggio_voti: c.punteggio_voti,
-        badge: BADGES[i],
-      }));
+      this.applyGalleryResponse(res);
     } catch (errore: unknown) {
       this.errorMessage = messaggioErrore(errore, 'Galleria non disponibile.');
     } finally {
       this.caricamento = false;
     }
+  }
+
+  // Applica una risposta di galleria allo stato del componente — condiviso tra il
+  // caricamento iniziale (loadGallery) e il ticker di refresh periodico (votingTicker).
+  private applyGalleryResponse(res: GalleriaResponse) {
+    this.foto = res?.foto ?? [];
+    this.ha_votato = res?.ha_votato ?? false;
+    this.stato = res?.stato ?? '';
+
+    this.voteEndAt = res.voting_end_at ? isoToMs(res.voting_end_at) : null;
+    const BADGES: ('oro' | 'argento' | 'bronzo')[] = ['oro', 'argento', 'bronzo'];
+    this.ranking = (res.classifica ?? []).slice(0, 3).map((c, i) => ({
+      posizione: (i + 1) as 1 | 2 | 3,
+      nome: c.nome, cognome: c.cognome, foto_profilo_url: c.foto_profilo_url,
+      id_foto: c.id_foto, url_originale: c.url_originale, punteggio_voti: c.punteggio_voti,
+      badge: BADGES[i],
+    }));
   }
 
   // Apre la foto ingrandita quando un utente tocca un gradino del podio con la medaglia.
@@ -206,7 +220,7 @@ export class ComponenteGalleria implements OnInit, OnDestroy {
   private async saveAndShareNative(zipped: Blob, filename: string): Promise<void> {
     // Si deve tradurre dal tipo Blob JavaScript al tipo stringa testuale grezza base64 che i plugin Capacitor tollerano di base per interagire col FileSystem locale.
     const base64Data = await blobToBase64(zipped);
-    // Tramite plugin Capacitor ordina al OS di memorizzare l'intera stringa in formato file dentro la cache del telefono (utile perché se ne sbarazzerà da solo non intasando la ROM).
+    // Tramite plugin Capacitor ordina al SO di memorizzare l'intera stringa in formato file dentro la cache del telefono (utile perché se ne sbarazzerà da solo non intasando la ROM).
     const result = await Filesystem.writeFile({ path: filename, data: base64Data, directory: Directory.Cache });
     try {
       // Innalza a video tramite le api native l'opzione "cosa vuoi farne del file che ha URI x".

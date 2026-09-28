@@ -48,7 +48,7 @@ export class ComponenteShellApp implements OnInit, AfterViewInit, OnDestroy {
   @ViewChild('tabBar') tabBarRef!: ElementRef<HTMLElement>;
 
   constructor(
-    private svc: ServizioStatoEvento,
+    private servizioSE: ServizioStatoEvento,
     private router: Router,
     piattaforma: ServizioPiattaforma,
     // Iniettato solo per avviarlo non appena lo shell autenticato viene montato — non ha
@@ -61,13 +61,13 @@ export class ComponenteShellApp implements OnInit, AfterViewInit, OnDestroy {
 
     // Aggiorna la vista automaticamente quando cambia il segnale dello stato dell'evento
     effect(() => {
-      this.st = this.svc.segnaleStato();
+      this.st = this.servizioSE.stateSig();
     });
   }
 
   ngOnInit() {
     // Avvia polling e countdown dello stato evento SOLO ora: il servizio non interroga mai il server da sloggati.
-    this.svc.start();
+    this.servizioSE.start();
 
     // Ascolta i cambiamenti di rotta (URL) per mantenere sincronizzata la tab bar
     this.subs.add(
@@ -92,7 +92,7 @@ export class ComponenteShellApp implements OnInit, AfterViewInit, OnDestroy {
     // Evita memory leaks scollegando le iscrizioni (subscriptions)
     this.subs.unsubscribe();
     // La shell muore quando si esce dall'area autenticata (logout): ferma polling e ticker.
-    this.svc.stop();
+    this.servizioSE.stop();
   }
 
   // Navigazione generica

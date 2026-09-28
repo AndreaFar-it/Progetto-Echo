@@ -1,7 +1,4 @@
-// Gemello di ECHO-backend/src/utils/validation.ts. Le due copie esistono perché i due
-// progetti hanno build separate e nessun modulo condiviso: questa dà la risposta subito
-// all'utente, quella è l'unica che conta davvero, perché un client si aggira.
-// Se cambi una regola qui, cambiala anche là.
+// Gemello di ECHO-backend/src/utils/validation.ts.
 
 // Stessa regex del backend: almeno due caratteri dopo l'ultimo punto.
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;

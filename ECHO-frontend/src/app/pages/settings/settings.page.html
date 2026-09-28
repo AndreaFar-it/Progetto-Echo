@@ -72,6 +72,17 @@
       </div>
     </section>
 
+    <!--  Notifiche (solo app nativa: su web le push non esistono)  -->
+    @if (piattaforma.isNativa) {
+      <section class="section">
+        <p class="section__label">Notifiche</p>
+        <button type="button" class="echo-btn-outline echo-btn-block" [disabled]="attivandoNotifiche" (click)="attivaNotifiche()">
+          {{ attivandoNotifiche ? 'Attivazione…' : 'Attiva notifiche' }}
+        </button>
+        <p class="field-hint">Se le avevi rifiutate, riprova qui dopo averle abilitate dalle impostazioni del telefono.</p>
+      </section>
+    }
+
     <!-- Esci  -->
     <section class="section">
       <button type="button" class="echo-btn-outline echo-btn-block" (click)="logout()">Esci</button>

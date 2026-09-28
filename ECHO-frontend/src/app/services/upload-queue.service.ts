@@ -66,8 +66,7 @@ export class ServizioCodaUpload {
         }
       }
     } catch {
-      // IndexedDB non disponibile (browser molto vecchio / storage negato): nessuna coda,
-      // il chiamante ha già gestito il fallback.
+      // IndexedDB non disponibile: non possiamo fare nulla, ma non vogliamo bloccare l'app.
     } finally {
       this.svuotamentoInCorso = false;
       if (almenoUnoCaricato) void this.eventState.refresh();

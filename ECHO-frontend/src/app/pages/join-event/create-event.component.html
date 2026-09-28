@@ -34,8 +34,6 @@
     </div>
 
     <div class="field-group">
-      <!-- "Durata" intesta due campi, non uno: è la didascalia di un gruppo, non
-           una label. Le unità visibili ORE/MIN fanno da label ai singoli campi. -->
       <div class="field-label" id="ev-durata-label">
         Durata
         <span class="field-hint">(min: 1h, max: 6h)</span>
@@ -46,14 +44,14 @@
       <div class="duration-row" role="group" aria-labelledby="ev-durata-label">
         <div class="duration-block">
           <input id="ev-durata-ore" class="field-input duration-input" [(ngModel)]="form.durata_ore"
-            type="number" min="0" max="6" step="1" placeholder="0"
+            type="number" min="0" max="6" step="1"
             (ngModelChange)="aggiornaDurata()" />
           <label class="duration-unit" for="ev-durata-ore">ORE</label>
         </div>
         <span class="duration-sep" aria-hidden="true">:</span>
         <div class="duration-block">
           <input id="ev-durata-min" class="field-input duration-input" [(ngModel)]="form.durata_min"
-            type="number" min="0" max="59" step="1" placeholder="00"
+            type="number" min="0" max="59" step="1"
             (ngModelChange)="aggiornaDurata()" />
           <label class="duration-unit" for="ev-durata-min">MIN</label>
         </div>

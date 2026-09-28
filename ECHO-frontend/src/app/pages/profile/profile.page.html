@@ -61,8 +61,6 @@
         <div class="section-header">
           <span class="section-label">Archivio Rullini</span>
         </div>
-      }
-      @if (profilo.archivio.length) {
         <div class="archive-strip">
           @for (evento of profilo.archivio; track evento.id_evento) {
             <app-film-canister

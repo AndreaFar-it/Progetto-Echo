@@ -165,18 +165,23 @@ export class PaginaAnalisi implements OnInit, OnDestroy {
       doc.text(this.eventoNome || 'Evento', pagW - 14, 12, { align: 'right' });
       doc.text(`Generato il ${dataOdierna}`, pagW - 14, 18, { align: 'right' });
 
-      // Adatta lo screenshot alla pagina mantenendo le proporzioni (mai deformato, mai tagliato)
+      // Margine di sicurezza esterno
       const margine = 10;
+      // Posizione Y iniziale dell'immagine, posizionata subito sotto l'header (22mm)
       const topContenuto = 22 + margine;
+      // Calcola il fattore di scala per adattare la foto all'area stampabile senza distorcerla
       const scala = Math.min((pagW - margine * 2) / canvas.width, (pagH - topContenuto - margine) / canvas.height);
+      // Applica la scala proporzionale per ricavare la larghezza finale nell'unità di misura del PDF
       const imgW = canvas.width * scala;
+      // Applica la scala proporzionale per ricavare l'altezza finale nell'unità di misura del PDF
       const imgH = canvas.height * scala;
       // PNG per conservare la trasparenza degli angoli arrotondati della card
+      // Inserisce l'immagine centrata orizzontalmente: X = (pagW - imgW) / 2
       doc.addImage(canvas.toDataURL('image/png'), 'PNG', (pagW - imgW) / 2, topContenuto, imgW, imgH);
 
+      // Gestisce il salvataggio o la condivisione nativa (Capacitor/Mobile) sanificando il nome file
       await this.salvaOCondividi(doc, `report-${this.sanitizeFilename(this.eventoNome || 'evento')}.pdf`);
     } catch {
-      // Cattura fallita (es. canvas "tainted" da immagini cross-origin senza CORS) o scrittura file fallita
       const t = await this.toastCtrl.create({ message: "Errore durante l'esportazione del PDF.", duration: 2800, color: 'danger', position: 'bottom' });
       t.present();
     } finally {

@@ -16,21 +16,13 @@ import {
   Haptics,
   ImpactStyle
 } from '@capacitor/haptics';
-import {
-  Subscription,
-  interval,
-  firstValueFrom
-} from 'rxjs';
+import { Subscription } from 'rxjs';
 import {
   ServizioFotocamera,
   ShotState,
   CameraFacing,
   FlashMode
 } from '../../services/camera.service';
-import { ApiService } from '../../services/api.service';
-
-// Cadenza del ticker che tiene vivo il conto alla rovescia di sviluppo.
-const DEVELOPMENT_TICKER_MS = 60_000;
 
 @Component({
   selector: 'app-camera',
@@ -70,10 +62,6 @@ export class ComponenteFotocamera implements OnInit, OnDestroy {
   // Funzione per l'UI
   get flashLabel(): string { return this.flashMode.toUpperCase(); }
 
-  private sviluppo_ended_at: string | null = null;
-  // Sottoscrizione per un timer che si aggiorna ogni minuto per simulare il conto alla rovescia
-  private developmentTicker?: Subscription;
-
   // Array che contiene i livelli di zoom preimpostati supportati dall'obiettivo attuale
   zoomLevels: number[] = [];
   currentZoom = 1.0;
@@ -87,38 +75,17 @@ export class ComponenteFotocamera implements OnInit, OnDestroy {
   constructor(
     public router: Router,
     private cameraService: ServizioFotocamera,
-    private api: ApiService,
     private toastCtrl: ToastController,
     private cdr: ChangeDetectorRef,
   ) { }
 
   ngOnInit() {
     this.cameraService.initState(this.scatti_usati_iniziali, this.scatti_per_utente);
-    // Si iscrive all'Observable shot$ per ricevere aggiornamenti sullo stato degli scatti
-    this.sub = this.cameraService.shot$.subscribe((state: ShotState) => {
+    // Si iscrive all'Observable shot per ricevere aggiornamenti sullo stato degli scatti
+    this.sub = this.cameraService.shot.subscribe((state: ShotState) => {
       this.shotState = state;
       this.cdr.markForCheck();
     });
-    this.loadDevelopmentTarget();
-    this.developmentTicker = interval(DEVELOPMENT_TICKER_MS).subscribe(() => this.cdr.markForCheck());
-  }
-
-  // Metodo privato asincrono per recuperare l'orario di fine sviluppo dell'album dall'API
-  private async loadDevelopmentTarget(): Promise<void> {
-    try {
-      const res = await firstValueFrom(this.api.getMieiEventi());
-      const ev = res.events.find(e => e.id_evento === this.id_evento);
-      if (ev?.album_sbloccato_at) {
-        this.sviluppo_ended_at = ev.album_sbloccato_at;
-      }
-      this.cdr.markForCheck();
-    } catch { 
-      // In caso di errore nella chiamata di rete, mantiene silenziosamente il fallback di default a "24 ore"
-    }
-  }
-
-  private formatDelay(minutes: number): string {
-    return minutes < 60 ? `${minutes} minuti` : `${Math.round(minutes / 60)} ore`;
   }
 
   // Metodo chiamato per "attivare" o resettare la vista della fotocamera quando si entra nella schermata
@@ -210,7 +177,6 @@ export class ComponenteFotocamera implements OnInit, OnDestroy {
   // Hook del ciclo di vita chiamato da Angular quando il componente sta per essere distrutto
   ngOnDestroy() {
     this.sub?.unsubscribe();
-    this.developmentTicker?.unsubscribe();
     clearTimeout(this.errorTimer);
     this.restoreBg();
     this.cameraService.stopPreview().catch(() => { /* ignora errori di stop preview */ });

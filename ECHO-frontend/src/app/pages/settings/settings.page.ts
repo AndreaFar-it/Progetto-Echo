@@ -15,6 +15,8 @@ import {
 } from '@ionic/angular/standalone';
 import { AuthService } from '../../services/auth.service';
 import { ApiService } from '../../services/api.service';
+import { ServizioNotifiche } from '../../services/notification.service';
+import { ServizioPiattaforma } from '../../services/piattaforma.service';
 import { environment } from '../../../environments/environment';
 import { firstValueFrom } from 'rxjs';
 import { messaggioErrore } from '../../core/api-error';
@@ -42,9 +44,13 @@ export class PaginaImpostazioni implements OnInit {
 
   deleting = false;
 
+  attivandoNotifiche = false;
+
   constructor(
     private auth: AuthService,
     private api: ApiService,
+    private notifiche: ServizioNotifiche,
+    public piattaforma: ServizioPiattaforma,
     public router: Router,
     private toastCtrl: ToastController,
     private alertCtrl: AlertController,
@@ -115,6 +121,18 @@ export class PaginaImpostazioni implements OnInit {
       this.pwError = messaggioErrore(errore, 'Errore durante l\'aggiornamento.');
     } finally {
       this.pwLoading = false;
+    }
+  }
+
+  // Ri-richiama la richiesta di permesso push — utile se l'utente l'aveva negata la prima
+  // volta e l'ha poi abilitata dalle impostazioni di sistema.
+  async attivaNotifiche() {
+    this.attivandoNotifiche = true;
+    try {
+      const ok = await this.notifiche.richiediPermessoNotifiche();
+      this.toast(ok ? 'Notifiche attivate' : 'Permesso negato — abilitalo dalle impostazioni del telefono', ok ? 'success' : 'danger');
+    } finally {
+      this.attivandoNotifiche = false;
     }
   }
 

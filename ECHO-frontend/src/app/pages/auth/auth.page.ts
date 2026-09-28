@@ -95,10 +95,6 @@ export class PaginaAutenticazione implements OnInit {
       this.errorMsg = 'Email e password sono obbligatorie.';
       return;
     }
-    if (this.mode === 'login') {
-      this.submit();
-      return;
-    }
 
     const email = this.form.email.trim();
     if (!emailValida(email)) {
@@ -107,6 +103,11 @@ export class PaginaAutenticazione implements OnInit {
     }
     if (!passwordRobusta(this.form.password)) {
       this.errorMsg = ERRORE_PASSWORD;
+      return;
+    }
+
+    if (this.mode === 'login') {
+      this.submit();
       return;
     }
 
@@ -189,6 +190,10 @@ export class PaginaAutenticazione implements OnInit {
           handler: async (data: { email?: string }) => {
             const email = data.email?.trim();
             if (!email) return false;
+            if (!emailValida(email)) {
+              this.toast('Email non valida.', 'danger');
+              return false;
+            }
             try {
               await firstValueFrom(this.api.forgotPassword(email));
               setTimeout(() => this.openOtpStep(email), 300);

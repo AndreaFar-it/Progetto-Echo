@@ -18,10 +18,10 @@ export const timeoutRetryInterceptor: HttpInterceptorFn = (req, next) => {
   if (!req.url.startsWith(environment.apiUrl)) return next(req);
 
   const isReadOnly = req.method === 'GET' || req.method === 'HEAD';
-  const base$: Observable<HttpEvent<unknown>> = next(req).pipe(timeout(TIMEOUT_MS));
+  const base: Observable<HttpEvent<unknown>> = next(req).pipe(timeout(TIMEOUT_MS));
 
   if (isReadOnly) {
-    return base$.pipe(retry({ count: 2, delay: (_e, n) => timer(n * 1000) }));
+    return base.pipe(retry({ count: 2, delay: (_e, n) => timer(n * 1000) }));
   }
-  return base$;
+  return base;
 };

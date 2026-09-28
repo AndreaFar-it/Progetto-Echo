@@ -46,7 +46,7 @@
             @if (event.stato === 'in_corso') {
               <div class="event-shots">
                 <div class="shot-pips">
-                  @for (p of makePips(event.scatti_per_utente); track i; let i = $index) {
+                  @for (p of arrayScatti(event.scatti_per_utente); track i; let i = $index) {
                     <span class="shot-pip" [class.used]="i < event.scatti_usati"></span>
                   }
                 </div>
@@ -79,7 +79,7 @@
           @if (modalitaVista === 'partecipante' && ctaLabel(event); as label) {
             <button type="button" class="event-cta"
             (click)="onEventTap(event); $event.stopPropagation()">{{ label }}</button>
-          }
+          } 
           @if (event.is_organiser) {
             <div class="event-right-row">
               <button type="button" class="delete-btn"

@@ -36,36 +36,25 @@ const POLLING_MS = 30_000;
 // Ritmo dell'orologio interno usato per aggiornare i conti alla rovescia in UI (1.000 ms = 1 secondo).
 const TICK_MS = 1000;
 
-// Rende questo servizio un Singleton (un'unica istanza condivisa) e lo registra nel root injector di Angular.
 @Injectable({ providedIn: 'root' })
 export class ServizioStatoEvento implements OnDestroy {
 
-  // conserva la lista grezza degli eventi scaricati dal server.
-  // Inizializzato con array vuoto. Conserva e restituisce sempre l'ultimo valore ai nuovi iscritti.
-  private _events$ = new BehaviorSubject<EventoCard[]>([]);
+  private _events = new BehaviorSubject<EventoCard[]>([]);// Inizializza lo stream degli eventi con un array vuoto.
+  readonly events: Observable<EventoCard[]> = this._events.asObservable(); //lo rendiamo osservabile per chi vuole sottoscriversi e ricevere aggiornamenti sugli eventi.
 
-  // Lista eventi in sola lettura: unica fonte di verità anche per le pagine (es. PaginaEventi),
-  // che così non devono duplicare il fetch di /api/events per conto proprio.
-  readonly eventi$: Observable<EventoCard[]> = this._events$.asObservable();
+  private _state = new BehaviorSubject<StatoEventoAttivo>(this.empty());// idem
+  private _stateSig = signal<StatoEventoAttivo>(this.empty()); // Signal traccia automaticamente chiunque la stia leggendo, notificando non appena il suo valore cambia.
+  readonly stateSig: Signal<StatoEventoAttivo> = this._stateSig.asReadonly();// Espone pubblicamente il Segnale in sola lettura.
 
-  // BehaviorSubject che conserva lo stato calcolato ed elaborato, partendo da uno stato vuoto.
-  private _state$ = new BehaviorSubject<StatoEventoAttivo>(this.empty());
+  private subs!: Subscription; // Crea un oggetto Subscription per gestire le sottoscrizioni e poterle annullare tutte insieme quando il servizio viene distrutto.
 
-  // Segnale Angular reattivo con stato iniziale vuoto .
-  private _stateSig = signal<StatoEventoAttivo>(this.empty());
+  private avviato = false; // Vero mentre polling e ticker sono attivi (tra una start() e la stop() successiva).
 
-  // Espone pubblicamente il Segnale in sola lettura. La UI lo leggerà, ma non potrà modificarlo direttamente.
-  readonly segnaleStato: Signal<StatoEventoAttivo> = this._stateSig.asReadonly();
-
-  // Contenitore di sottoscrizioni RxJS. Aggruppa le iscrizioni per poterle cancellare tutte assieme.
-  private subs = new Subscription();
-
-  // Vero mentre polling e ticker sono attivi (tra una start() e la stop() successiva).
-  private avviato = false;
-
+  // NgZone ci permette di controllare quando svolgere la change detection di Angular.
+  // Senza di essa, il ticker del countdown (TICK_MS) scatenerebbe la Change Detection ad ogni singolo tick,
   constructor(private http: HttpClient, private zone: NgZone) { }
 
-  // Avvia il polling degli eventi e il ticker dei countdown. Idempotente.
+  // Avvia il polling degli eventi e il ticker dei countdown.
   start(): void {
     if (this.avviato) return;
     this.avviato = true;
@@ -80,17 +69,14 @@ export class ServizioStatoEvento implements OnDestroy {
     // Ticker dei countdown, fuori dalla zona di Angular: rientra solo se lo stato cambia.
     this.zone.runOutsideAngular(() => {
       this.subs.add(interval(TICK_MS).subscribe(() => {
-        const prev = this._state$.getValue();
-        const nuovo = this.derive(this._events$.getValue());
+        const prev = this._state.getValue();
+        const nuovo = this.derive(this._events.getValue());
 
         // Nulla e' cambiato: si esce senza svegliare Angular.
         if (this.statiUguali(prev, nuovo)) return;
 
-        // Rientra in zona: Angular programma il ciclo di change detection.
-        this.zone.run(() => {
-          this._state$.next(nuovo);
-          this._stateSig.set(nuovo);
-        });
+        // Rientra in zona solo per il commit: Angular programma il ciclo di change detection.
+        this.zone.run(() => this.commit(nuovo));
 
         // Tempo scaduto: aggiorna subito invece di attendere il polling.
         if (prev.secondsToNext > 0 && nuovo.secondsToNext <= 0) void this.refresh();
@@ -116,7 +102,7 @@ export class ServizioStatoEvento implements OnDestroy {
 
   // aggiorna la UI istantaneamente prima della risposta server.
   decrementShot() {
-    const cur = this._state$.getValue();
+    const cur = this._state.getValue();
     // Interrompe se non c'è un evento attivo o lo stato non è 'in_corso'.
     if (!cur.evento || cur.evento.stato !== 'in_corso') return;
 
@@ -124,10 +110,10 @@ export class ServizioStatoEvento implements OnDestroy {
     const updated = { ...cur.evento, scatti_usati: cur.evento.scatti_usati + 1 };
 
     // Sostituisce l'evento modificato all'interno dell'array di tutti gli eventi memorizzati.
-    const events = this._events$.getValue().map(e => e.id_evento === updated.id_evento ? updated : e);
+    const events = this._events.getValue().map(e => e.id_evento === updated.id_evento ? updated : e);
 
     // Emette il nuovo array e ricalcola lo stato per aggiornare la UI all'istante.
-    this._events$.next(events);
+    this._events.next(events);
     this.push(events);
   }
 
@@ -137,7 +123,7 @@ export class ServizioStatoEvento implements OnDestroy {
     return this.http.get<{ events: EventoCard[] }>(`${environment.apiUrl}/api/events`).pipe(
       tap(res => {
         // Aggiorna lo stream degli eventi grezzi e ricalcola lo stato attivo.
-        this._events$.next(res.events);
+        this._events.next(res.events);
         this.push(res.events);
       }),
       map(() => true),
@@ -147,7 +133,7 @@ export class ServizioStatoEvento implements OnDestroy {
     );
   }
 
-  // LOGICA DI BUSINESS E CALCOLO DELLE PRIORITÀ
+  // Prende i dati degli eventi e deriva lo stato attivo.
   private derive(events: EventoCard[]): StatoEventoAttivo {
     const now = Date.now(); // Prende il timestamp attuale
 
@@ -162,12 +148,12 @@ export class ServizioStatoEvento implements OnDestroy {
 
     // Se c'è un evento "in_corso"
     if (inCorso) {
-      const rem = inCorso.scatti_per_utente - inCorso.scatti_usati; // Calcola scatti rimanenti
+      const scattiRimanenti = inCorso.scatti_per_utente - inCorso.scatti_usati; // Calcola scatti rimanenti
       const activeEnd = isoToMs(inCorso.data_inizio) + inCorso.durata_minuti * MS_PER_MINUTO;
       return {
         evento: inCorso, galleryEvento,
-        showCamera: rem > 0, // Mostra la fotocamera solo se ci sono ancora scatti
-        showGallery: !!galleryEvento, scattiRimanenti: rem,
+        showCamera: scattiRimanenti > 0, // Mostra la fotocamera solo se ci sono ancora scatti
+        showGallery: !!galleryEvento, scattiRimanenti: scattiRimanenti,
         secondsToNext: Math.max(0, Math.floor((activeEnd - now) / 1000)), // Tempo rimanente in secondi
         countdownLabel: 'Fine acquisizione'
       };
@@ -200,13 +186,19 @@ export class ServizioStatoEvento implements OnDestroy {
 
   // PONTE REATTIVO
   private push(events: EventoCard[]) {
-    const d = this.derive(events);
-    // Emette SOLO se lo stato è davvero cambiato: il ticker gira ogni secondo, e senza questo
-    // controllo ogni tick produrrebbe un nuovo oggetto identico.
-    if (this.statiUguali(this._state$.getValue(), d)) return;
+    this.commit(this.derive(events));
+  }
+
+  // Unico punto di scrittura dello stato derivato: usato sia da push() che dal ticker in
+  // start(). Emette SOLO se lo stato è davvero cambiato — il ticker gira ogni secondo, e
+  // senza questo controllo ogni tick produrrebbe un nuovo oggetto identico.
+  // Il chiamante decide se serve zone.run() attorno alla chiamata.
+  private commit(nuovo: StatoEventoAttivo): boolean {
+    if (this.statiUguali(this._state.getValue(), nuovo)) return false;
     // Aggiorna simultaneamente sia il BehaviorSubject (ecosistema RxJS) che il Segnale (ecosistema Angular Signals).
-    this._state$.next(d);
-    this._stateSig.set(d);
+    this._state.next(nuovo);
+    this._stateSig.set(nuovo);
+    return true;
   }
 
   // Confronto campo per campo dei due stati.

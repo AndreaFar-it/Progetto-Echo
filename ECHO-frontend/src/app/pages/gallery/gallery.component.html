@@ -156,10 +156,10 @@
     (keydown.escape)="closeDetail()">
     <div class="detail-panel">
       <div class="detail-header">
-        @if (selectedPhoto) {
+        <div class="detail-header">
           <span class="detail-author-label">Scatto di: {{ selectedPhoto.nome | uppercase }}</span>
-        }
-        <button type="button" class="detail-close" (click)="closeDetail()" aria-label="Chiudi">✕</button>
+          <button type="button" class="detail-close" (click)="closeDetail()" aria-label="Chiudi">✕</button>
+        </div>
       </div>
       <!-- Foto intera — avvolta nella cornice a perforazioni, pulsante voto in basso a destra.
       Cerchio bianco semplice in stile otturatore . -->

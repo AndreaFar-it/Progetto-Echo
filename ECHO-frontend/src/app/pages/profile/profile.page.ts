@@ -36,7 +36,7 @@ interface MedagliaDisposta {
   templateUrl: './profile.page.html',
   styleUrl: './profile.page.scss',
 })
-export class PaginaProfilo implements OnInit, ViewWillEnter {
+export class PaginaProfilo implements ViewWillEnter {
 
   profilo: ProfiloResponse | null = null;
 
@@ -46,7 +46,6 @@ export class PaginaProfilo implements OnInit, ViewWillEnter {
     private toastCtrl: ToastController,
   ) { }
 
-  ngOnInit() { this.caricaProfilo(); }
   ionViewWillEnter() { this.profilo = null; this.caricaProfilo(); }
 
   // Recupera il profilo dal backend e aggiorna la vista.

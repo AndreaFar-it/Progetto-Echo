@@ -19,6 +19,8 @@ const USER_KEY = 'echo_user';
 function decodeJwtPayload(token: string): JwtPayload | null {
   try {
     const [, b64] = token.split('.');
+    // atob(...): Converte la stringa Base64 decodificata in una stringa di testo leggibile
+    // JSON.parse(...): Converte la stringa JSON in un oggetto JavaScript
     return JSON.parse(atob(b64.replace(/-/g, '+').replace(/_/g, '/'))) as JwtPayload;
   } catch {
     return null;
